@@ -50,6 +50,15 @@ struct AngleChartView: View {
         }
     }
 
+    /// Lead is solid, trail is dashed. Chosen over two hues alone so the series
+    /// stay distinguishable in greyscale and for colour-blind viewers.
+    static func strokeStyle(for series: String) -> StrokeStyle {
+        switch series {
+        case "后侧臂": return StrokeStyle(lineWidth: 2, dash: [6, 3])
+        default:      return StrokeStyle(lineWidth: 2)
+        }
+    }
+
     private var chart: some View {
         Chart {
             ForEach(samples) { sample in
@@ -58,6 +67,11 @@ struct AngleChartView: View {
                              y: .value("角度", value),
                              series: .value("系列", sample.series))
                         .foregroundStyle(by: .value("系列", sample.series))
+                        // Colour alone does not separate the two arms for a
+                        // colour-blind coach, and the two hues are close in
+                        // luminance. The dash pattern carries the same
+                        // distinction independently.
+                        .lineStyle(Self.strokeStyle(for: sample.series))
                         .interpolationMethod(.linear)
                 }
             }

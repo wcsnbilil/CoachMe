@@ -160,15 +160,17 @@ struct WorkbenchView: View {
             Text("v1 由教练手动标记。自动识别尚未经过验证，标错阶段会让按阶段生效的规则全部失效。")
                 .font(.caption).foregroundStyle(.secondary)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(SwingPhase.allCases) { phase in
-                        KeyframeChip(phase: phase,
-                                     marked: model.swing.keyframes.keyframe(for: phase),
-                                     onMark: { model.markKeyframe(phase, library: library) },
-                                     onJump: { time in model.playback?.seek(to: time) },
-                                     onClear: { model.clearKeyframe(phase, library: library) })
-                    }
+            // Two columns rather than a horizontal scroller: at 375pt only two
+            // and a half chips were visible, so a coach could not see that six
+            // phases exist, let alone which were still unmarked.
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8),
+                                GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                ForEach(SwingPhase.allCases) { phase in
+                    KeyframeChip(phase: phase,
+                                 marked: model.swing.keyframes.keyframe(for: phase),
+                                 onMark: { model.markKeyframe(phase, library: library) },
+                                 onJump: { time in model.playback?.seek(to: time) },
+                                 onClear: { model.clearKeyframe(phase, library: library) })
                 }
             }
         }
@@ -260,19 +262,43 @@ struct KeyframeChip: View {
                 Button("用当前帧标记") { onMark() }
             }
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: marked == nil ? "circle.dashed" : "checkmark.circle.fill")
-                Text(phase.nameZH)
-                if let marked {
-                    Text(String(format: "%.2fs", marked.timestampSeconds))
-                        .font(.caption2.monospacedDigit())
-                }
-            }
-            .font(.subheadline)
-            .padding(.horizontal, 10).padding(.vertical, 6)
-            .background(.quaternary, in: Capsule())
+            KeyframeChipLabel(phase: phase, marked: marked)
         }
-        .accessibilityLabel("\(phase.nameZH)\(marked == nil ? "，未标记" : "，已标记")")
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(phase.nameZH)\(marked.map { "，已标记于 \(String(format: "%.2f", $0.timestampSeconds)) 秒" } ?? "，未标记")")
+    }
+}
+
+/// The chip's visual, split from the `Menu` that wraps it so it can be rendered
+/// and inspected on its own — `ImageRenderer` cannot draw interactive controls.
+@MainActor
+struct KeyframeChipLabel: View {
+    let phase: SwingPhase
+    let marked: Keyframe?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            // Shape carries the state as well as colour: a dashed ring reads as
+            // unmarked even without colour perception.
+            Image(systemName: marked == nil ? "circle.dashed" : "checkmark.circle.fill")
+                .foregroundStyle(marked == nil ? AnyShapeStyle(.secondary)
+                                               : AnyShapeStyle(Palette.leadArm))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(phase.nameZH)
+                    .font(.subheadline.weight(marked == nil ? .regular : .medium))
+                Text(marked.map { String(format: "%.2f 秒", $0.timestampSeconds) } ?? "未标记")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        // 44pt is the iOS minimum touch target; the old chip was about 32pt.
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .background(.quaternary.opacity(marked == nil ? 0.35 : 0.6),
+                    in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10)
+            .strokeBorder(marked == nil ? .clear : Palette.leadArm.opacity(0.4), lineWidth: 1))
     }
 }
 
@@ -281,43 +307,138 @@ struct MetricReadoutGrid: View {
     let metrics: FrameMetrics
     let handedness: Handedness
 
-    private var rows: [(String, MetricOutcome, String)] {
-        let lead = handedness.leadSide, trail = handedness.trailSide
-        return [
-            ("引导臂肘部", metrics.outcome(.elbowInteriorAngle, lead), "°"),
-            ("后侧臂肘部", metrics.outcome(.elbowInteriorAngle, trail), "°"),
-            ("引导臂上臂-躯干", metrics.outcome(.upperArmToTorsoAngle, lead), "°"),
-            ("后侧臂上臂-躯干", metrics.outcome(.upperArmToTorsoAngle, trail), "°"),
-            ("双上臂夹角", metrics.outcome(.betweenUpperArmsAngle), "°"),
-            ("引导侧膝部", metrics.outcome(.kneeInteriorAngle, lead), "°"),
-            ("后侧膝部", metrics.outcome(.kneeInteriorAngle, trail), "°"),
-            ("肩线转角", metrics.outcome(.shoulderLineRotation), "°"),
-            ("髋线转角", metrics.outcome(.hipLineRotation), "°"),
-            ("肩髋分离角", metrics.outcome(.shoulderHipSeparation), "°")
-        ]
+    /// One reading: a metric with either one value or a lead/trail pair.
+    private struct Row: Identifiable {
+        let id: String
+        let name: String
+        let lead: MetricOutcome?
+        let trail: MetricOutcome?
+        let single: MetricOutcome?
+    }
+
+    private func paired(_ id: MetricID, _ name: String) -> Row {
+        Row(id: name, name: name,
+            lead: metrics.outcome(id, handedness.leadSide),
+            trail: metrics.outcome(id, handedness.trailSide),
+            single: nil)
+    }
+
+    private func bilateral(_ id: MetricID, _ name: String) -> Row {
+        Row(id: name, name: name, lead: nil, trail: nil, single: metrics.outcome(id))
+    }
+
+    /// Group 1: computable from a single frame.
+    private var perFrame: [Row] {
+        [paired(.elbowInteriorAngle, "肘部内角"),
+         paired(.upperArmToTorsoAngle, "上臂与躯干夹角"),
+         bilateral(.betweenUpperArmsAngle, "双上臂夹角"),
+         paired(.kneeInteriorAngle, "膝部内角")]
+    }
+
+    /// Group 2: measured against the address keyframe. Split out because when no
+    /// address is marked every one of them is unavailable for the same reason,
+    /// and a coach reading four identical "cannot compute" cards learns nothing.
+    private var relativeToAddress: [Row] {
+        [bilateral(.shoulderLineRotation, "肩线转角"),
+         bilateral(.hipLineRotation, "髋线转角"),
+         bilateral(.shoulderHipSeparation, "肩髋分离角")]
+    }
+
+    private var addressMissing: Bool {
+        if case .unavailable(.addressReferenceMissing) = metrics.outcome(.shoulderLineRotation) {
+            return true
+        }
+        return false
     }
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-            ForEach(rows, id: \.0) { name, outcome, unit in
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(name).font(.caption).foregroundStyle(.secondary)
-                    switch outcome {
-                    case .value(let v):
-                        Text("\(v, specifier: "%.1f")\(unit)")
-                            .font(.title3.monospacedDigit().weight(.medium))
-                    case .unavailable(let reason):
-                        // Never a number, never a zero — the reason is shown instead.
-                        Label("无法可靠计算", systemImage: "minus.circle")
-                            .font(.caption.weight(.medium))
-                        Text(reason.localizedZH).font(.caption2).foregroundStyle(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(8)
-                .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
-                .accessibilityElement(children: .combine)
+        VStack(alignment: .leading, spacing: 14) {
+            group("单帧可测", rows: perFrame, note: nil)
+            group("相对准备姿势", rows: relativeToAddress,
+                  note: addressMissing ? "先在上方标记「准备姿势」关键帧，这三项才有数值。" : nil)
+        }
+    }
+
+    @ViewBuilder
+    private func group(_ title: String, rows: [Row], note: String?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .kerning(0.5)
+            if let note {
+                Label(note, systemImage: "mappin.circle")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .padding(.bottom, 2)
             }
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                    if index > 0 {
+                        Divider().padding(.leading, 14)
+                    }
+                    readingRow(row)
+                }
+            }
+            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
+    @ViewBuilder
+    private func readingRow(_ row: Row) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let single = row.single {
+                // Bilateral metric: name and value share one line.
+                HStack(alignment: .firstTextBaseline) {
+                    Text(row.name).font(.subheadline)
+                    Spacer(minLength: 12)
+                    value(single)
+                }
+            } else {
+                // Sided metric: the name is stated once, then the two sides sit
+                // in equal-width columns so their values line up down the grid.
+                Text(row.name).font(.subheadline)
+                HStack(alignment: .top, spacing: 12) {
+                    if let lead = row.lead { sideColumn("引导臂", lead) }
+                    if let trail = row.trail { sideColumn("后侧臂", trail) }
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Side label above its value, never after it: the label has to be read
+    /// first for the number below it to mean anything.
+    @ViewBuilder
+    private func sideColumn(_ label: String, _ outcome: MetricOutcome) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            value(outcome)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func value(_ outcome: MetricOutcome) -> some View {
+        switch outcome {
+        case .value(let v):
+            Text("\(v, specifier: "%.1f")°")
+                .font(.title3.monospacedDigit().weight(.medium))
+        case .unavailable(let reason):
+            // Never a number, never a zero — the reason is shown instead.
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Image(systemName: "minus.circle").font(.caption)
+                Text(reason.localizedZH)
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundStyle(.secondary)
+            .accessibilityLabel("无法可靠计算：\(reason.localizedZH)")
         }
     }
 }

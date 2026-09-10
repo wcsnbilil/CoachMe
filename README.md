@@ -1,89 +1,140 @@
 # CoachMe
 
-高尔夫挥杆分析与教学 iOS App。视频 → 骨架 → 角度 → 教练参考范围 → 反馈 → AI 对话。
+**English** · [简体中文](README.zh-CN.md)
 
-## 当前状态（2026-09-09，已在 macOS + Xcode 15.4 上完整构建并运行）
+Golf swing analysis for iOS. Video → skeleton → joint angles → the coach's own
+reference ranges → feedback.
 
-| 模块 | 状态 |
+CoachMe ships **no built-in "correct" angles**. Every reference range is entered
+by a coach, carries its source, and is only ever described as *outside the range
+you set* — never as a wrong movement.
+
+<img src="simulator-launch.png" alt="CoachMe home screen" width="300">
+
+## Status — 2026-09-10
+
+Runs end to end on the iOS Simulator against real swing footage.
+
+| Area | State |
 |---|---|
-| `CoachMeCore` 编译 | ✅ 0 error 0 warning |
-| `CoachMeCore` 单元测试 | ✅ **28/28 通过**（真 XCTest） |
-| iOS App 目标构建 | ✅ **BUILD SUCCEEDED**（Xcode 15.4 / iOS 17.5 SDK，含 MediaPipe pod 链接） |
-| `CoachMeTests`（聊天框架 + MediaPipe 冒烟 + 端到端） | ✅ **14/14 通过**（iPhone 15 模拟器） |
-| MediaPipe 模型加载与推理 | ✅ 真实照片跑通：33 个关键点 + world landmarks，CoachMeCore 算出角度 |
-| App 启动 | ✅ 模拟器启动正常，首页渲染正确，无崩溃 |
-| 几何公式数值验证 | ✅ 31/31 |
-| 规则判定优先级验证 | ✅ 25/25 |
-| 真机运行 / 真实**挥杆视频**端到端 | ❌ **未验证**（静态照片已通，视频解码与逐帧时间戳未验证） |
-| 骨架对齐、角度准确度、性能 | ❌ **未验证**（见 LIMITATIONS） |
-| 历史对比 UI、关键点平滑、实时摄像头 | ⬜ 未开始 |
+| `CoachMeCore` build | ✅ 0 errors, 0 warnings |
+| `CoachMeCore` tests | ✅ **46/46** (real XCTest) |
+| iOS app build | ✅ Xcode 15.4 / iOS 17.5 SDK, MediaPipe pod linked |
+| App tests | ✅ **24/24** on the iPhone 15 Simulator |
+| Real video, end to end | ✅ decode → pose → keyframes → metrics → rule findings → chat payload |
+| MediaPipe inference | ✅ 33 landmarks + world landmarks on real footage |
+| Landmark smoothing | ✅ One Euro, tuned on real footage, separate real-time / slow-motion presets |
+| Node reference checks | ✅ geometry 31/31, rules 25/25 |
+| **On-device run** | ❌ **blocked** — see below |
+| **Measurement accuracy** | ❌ **never measured** — see [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) |
+| History comparison, live camera | ⬜ not started |
 
-首次在 macOS 上构建时修掉了 87 个问题，分五类，详见
-[`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) 第五节。
+**There are no accuracy figures anywhere in this project.** Nothing here has been
+compared against manual annotation or motion capture, so no claim about how close
+a reported angle is to the truth can be made. `docs/LIMITATIONS.md` records what
+has and has not been verified, in detail.
 
-完整状态与限制见 [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md)。
+### Why on-device is blocked
 
-## 结构
+Xcode 15.4 carries device support up to iOS 16.4 and has no developer disk image
+for iOS 26, so `devicectl` reports `connected (no DDI)`. Deploying to an iOS 26
+device needs Xcode 26.4, which needs macOS 26.2. Everything below therefore runs
+in the Simulator.
+
+## Layout
 
 ```
-CoachMeCore/          纯 Swift 逻辑包，不依赖 SwiftUI / AVFoundation / MediaPipe
+CoachMeCore/            Pure Swift logic. No SwiftUI, no AVFoundation, no MediaPipe.
   Sources/
-    Model/            关键点、帧、动作阶段、关键帧
-    Geometry/         向量、角度、躯干坐标系
-    Metrics/          指标定义目录 + 计算器
-    Quality/          可见度门槛与帧级质量
-    Rules/            教练规则与判定引擎
-    Chat/             消息、会话、分析上下文、ChatService 接口
-  Tests/              XCTest（28/28 通过）
+    Model/              Landmarks, frames, swing phases, keyframes
+    Geometry/           Vectors, angles, the torso frame
+    Metrics/            Metric catalogue + calculator
+    Quality/            Visibility gates and per-frame quality
+    Smoothing/          One Euro filter and the pose sequence smoother
+    Rules/              Coach rules and the evaluation engine
+    Chat/               Messages, conversations, analysis context, ChatService
+  Tests/                46 tests
 
-CoachMe/              iOS App 目标（构建通过，模拟器可运行）
-tools/reference/      Node 数值参考，用于在无 Swift 环境时验证公式
-tools/no-xcode-testrunner/  只有 CLT、没有 Xcode 时跑 XCTest 套件的垫片
-tools/setup-xcode-project.sh  生成工程 + 装 pod + 降工程格式到 Xcode 15 可读
-docs/                 指标定义、Mac 构建步骤、限制说明
-project.yml           XcodeGen 工程描述
-Podfile               MediaPipeTasksVision 0.10.21（版本锁定，见文件内说明）
+CoachMe/                iOS app target
+tools/reference/        Node reimplementations of the formulas, for checking
+                        the maths without a Swift toolchain
+tools/no-xcode-testrunner/  Runs the XCTest suite with Command Line Tools only
+tools/setup-xcode-project.sh    Generates the project, installs pods, fixes format
+tools/setup-device-signing.sh   Writes signing details into project.yml
+tools/download-model.sh         Fetches the MediaPipe pose model
+docs/                   Metric definitions, Mac setup, limitations
+project.yml             XcodeGen specification — the project file is generated
+Podfile                 MediaPipeTasksVision 0.10.21, pinned (reason in the file)
 ```
 
-## 构建与测试
+## Getting started
+
+Two things are deliberately **not** in the repository: the generated Xcode
+project, and the 5.5 MB MediaPipe model (it carries Google's own licence).
 
 ```bash
-tools/setup-xcode-project.sh              # xcodegen + pod install + 工程格式降级
+tools/download-model.sh          # pose_landmarker_lite.task → CoachMe/Resources/
+tools/setup-xcode-project.sh     # xcodegen + pod install + project format fix
+open CoachMe.xcworkspace         # the workspace, not the .xcodeproj
+```
+
+`setup-xcode-project.sh` rewrites the project format to `objectVersion = 56`.
+XcodeGen 2.45 and CocoaPods 1.16 both emit `77`, the Xcode 16 format, which
+Xcode 15.4 refuses to open. Delete that step once you move to Xcode 16+.
+
+### Test
+
+```bash
+swift test --package-path CoachMeCore     # 46 tests, seconds, no Simulator
 xcodebuild -workspace CoachMe.xcworkspace -scheme CoachMe \
-  -destination 'platform=iOS Simulator,name=iPhone 15' test
-swift test --package-path CoachMeCore     # 28/28
+  -destination 'platform=iOS Simulator,name=iPhone 15' test    # 24 tests
 ```
 
-`tools/setup-xcode-project.sh` 会把工程格式降到 objectVersion 56——XcodeGen 2.45
-和 CocoaPods 1.16 默认写 77（Xcode 16 格式），Xcode 15.4 打不开。脚本内有说明。
+### Without Xcode
 
-### 不装 Xcode 也能跑的验证
+`swift test` fails with `error: XCTest not available` on a machine that has only
+the Command Line Tools, because XCTest ships with the full Xcode. These work
+anyway:
 
 ```bash
-swift build --package-path CoachMeCore    # 编译核心逻辑包
-tools/no-xcode-testrunner/run.sh          # 28/28（绕开缺失的 XCTest）
+swift build --package-path CoachMeCore
+tools/no-xcode-testrunner/run.sh          # the real test files, XCTest shimmed
 node tools/reference/verify_geometry.mjs  # 31/31
 node tools/reference/verify_rules.mjs     # 25/25
 ```
 
-`swift test` 在只装了 Command Line Tools 的机器上会报 `error: XCTest not available`
-（XCTest 只随完整 Xcode 分发）。`tools/no-xcode-testrunner/` 用一个最小 XCTest 垫片
-编译原封不动的测试文件来绕开，说明见该目录的 README。装了 Xcode 后请直接用 `swift test`。
+The Node scripts reimplement the same formulas and the same decision order as the
+Swift code. They check that the **maths** is right; they cannot tell you whether
+the app builds or runs.
 
-`tools/reference/` 下的两个 node 脚本复刻 Swift 中的同一批公式与判定顺序，最初用于
-在没有 Swift 工具链时确认**算法本身**正确。
+## Three rules the product does not bend
 
-以上都不能证明 iOS App 目标可编译或可运行——那需要完整 Xcode。
+**1. If it cannot be computed, say so.** Any metric without sufficient data shows
+「无法可靠计算」 and the reason. Never 0, never a default angle, never an
+extrapolation. This is why `MetricOutcome` is an enum carrying a reason rather
+than an optional `Double`, why `Vector3.normalized()` returns nil on a degenerate
+vector, and why nothing downstream fills a gap.
 
-## 在 Mac 上继续
+**2. No invented standards.** The app contains no reference ranges. A coach
+enters their own, with a source note and the conditions they apply under. A value
+outside one is reported as *outside the range you set*, never as an error —
+`RuleEvaluation` has no case for "wrong".
 
-见 [`docs/MAC_SETUP.md`](docs/MAC_SETUP.md)。
+**3. No pretend AI.** The v1 `UnconfiguredChatService` makes no network calls and
+returns a "not configured" status. It never generates coaching-shaped text.
 
-## 三条不可退让的产品规则
+## Documentation
 
-1. **算不出来就说算不出来。** 任何指标在数据不足时显示「无法可靠计算」并给出原因，
-   永远不用 0、默认角度或推算值填充。
-2. **不编标准。** App 不内置任何参考范围。范围由教练录入，附来源与适用条件。
-   超出范围只表述为「超出你设置的范围」，不表述为「动作错误」。
-3. **不假装有 AI。** v1 的 `UnconfiguredChatService` 不发任何网络请求，
-   只返回「尚未连接」状态，绝不生成教练式回答。
+| | |
+|---|---|
+| [`docs/METRICS.md`](docs/METRICS.md) | Every metric: formula, reference frame, zero and sign, caveats |
+| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | What is verified, what is not, and why. Read before trusting a number |
+| [`docs/MAC_SETUP.md`](docs/MAC_SETUP.md) | Build steps on a Mac |
+| [`docs/AI_INTEGRATION.md`](docs/AI_INTEGRATION.md) | What a model would receive, and what it must never claim |
+
+## Licence
+
+None yet — all rights reserved. The MediaPipe model and the test fixtures carry
+their own terms: the pose model is Google's, `CoachMeTests/Fixtures/swing3s.mp4`
+is derived from a [Pexels](https://www.pexels.com/video/38025678/) clip under the
+Pexels licence, and `pose.jpg` comes from Google's MediaPipe sample assets.

@@ -11,21 +11,22 @@ you set* — never as a wrong movement.
 
 <img src="simulator-launch.png" alt="CoachMe home screen" width="300">
 
-## Status — 2026-09-10
+## Status — 2026-09-11
 
-Runs end to end on the iOS Simulator against real swing footage.
+Runs end to end on the iOS Simulator against real swing footage, and on a
+physical iPhone since 2026-09-11.
 
 | Area | State |
 |---|---|
 | `CoachMeCore` build | ✅ 0 errors, 0 warnings |
 | `CoachMeCore` tests | ✅ **46/46** (real XCTest) |
-| iOS app build | ✅ Xcode 15.4 / iOS 17.5 SDK, MediaPipe pod linked |
+| iOS app build | ✅ Simulator: Xcode 15.4 / iOS 17.5 SDK · device: Xcode 26.6 / iOS 26.5 SDK · MediaPipe pod linked |
 | App tests | ✅ **24/24** on the iPhone 15 Simulator |
 | Real video, end to end | ✅ decode → pose → keyframes → metrics → rule findings → chat payload |
 | MediaPipe inference | ✅ 33 landmarks + world landmarks on real footage |
 | Landmark smoothing | ✅ One Euro, tuned on real footage, separate real-time / slow-motion presets |
 | Node reference checks | ✅ geometry 31/31, rules 25/25 |
-| **On-device run** | ❌ **blocked** — see below |
+| On-device run | ✅ iPhone 16 Pro, iOS 26.4.2 — installs, launches, completes an analysis. Run once — see below |
 | **Measurement accuracy** | ❌ **never measured** — see [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) |
 | History comparison, live camera | ⬜ not started |
 
@@ -34,12 +35,30 @@ compared against manual annotation or motion capture, so no claim about how clos
 a reported angle is to the truth can be made. `docs/LIMITATIONS.md` records what
 has and has not been verified, in detail.
 
-### Why on-device is blocked
+### Running on a device
 
-Xcode 15.4 carries device support up to iOS 16.4 and has no developer disk image
-for iOS 26, so `devicectl` reports `connected (no DDI)`. Deploying to an iOS 26
-device needs Xcode 26.4, which needs macOS 26.2. Everything below therefore runs
-in the Simulator.
+First done on 2026-09-11 — iPhone 16 Pro, iOS 26.4.2, Xcode 26.6, free Personal
+Team. The old blocker (Xcode 15.4 has no developer disk image for iOS 26) does
+not exist under Xcode 26.
+
+```bash
+xcodebuild -downloadPlatform iOS          # once: Xcode 26 installs without the iOS platform
+tools/setup-device-signing.sh <TEAM_ID>   # team + bundle ID into project.yml, regenerates
+open CoachMe.xcworkspace                  # pick the iPhone, ⌘R
+```
+
+Without the platform component the build fails with `iOS 26.5 is not installed`.
+An SDK newer than the phone's iOS is fine; the deployment target is iOS 17.0.
+Signing lives in `project.yml`, not in Xcode's Signing pane — the project is
+generated, and anything set there is wiped on the next regeneration.
+
+On first launch iOS refuses to open the app until you trust the certificate:
+Settings → General → VPN & Device Management. Personal Team builds expire after
+7 days.
+
+This run shows the app builds, signs, installs and finishes an analysis on real
+hardware — nothing more. Skeleton alignment, speed, memory, battery and accuracy
+on the device are all unchecked; see [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
 ## Layout
 

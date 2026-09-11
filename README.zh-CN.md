@@ -9,21 +9,21 @@ CoachMe **不内置任何「正确」角度**。每一条参考范围都由教�
 
 <img src="simulator-launch.png" alt="CoachMe 首页" width="300">
 
-## 当前状态 — 2026-09-10
+## 当前状态 — 2026-09-11
 
-在 iOS 模拟器上用真实挥杆素材完整跑通。
+在 iOS 模拟器上用真实挥杆素材完整跑通；2026-09-11 起也在真机上跑通。
 
 | 模块 | 状态 |
 |---|---|
 | `CoachMeCore` 编译 | ✅ 0 error 0 warning |
 | `CoachMeCore` 测试 | ✅ **46/46**（真 XCTest） |
-| iOS App 构建 | ✅ Xcode 15.4 / iOS 17.5 SDK，MediaPipe pod 已链接 |
+| iOS App 构建 | ✅ 模拟器：Xcode 15.4 / iOS 17.5 SDK · 真机：Xcode 26.6 / iOS 26.5 SDK · MediaPipe pod 已链接 |
 | App 测试 | ✅ **24/24**（iPhone 15 模拟器） |
 | 真实视频端到端 | ✅ 解码 → 姿态 → 关键帧 → 指标 → 规则判定 → 聊天上下文 |
 | MediaPipe 推理 | ✅ 真实素材上产出 33 个关键点 + world landmarks |
 | 关键点平滑 | ✅ One Euro，在真实素材上调参，分实时/慢动作两套预设 |
 | Node 参考验证 | ✅ 几何 31/31，规则 25/25 |
-| **真机运行** | ❌ **受阻**，原因见下 |
+| 真机运行 | ✅ iPhone 16 Pro、iOS 26.4.2：能安装、能启动、能跑完一次分析。只跑过一次，见下 |
 | **测量准确度** | ❌ **从未测量**，见 [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) |
 | 历史对比、实时摄像头 | ⬜ 未开始 |
 
@@ -31,11 +31,26 @@ CoachMe **不内置任何「正确」角度**。每一条参考范围都由教�
 因此无法宣称某个角度读数离真值有多近。哪些验证过、哪些没有，
 `docs/LIMITATIONS.md` 里逐条记录。
 
-### 真机为什么受阻
+### 真机运行
 
-Xcode 15.4 自带的 DeviceSupport 最高到 iOS 16.4，没有 iOS 26 的开发者磁盘镜像，
-`devicectl` 报告 `connected (no DDI)`。要往 iOS 26 设备上部署需要 Xcode 26.4，
-而它要求 macOS 26.2。所以以下全部在模拟器上运行。
+2026-09-11 首次跑通：iPhone 16 Pro、iOS 26.4.2、Xcode 26.6、免费个人团队签名。
+之前的阻塞（Xcode 15.4 没有 iOS 26 的开发者磁盘镜像）在 Xcode 26 下不存在。
+
+```bash
+xcodebuild -downloadPlatform iOS          # 只需一次：Xcode 26 安装时不带 iOS 平台组件
+tools/setup-device-signing.sh <TEAM_ID>   # 把 Team 和 bundle ID 写进 project.yml 并重新生成
+open CoachMe.xcworkspace                  # 选中 iPhone，⌘R
+```
+
+缺平台组件时构建报 `iOS 26.5 is not installed`。SDK 版本高于手机系统没有关系，
+部署目标是 iOS 17.0。签名写在 `project.yml` 里，不要在 Xcode 的 Signing 面板改——
+工程是生成的，下次重新生成就会被覆盖。
+
+首次启动时 iOS 会拒绝打开，需在手机上「设置 → 通用 → VPN 与设备管理」信任开发者证书。
+免费个人团队签的包 7 天后失效。
+
+这次只证明了 App 能在真机上构建、签名、安装并跑完一次分析，仅此而已。骨架对齐、
+速度、内存、电量和准确度在真机上都没有检查过，见 [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md)。
 
 ## 结构
 

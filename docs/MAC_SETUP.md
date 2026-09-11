@@ -1,14 +1,15 @@
 # 在 Mac 上构建与运行 CoachMe
 
-本工程在 Windows 上编写，**以下每一步都尚未在本机执行过**。Xcode 仅在 macOS 上运行，
-CocoaPods 安装、Swift 编译、MediaPipe 推理和真机运行都必须在 Mac 上完成。
+本工程在 Windows 上编写。以下第 1–4 步已在 Mac 上实际执行过，真机运行于 2026-09-11
+首次跑通。Xcode 仅在 macOS 上运行，CocoaPods 安装、Swift 编译、MediaPipe 推理和
+真机运行都必须在 Mac 上完成。
 
 ## 0. 前置条件
 
 | 项目 | 要求 |
 |---|---|
 | macOS | 能运行 Xcode 15 或更高版本 |
-| Xcode | 15+（iOS 17 SDK） |
+| Xcode | 15+（iOS 17 SDK）；真机是 iOS 26 时需要 Xcode 26 |
 | CocoaPods | `sudo gem install cocoapods` |
 | XcodeGen | `brew install xcodegen` |
 | Apple ID | 免费 Apple ID 可做 7 天真机调试；上架需付费开发者账号 |
@@ -53,11 +54,27 @@ swift test
 
 ## 4. 真机运行
 
-1. Xcode → 项目设置 → Signing & Capabilities → 选择你的 Team
-2. `PRODUCT_BUNDLE_IDENTIFIER` 改成你自己的唯一 ID（默认 `com.coachme.app` 可能已被占用）
-3. iPhone 用数据线连接，在设备列表中选中
-4. ⌘R 运行
-5. 首次运行需在 iPhone 上「设置 → 通用 → VPN 与设备管理」信任你的开发者证书
+2026-09-11 首次跑通：iPhone 16 Pro、iOS 26.4.2、Xcode 26.6、免费个人团队签名。
+
+1. Xcode 26 安装时不带 iOS 平台组件，缺它时构建报 `iOS 26.5 is not installed`。
+   先装一次：`xcodebuild -downloadPlatform iOS`（或 Xcode → Settings → Components）。
+   SDK 版本高于手机系统没有关系，部署目标是 iOS 17.0
+2. `tools/setup-device-signing.sh <TEAM_ID>` 把 Team 和 bundle ID 写进 `project.yml`
+   并重新生成工程。Team ID 在 Xcode → Settings → Accounts 里。**不要在 Xcode 的
+   Signing & Capabilities 里改**——工程是生成的，下次重新生成就会被覆盖。
+   bundle ID 默认变成 `com.<team id 小写>.coachme`，因为 `com.coachme.app` 很可能已被占用
+3. iPhone 用数据线连接并开启开发者模式，在设备列表中选中，⌘R 运行。
+   命令行等价做法：
+   ```bash
+   xcodebuild -workspace CoachMe.xcworkspace -scheme CoachMe \
+     -destination 'id=<UDID>' -allowProvisioningUpdates build
+   xcrun devicectl device install app --device <设备> <Debug-iphoneos/CoachMe.app 的路径>
+   ```
+   UDID 用 `xcrun xctrace list devices` 查。`-allowProvisioningUpdates` 让 Xcode 用已登录
+   的 Apple ID 自动创建开发证书和描述文件
+4. 首次运行需在 iPhone 上「设置 → 通用 → VPN 与设备管理」信任你的开发者证书。
+   不信任时启动报 `profile has not been explicitly trusted by the user`
+5. 免费个人团队签的包 7 天后失效，重新构建安装即可
 
 **必须在真机上验证，不要只用模拟器**：模拟器没有相册中的真实视频，且 MediaPipe 在
 模拟器（x86/arm64 slice）上的行为与真机不一致。

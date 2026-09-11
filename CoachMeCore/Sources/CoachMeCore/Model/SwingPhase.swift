@@ -1,10 +1,6 @@
 import Foundation
 
-/// The swing positions a coach can mark.
-///
-/// Version 1 does **not** detect these automatically. Auto-phase-detection has
-/// not been validated against labelled swings, and a wrong phase label would
-/// silently corrupt every rule that is scoped to a phase. The coach marks them.
+/// Swing positions detected automatically or marked by the coach.
 public enum SwingPhase: String, Sendable, Codable, CaseIterable, Identifiable {
     case address        // 准备姿势
     case midBackswing   // 上杆中段
@@ -30,7 +26,7 @@ public enum SwingPhase: String, Sendable, Codable, CaseIterable, Identifiable {
     public var order: Int { Self.allCases.firstIndex(of: self)! }
 }
 
-/// A coach-placed marker tying a phase to an exact frame time.
+/// A marker tying a phase to an exact frame time, with automatic/manual provenance.
 public struct Keyframe: Sendable, Codable, Identifiable, Equatable {
     public let id: UUID
     public var phase: SwingPhase

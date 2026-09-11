@@ -1,3 +1,25 @@
+# AI 接口接入（当前实现）
+
+首页或 AI 教练聊天页 → AI 接口设置 → 选择服务商 → 填写模型 ID 与 API Key → 测试连接并保存。
+
+支持 OpenAI Chat Completions、Claude Messages、Gemini OpenAI 兼容端点、DeepSeek Chat Completions，以及自定义 HTTPS OpenAI 兼容地址。模型 ID 由服务商控制台确定，不内置密钥或默认模型。Key 存储在 iOS Keychain，并绑定服务商/基础地址；修改地址会清空输入，避免误发密钥。不跟随 HTTP 重定向。
+
+每次请求包含当前挥杆全部分析帧的指标与手腕轨迹、缺失原因、关键帧来源、检测质量、适用教练规则、当前帧关节数据和最近 20 条有效聊天消息。未上传视频、其他挥杆、显示补全位置或全程原始关节点。超过长度保护会显示错误，不静默裁掉指标。没有关键帧也可解读可用指标，缺少参考姿势的转角明确标为不可用。
+
+支持非流式回答、连续提问、停止生成、本地历史、连接测试、认证/额度/超时提示。连接测试会调用实际 API，可能产生费用。离线保存的问题不会在配置后自动上传。模型未收到比较数据时不能声称与上次相比进步。
+
+验证：核心测试 64 项通过；后续新增认证/超时测试通过；模拟器聊天集成 6 项通过；签名 iPhone 构建成功。真实服务需用户配置 Key 后自测，尚无付费服务端验收。
+
+官方接口：
+- https://developers.openai.com/api/reference/resources/chat
+- https://platform.claude.com/docs/en/api/messages/create
+- https://ai.google.dev/gemini-api/docs/openai
+- https://api-docs.deepseek.com/api/create-chat-completion/
+
+---
+
+## 原始设计记录（下文含早期未接入状态，以上述实现为准）
+
 # 接入真实大模型
 
 v1 **不调用任何模型**，也不部署后端。本文件说明将来怎么接，以及哪些边界不能破。

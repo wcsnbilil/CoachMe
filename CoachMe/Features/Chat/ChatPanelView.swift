@@ -1,16 +1,14 @@
 import SwiftUI
 import CoachMeCore
 
-/// Chat surface for one swing.
-///
-/// Version 1 is backed by `UnconfiguredChatService`: the user can type and send,
-/// the message is stored locally, and the app replies with a clearly-marked
-/// status notice. No model is called and no coaching answer is fabricated.
+/// Multi-provider chat with local conversation history.
 @MainActor
 struct ChatPanelView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var model: ChatModel
     @State private var draft = ""
+    @State private var showingSettings = false
+    @State private var requestTask: Task<Void, Never>?
     @FocusState private var inputFocused: Bool
 
     init(swing: SwingRecord, phase: SwingPhase?, timestamp: Double, context: SwingAnalysisContext) {
@@ -31,9 +29,14 @@ struct ChatPanelView: View {
             .navigationTitle("AI 教练")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("接口设置") { showingSettings = true }.disabled(model.isSending)
+                }
                 ToolbarItem(placement: .cancellationAction) { Button("返回视频") { dismiss() } }
             }
         }
+        .sheet(isPresented: $showingSettings, onDismiss: { model.reloadConfiguration() }) { AISettingsView() }
+        .onDisappear { requestTask?.cancel() }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
     }
@@ -53,7 +56,7 @@ struct ChatPanelView: View {
             .foregroundStyle(.secondary)
 
             // Connection state is stated with an icon and words, not colour alone.
-            Label("AI 尚未连接", systemImage: "bolt.horizontal.circle")
+            Label(model.connectionLabel, systemImage: model.isConfigured ? "checkmark.circle" : "bolt.horizontal.circle")
                 .font(.caption.bold())
                 .padding(.horizontal, 8).padding(.vertical, 4)
                 .background(.quaternary, in: Capsule())
@@ -67,10 +70,13 @@ struct ChatPanelView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     if model.conversation.messages.isEmpty {
-                        Text("你可以先问一个问题。当前版本不会生成回答，但你的提问会保存下来。")
+                        Text("配置接口后，可解读本次挥杆并连续追问。发送会附带全程指标、关键帧、质量与当前帧数据。")
                             .font(.footnote).foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 24)
+                    }
+                    if model.isSending {
+                        HStack { ProgressView(); Text("AI 正在分析…"); Button("停止") { requestTask?.cancel() } }
                     }
                     ForEach(model.conversation.messages) { message in
                         MessageBubble(message: message).id(message.id)
@@ -117,7 +123,7 @@ struct ChatPanelView: View {
                 let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !text.isEmpty else { return }
                 draft = ""
-                Task { await model.send(text) }
+                requestTask = Task { await model.send(text) }
             } label: {
                 Image(systemName: "arrow.up.circle.fill").font(.title2)
             }
@@ -156,7 +162,8 @@ struct MessageBubble: View {
                 .background(.yellow.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
 
             case .text:
-                Text(message.content)
+                Text(.init(message.content))
+                    .textSelection(.enabled)
                     .padding(10)
                     .background(message.role == .user ? AnyShapeStyle(Palette.leadArm.opacity(0.2))
                                                       : AnyShapeStyle(.quaternary),
@@ -184,26 +191,38 @@ final class ChatModel {
     private(set) var conversation: Conversation
     private(set) var isSending = false
 
-    private let service: ChatService
+    private var service: ChatService
+    private let injectedService: Bool
+    private(set) var connectionLabel = "AI 尚未配置"
+    var isConfigured: Bool { service.isConfigured }
     private let store: LocalStore
 
     init(swing: SwingRecord,
          phase: SwingPhase?,
          timestamp: Double,
          context: SwingAnalysisContext,
-         service: ChatService = UnconfiguredChatService(),
+         service: ChatService? = nil,
          store: LocalStore = .shared) {
         self.swing = swing
         self.phase = phase
         self.timestamp = timestamp
         self.context = context
-        self.service = service
+        self.injectedService = service != nil
+        self.service = service ?? AISettingsStore.service()
         self.store = store
         self.conversation = store.loadConversation(swingID: swing.id)
             ?? Conversation(swingID: swing.id)
+        self.connectionLabel = self.service.isConfigured ? "已配置 · " + AISettingsStore.configuration.provider.name : "AI 尚未配置"
+    }
+
+    func reloadConfiguration() {
+        guard !injectedService else { return }
+        service = AISettingsStore.service()
+        connectionLabel = service.isConfigured ? "已配置 · " + AISettingsStore.configuration.provider.name : "AI 尚未配置"
     }
 
     func send(_ text: String) async {
+        guard !isSending, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         isSending = true
         defer { isSending = false }
 
@@ -220,20 +239,25 @@ final class ChatModel {
         for await event in service.send(message: message,
                                         conversation: conversation,
                                         context: context,
-                                        options: ChatRequestOptions()).mapErrorToEvents() {
+                                        options: ChatRequestOptions(timeout: 120, maxRetries: 0, contextTokenLimit: 128_000)).mapErrorToEvents() {
             switch event {
             case .failed(let error):
+                conversation.updateStatus(messageID: message.id, to: error == .cancelled ? .cancelled : .failed)
                 // The only reply v1 can honestly produce: a status notice.
                 let notice = error == .notConfigured
                     ? ChatMessage.notConnectedNotice(analysisVersion: swing.analysisVersion)
                     : ChatMessage(role: .system, kind: .statusNotice, content: error.messageZH,
-                                  status: .delivered, producedWhileUnconfigured: true)
+                                  status: .delivered, producedWhileUnconfigured: !service.isConfigured)
                 conversation.append(notice)
             case .finished(let reply):
                 conversation.append(reply)
             case .started, .delta, .reference:
                 break
             }
+        }
+        if Task.isCancelled {
+            conversation.updateStatus(messageID: message.id, to: .cancelled)
+            conversation.append(ChatMessage(role: .system, kind: .statusNotice, content: "已停止生成。", status: .delivered))
         }
         persist()
     }
@@ -246,7 +270,7 @@ private extension AsyncThrowingStream where Element == ChatStreamEvent, Failure 
     /// one code path.
     func mapErrorToEvents() -> AsyncStream<ChatStreamEvent> {
         AsyncStream { continuation in
-            Task {
+            let task = Task {
                 do {
                     for try await event in self { continuation.yield(event) }
                 } catch let error as ChatServiceError {
@@ -256,6 +280,7 @@ private extension AsyncThrowingStream where Element == ChatStreamEvent, Failure 
                 }
                 continuation.finish()
             }
+            continuation.onTermination = { @Sendable _ in task.cancel() }
         }
     }
 }

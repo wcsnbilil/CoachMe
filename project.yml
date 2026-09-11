@@ -45,11 +45,16 @@ targets:
           # The .task model is added explicitly below as a resource so it lands
           # in Copy Bundle Resources rather than being guessed at by file type.
           - "Resources/*.task"
+          - "Resources/*.mlpackage"
       - path: CoachMe/Resources
         includes:
           - "*.task"
         buildPhase: resources
         optional: true
+      - path: CoachMe/Resources/SwingNetEncoder.mlpackage
+        buildPhase: sources
+      - path: CoachMe/Resources/SwingNetSequence.mlpackage
+        buildPhase: sources
     dependencies:
       - package: CoachMeCore
         product: CoachMeCore
@@ -91,6 +96,10 @@ targets:
         # an Info.plist file". The app target supplies its own plist; the test
         # bundle has no reason to, so let Xcode synthesise one.
         GENERATE_INFOPLIST_FILE: YES
+        # The app host already links MediaPipe graphs. Force-loading them into
+        # the test bundle registers every calculator twice and aborts launch.
+        "OTHER_LDFLAGS[sdk=iphoneos*]": ""
+        "OTHER_LDFLAGS[sdk=iphonesimulator*]": ""
 
 schemes:
   CoachMe:

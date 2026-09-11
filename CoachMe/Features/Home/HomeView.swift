@@ -6,6 +6,7 @@ struct HomeView: View {
     @Environment(SwingLibrary.self) private var library
     @State private var showingImport = false
     @State private var showingRules = false
+    @State private var showingAISettings = false
 
     var body: some View {
         NavigationStack {
@@ -45,6 +46,7 @@ struct HomeView: View {
                     } label: {
                         Label("查看历史报告", systemImage: "list.bullet.rectangle")
                     }
+                    Button("AI 接口设置", systemImage: "sparkles") { showingAISettings = true }
                     Button {
                         showingRules = true
                     } label: {
@@ -59,6 +61,7 @@ struct HomeView: View {
             .sheet(isPresented: $showingImport) {
                 ImportView()
             }
+            .sheet(isPresented: $showingAISettings) { AISettingsView() }
             .sheet(isPresented: $showingRules) {
                 NavigationStack { RuleListView() }
             }

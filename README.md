@@ -31,6 +31,15 @@
   </tr>
 </table>
 
+## Latest functionality
+
+- MediaPipe Heavy by default; local SwingNet detects six phases, with retry for saved records and manual correction.
+- Display-only temporal/body-proportion skeleton completion in 2D and 3D. Estimated segments are dashed and excluded from measurements. A central spine avoids crossed torso diagonals in the 2D projection.
+- OpenAI, Claude, Gemini, DeepSeek, and OpenAI-compatible APIs for swing-data interpretation and follow-up questions. User API keys are stored in the device Keychain.
+- 64 core regression tests passed, followed by added authentication/timeout checks; six simulator chat integration tests passed. Real-provider calls require a user API key for verification.
+
+New imports receive automatic phase candidates. Saved records can retry phase detection in the workbench. See [model conversion and upstream terms](tools/swingnet/README.md) and [AI setup/data scope](docs/AI_INTEGRATION.md).
+
 ## What works today
 
 - Import real swing footage from Photos and analyze it on the device
@@ -81,12 +90,12 @@ MediaPipeTasksVision 0.10.21 is linked.
 ### Build and run
 
 ```bash
-tools/download-model.sh          # fetch MediaPipe pose_landmarker_lite.task
+tools/download-model.sh          # fetch MediaPipe pose_landmarker_heavy.task
 tools/setup-xcode-project.sh     # generate the project, install Pods, fix its format
 open CoachMe.xcworkspace         # open the workspace, not the .xcodeproj
 ```
 
-The generated Xcode project and Google's 5.5 MB MediaPipe model are deliberately
+The generated Xcode project and Google's 29 MB MediaPipe model are deliberately
 not committed. The setup scripts prepare both.
 
 ### Run on an iPhone
@@ -155,7 +164,7 @@ project.yml                  XcodeGen project specification
 
 1. **Say when a value cannot be computed.** Return the reason; never insert a default angle or estimate.
 2. **Do not invent standards for the coach.** Every reference range needs a source and applicable conditions.
-3. **Do not pretend AI is connected.** The v1 `UnconfiguredChatService` makes no network request and returns an explicit unconfigured state.
+3. **Do not pretend AI is connected.** Configured requests call the selected service; unconfigured requests show a status notice. Video stays local.
 
 ## Documentation
 
@@ -175,7 +184,7 @@ project.yml                  XcodeGen project specification
 - [ ] Measurement-accuracy benchmark
 - [ ] Historical analysis comparison
 - [ ] Live-camera analysis
-- [ ] Configurable AI coaching service
+- [x] Configurable AI coaching service
 
 ## Licence
 

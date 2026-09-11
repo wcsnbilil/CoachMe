@@ -22,14 +22,17 @@ struct Skeleton3DView: View {
                 Canvas { context, size in
                     guard let points = projectedPoints(in: size) else { return }
 
+                    let estimatedJoints = Set(PoseJoint.allCases.filter { isEstimated($0) })
                     func stroke(_ bones: [(PoseJoint, PoseJoint)], _ colour: Color, _ width: CGFloat) {
-                        var path = Path()
                         for (a, b) in bones {
                             guard let pa = points[a], let pb = points[b] else { continue }
+                            var path = Path()
                             path.move(to: pa); path.addLine(to: pb)
+                            let estimated = estimatedJoints.contains(a) || estimatedJoints.contains(b)
+                            context.stroke(path, with: .color(colour.opacity(estimated ? 0.65 : 1)),
+                                           style: .init(lineWidth: width, lineCap: .round,
+                                                        dash: estimated ? [5, 5] : []))
                         }
-                        context.stroke(path, with: .color(colour),
-                                       style: .init(lineWidth: width, lineCap: .round))
                     }
 
                     stroke(SkeletonTopology.torso, .primary.opacity(0.8), 3)
@@ -39,8 +42,12 @@ struct Skeleton3DView: View {
 
                     for joint in SkeletonTopology.dots {
                         guard let p = points[joint] else { continue }
-                        context.fill(Path(ellipseIn: CGRect(x: p.x - 3, y: p.y - 3, width: 6, height: 6)),
-                                     with: .color(.primary))
+                        let dot = Path(ellipseIn: CGRect(x: p.x - 3, y: p.y - 3, width: 6, height: 6))
+                        if isEstimated(joint) {
+                            context.stroke(dot, with: .color(.secondary), lineWidth: 1.5)
+                        } else {
+                            context.fill(dot, with: .color(.primary))
+                        }
                     }
 
                     // Hip-centre origin marker, to make the coordinate origin visible.
@@ -73,8 +80,13 @@ struct Skeleton3DView: View {
         }
     }
 
+    private func isEstimated(_ joint: PoseJoint) -> Bool {
+        (frame?.worldLandmark(joint)?.visibility ?? 1) < 0.5
+            || (frame?.imageLandmark(joint)?.visibility ?? 1) < 0.5
+    }
+
     private var banner: some View {
-        Label("模型估计的三维骨架，非动作捕捉。原点为模型的髋部中心，坐标轴与球场、地面、目标线无关。",
+        Label("三维骨架含时序与人体比例补全，虚线为估计，非动作捕捉。原点为模型的髋部中心，坐标轴与球场、地面、目标线无关。",
               systemImage: "exclamationmark.triangle")
             .font(.caption2)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -95,7 +107,8 @@ struct Skeleton3DView: View {
         for joint in PoseJoint.allCases {
             guard world.indices.contains(joint.rawValue) else { continue }
             let mark = world[joint.rawValue]
-            if (mark.visibility ?? 1.0) < 0.3 { continue }
+            guard mark.position.x.isFinite, mark.position.y.isFinite, mark.position.z.isFinite,
+                  (mark.presence ?? 1) >= 0.5 else { continue }
             let p = mark.position
             // Yaw about the vertical axis, then pitch about the horizontal one.
             let x1 = p.x * cosY + p.z * sinY

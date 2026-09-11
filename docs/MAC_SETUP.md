@@ -25,10 +25,10 @@ open CoachMe.xcworkspace   # 必须开 workspace，不是 xcodeproj
 
 ## 2. 下载姿态模型
 
-模型文件**不在仓库中**（5.5 MB，且适用 Google 自己的许可）。
+模型文件**不在仓库中**（适用 Google 自己的许可）。
 
 ```bash
-tools/download-model.sh          # 默认 lite，可传 full / heavy
+tools/download-model.sh          # 默认 heavy，可传 lite / full
 tools/setup-xcode-project.sh     # 重新生成工程，让模型进 Copy Bundle Resources
 ```
 
@@ -38,8 +38,8 @@ tools/setup-xcode-project.sh     # 重新生成工程，让模型进 Copy Bundle
 代码通过 `BaseOptions.modelAssetPath` 从 App Bundle 读取。文件缺失时 App 显示
 「模型文件缺失」，不崩溃也不退回假数据——`PoseDetectorSmokeTests` 覆盖了这条路径。
 
-**建议先用 lite**：三个变体输入尺寸相同，lite 最快。官方未给出精度/延迟对比数字，
-需要你用自己的视频实测。
+**默认使用 heavy**：App、分析记录中的模型标识和下载脚本均使用 Heavy。
+切换其他变体时，应同步修改检测器配置和分析记录中的模型标识，并用自己的视频实测。
 
 ## 3. 运行纯逻辑测试（不需要真机）
 
@@ -88,5 +88,5 @@ swift test
 3. 分析能跑完并给出进度，中途能取消
 4. 骨架叠加与人物对齐——**用竖拍和横拍各测一次**，这是最容易出错的地方
 5. 拖动进度条，骨架、角度读数、曲线游标三者同步
-6. 手动标记准备姿势关键帧后，肩线/髋线转角才出现数值
+6. 新导入视频生成六个自动阶段；点击可跳转，重新标记后显示「手动」。准备姿势标记作为肩线/髋线转角的参考。
 7. 遮挡严重的帧显示"无法可靠计算"，而不是某个数字

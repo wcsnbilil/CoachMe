@@ -31,8 +31,8 @@ final class PoseDetectorSmokeTests: XCTestCase {
     }
 
     func testModelFileIsInTheAppBundle() throws {
-        let path = Bundle.main.path(forResource: "pose_landmarker_lite", ofType: "task")
-        XCTAssertNotNil(path, "pose_landmarker_lite.task 不在 App Bundle 中——检查 project.yml 的 resources 声明")
+        let path = Bundle.main.path(forResource: "pose_landmarker_heavy", ofType: "task")
+        XCTAssertNotNil(path, "pose_landmarker_heavy.task 不在 App Bundle 中——检查 project.yml 的 resources 声明")
     }
 
     /// The real signature check: if `PoseLandmarkerOptions` or `PoseLandmarker`

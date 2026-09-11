@@ -42,6 +42,10 @@ struct WorkbenchView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     videoSection(model)
+                    if model.showSkeleton {
+                        Text("骨架已启用时序与人体比例补全；虚线为估计位置，不用于角度评分。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                     transportControls(model)
                     keyframeSection(model)
                     readoutSection(model)
@@ -69,7 +73,7 @@ struct WorkbenchView: View {
             if let playback = model.playback {
                 PlayerLayerView(player: playback.player)
                 if model.showSkeleton {
-                    SkeletonOverlay(frame: model.currentPoseFrame,
+                    SkeletonOverlay(frame: model.currentDisplayPoseFrame,
                                     handedness: model.swing.handedness,
                                     videoSize: model.videoSize,
                                     minVisibility: model.swing.qualityPolicy.minVisibility)
@@ -157,8 +161,26 @@ struct WorkbenchView: View {
                     Label(phase.nameZH, systemImage: "mappin.circle.fill").font(.subheadline)
                 }
             }
-            Text("v1 由教练手动标记。自动识别尚未经过验证，标错阶段会让按阶段生效的规则全部失效。")
+            Text(model.swing.keyframes.isEmpty
+                 ? "尚无可用的自动标记：可能未运行阶段识别，或预测阶段顺序冲突。可手动标记；重新拍摄时尽量让人物占满画面并只保留一次完整挥杆。"
+                 : "自动标记可直接跳转查看；需要调整时，拖动视频后重新标记该阶段。")
                 .font(.caption).foregroundStyle(.secondary)
+
+            if model.swing.keyframes.isEmpty {
+                Button {
+                    Task { await model.findKeyframes(library: library) }
+                } label: {
+                    HStack {
+                        if model.findingPhases { ProgressView() }
+                        Text(model.findingPhases ? "正在识别关键帧…" : "重新自动识别关键帧")
+                    }
+                }
+                .disabled(model.findingPhases)
+                .buttonStyle(.bordered)
+            }
+            if let message = model.phaseDetectionMessage {
+                Text(message).font(.caption).foregroundStyle(.secondary)
+            }
 
             // Two columns rather than a horizontal scroller: at 375pt only two
             // and a half chips were visible, so a coach could not see that six
@@ -215,7 +237,7 @@ struct WorkbenchView: View {
     @ViewBuilder
     private func skeleton3DSection(_ model: WorkbenchModel) -> some View {
         DisclosureGroup("独立骨架视图（三维估计）") {
-            Skeleton3DView(frame: model.currentPoseFrame, handedness: model.swing.handedness)
+            Skeleton3DView(frame: model.currentDisplayPoseFrame, handedness: model.swing.handedness)
                 .frame(height: 320)
         }
     }
@@ -286,7 +308,7 @@ struct KeyframeChipLabel: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(phase.nameZH)
                     .font(.subheadline.weight(marked == nil ? .regular : .medium))
-                Text(marked.map { String(format: "%.2f 秒", $0.timestampSeconds) } ?? "未标记")
+                Text(marked.map { String(format: "%.2f 秒", $0.timestampSeconds) + ($0.markedByCoach ? " · 手动" : " · 自动") } ?? "未标记")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
             }

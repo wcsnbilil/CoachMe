@@ -1,16 +1,15 @@
 #!/bin/bash
 # Downloads the MediaPipe pose landmarker model into CoachMe/Resources/.
 #
-# The .task file is gitignored: 5.5 MB, and it carries Google's own licence
+# The .task file is gitignored and carries Google's own licence
 # rather than this project's. Run this once after cloning.
 #
-# The variant must match MediaPipePoseDetector.ModelVariant. `lite` is the
-# app's default; the three variants share an input size, and the official docs
-# publish no accuracy/latency comparison, so pick by measuring your own footage.
+# The variant must match MediaPipePoseDetector.ModelVariant. Heavy is the
+# app default; pass lite or full explicitly to download an alternative.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-VARIANT="${1:-lite}"
+VARIANT="${1:-heavy}"
 case "$VARIANT" in
   lite|full|heavy) ;;
   *) echo "usage: $0 [lite|full|heavy]" >&2; exit 1 ;;

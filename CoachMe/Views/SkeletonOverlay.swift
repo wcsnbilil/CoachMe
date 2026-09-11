@@ -75,23 +75,51 @@ struct SkeletonOverlay: View {
             Canvas { context, _ in
                 guard let frame else { return }
 
-                func visiblePoint(_ joint: PoseJoint) -> CGPoint? {
+                func isReliable(_ joint: PoseJoint) -> Bool {
+                    (frame.imageLandmark(joint)?.visibility ?? 1) >= minVisibility
+                }
+
+                func estimatedPoint(_ joint: PoseJoint) -> CGPoint? {
                     guard let mark = frame.imageLandmark(joint),
-                          (mark.visibility ?? 1.0) >= minVisibility else { return nil }
+                          mark.position.x.isFinite, mark.position.y.isFinite,
+                          (0...1).contains(mark.position.x), (0...1).contains(mark.position.y),
+                          (mark.presence ?? 1) >= 0.5 else { return nil }
                     return geometry.point(normalisedX: mark.position.x, y: mark.position.y)
                 }
 
-                func stroke(_ bones: [(PoseJoint, PoseJoint)], _ colour: Color, width: CGFloat) {
-                    var path = Path()
-                    for (a, b) in bones {
-                        guard let pa = visiblePoint(a), let pb = visiblePoint(b) else { continue }
-                        path.move(to: pa)
-                        path.addLine(to: pb)
-                    }
-                    context.stroke(path, with: .color(colour), style: .init(lineWidth: width, lineCap: .round))
+                func visiblePoint(_ joint: PoseJoint) -> CGPoint? {
+                    isReliable(joint) ? estimatedPoint(joint) : nil
                 }
 
-                stroke(SkeletonTopology.torso, .white.opacity(0.9), width: 3)
+                func stroke(_ bones: [(PoseJoint, PoseJoint)], _ colour: Color, width: CGFloat) {
+                    for (a, b) in bones {
+                        guard let pa = estimatedPoint(a), let pb = estimatedPoint(b) else { continue }
+                        let reliable = isReliable(a) && isReliable(b)
+                        var path = Path()
+                        path.move(to: pa)
+                        path.addLine(to: pb)
+                        context.stroke(path, with: .color(colour.opacity(reliable ? 1 : 0.55)),
+                                       style: .init(lineWidth: width, lineCap: .round,
+                                                    dash: reliable ? [] : [5, 5]))
+                    }
+                }
+
+                // In a 2D projection, anatomical left/right shoulder-to-hip
+                // diagonals can cross during a valid finish. Use a spine with
+                // shoulder/hip axes so this does not look like a twisted cage.
+                stroke([(.leftShoulder, .rightShoulder), (.leftHip, .rightHip)],
+                       .white.opacity(0.9), width: 3)
+                if let ls = estimatedPoint(.leftShoulder), let rs = estimatedPoint(.rightShoulder),
+                   let lh = estimatedPoint(.leftHip), let rh = estimatedPoint(.rightHip) {
+                    let reliable = [PoseJoint.leftShoulder, .rightShoulder, .leftHip, .rightHip]
+                        .allSatisfy { isReliable($0) }
+                    var spine = Path()
+                    spine.move(to: CGPoint(x: (ls.x+rs.x)/2, y: (ls.y+rs.y)/2))
+                    spine.addLine(to: CGPoint(x: (lh.x+rh.x)/2, y: (lh.y+rh.y)/2))
+                    context.stroke(spine, with: .color(.white.opacity(reliable ? 0.9 : 0.55)),
+                                   style: .init(lineWidth: 3, lineCap: .round,
+                                                dash: reliable ? [] : [5, 5]))
+                }
                 stroke(SkeletonTopology.legs, .white.opacity(0.65), width: 3)
                 // Lead and trail arms are coloured differently AND labelled, so the
                 // distinction never depends on colour alone.
@@ -99,10 +127,14 @@ struct SkeletonOverlay: View {
                 stroke(SkeletonTopology.arm(handedness.trailSide), Palette.trailArm, width: 4)
 
                 for joint in SkeletonTopology.dots {
-                    guard let p = visiblePoint(joint) else { continue }
+                    guard let p = estimatedPoint(joint) else { continue }
                     let r: CGFloat = 3.5
-                    context.fill(Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)),
-                                 with: .color(.white))
+                    let dot = Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2))
+                    if isReliable(joint) {
+                        context.fill(dot, with: .color(.white))
+                    } else {
+                        context.stroke(dot, with: .color(.white.opacity(0.7)), lineWidth: 1.5)
+                    }
                 }
 
                 // Text labels next to each wrist, so the arms are identifiable

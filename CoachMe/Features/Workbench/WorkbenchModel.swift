@@ -15,8 +15,11 @@ final class WorkbenchModel {
     /// Smoothed once at load. Everything on screen — skeleton, readouts, chart —
     /// reads from this, so they can never disagree about what a frame contained.
     private let poseFrames: [PoseFrame]
+    private var displayFrames: [PoseFrame] = []
     var playback: PlaybackController?
     var showSkeleton = true
+    private(set) var findingPhases = false
+    private(set) var phaseDetectionMessage: String?
     var chartMetric: MetricID = .elbowInteriorAngle
     private(set) var videoSize: CGSize = CGSize(width: 9, height: 16)
 
@@ -24,6 +27,8 @@ final class WorkbenchModel {
         self.swing = swing
         self.cache = cache
         self.poseFrames = cache?.smoothedFrames() ?? []
+        self.displayFrames = PoseDisplayCompleter(minVisibility: swing.qualityPolicy.minVisibility)
+            .complete(self.poseFrames, keyframes: swing.keyframes)
         if cache != nil {
             timeline = MetricTimeline(poseFrames: poseFrames, record: swing)
         }
@@ -48,6 +53,11 @@ final class WorkbenchModel {
         return poseFrames.nearest(to: time)
     }
 
+    var currentDisplayPoseFrame: PoseFrame? {
+        guard let time = playback?.currentTime else { return nil }
+        return displayFrames.nearest(to: time)
+    }
+
     var currentMetrics: FrameMetrics? {
         guard let time = playback?.currentTime else { return nil }
         return timeline?.metrics(at: time)
@@ -63,6 +73,26 @@ final class WorkbenchModel {
     }
 
     // MARK: - Keyframes
+
+    func findKeyframes(library: SwingLibrary) async {
+        guard !findingPhases, swing.keyframes.isEmpty else { return }
+        findingPhases = true
+        phaseDetectionMessage = nil
+        defer { findingPhases = false }
+        do {
+            let marks = try await SavedSwingPhaseAnalysis().run(url: library.videoURL(for: swing))
+            // Do not overwrite marks added while the background analysis ran.
+            guard swing.keyframes.isEmpty else { return }
+            if marks.isEmpty {
+                phaseDetectionMessage = "未能识别出顺序一致的挥杆阶段，请手动标记这段视频。"
+            } else {
+                swing.keyframes = marks
+                persist(library)
+            }
+        } catch {
+            phaseDetectionMessage = "阶段识别失败：\(error.localizedDescription)"
+        }
+    }
 
     func markKeyframe(_ phase: SwingPhase, library: SwingLibrary) {
         guard let time = playback?.currentTime else { return }
@@ -80,6 +110,8 @@ final class WorkbenchModel {
 
     private func persist(_ library: SwingLibrary) {
         library.save(swing)
+        displayFrames = PoseDisplayCompleter(minVisibility: swing.qualityPolicy.minVisibility)
+            .complete(poseFrames, keyframes: swing.keyframes)
         // Address may have moved, which changes every rotation metric. Recompute
         // from the cached landmarks; no inference re-run.
         if let cache {
@@ -145,7 +177,7 @@ final class WorkbenchModel {
                 .map { "\($0.nameZH)@\($0.phase.nameZH)" },
             statedLimitationsZH: SwingAnalysisContext.standingLimitationsZH)
 
-        return SwingAnalysisContext(
+        var result = SwingAnalysisContext(
             swingID: swing.id,
             analysisVersion: swing.analysisVersion,
             handedness: swing.handedness,
@@ -157,5 +189,51 @@ final class WorkbenchModel {
             readings: readings,
             quality: quality,
             comparison: nil)
+        result.analysisDetails = analysisDetails()
+        let applicableRules = rules.filter { $0.clubs.contains(swing.club) && $0.views.contains(swing.cameraView) }
+        if let data = try? JSONEncoder().encode(applicableRules) {
+            result.analysisDetails = (result.analysisDetails ?? "") + "\n适用教练规则（需按阶段匹配）：" + String(decoding: data, as: UTF8.self)
+        }
+        return result
+    }
+
+    private func analysisDetails() -> String {
+        let frames = timeline?.frames ?? []
+        let columns = MetricID.allCases.filter { $0 != .wristPathBodyReferenced }.flatMap { id in
+            (MetricCatalog.isBilateral(id) ? [nil] : [BodySide.left, .right]).map { side in MetricKey(id, side) }
+        }
+        func number(_ value: Double?) -> String {
+            guard let value, value.isFinite else { return "NA" }
+            return String(format: "%.3f", locale: Locale(identifier: "en_US_POSIX"), value)
+        }
+        var lines = ["全程指标：所有分析帧，未抽样；NA=缺失或不可靠，绝非零。显示补全未参与。"]
+        for (i,key) in columns.enumerated() {
+            let d = MetricCatalog.definition(for: key.id)
+            lines.append("c\(i)=\(d.nameZH)/\(key.side?.rawValue ?? "bilateral")/\(d.unit)/\(d.space.rawValue)；\(d.caveatZH)")
+        }
+        lines.append("每行 timeSeconds,quality," + columns.indices.map { "c\($0)" }.joined(separator: ",") + ",leftWristBodyXYZ,rightWristBodyXYZ,leftWristImageXYZ,rightWristImageXYZ")
+        for frame in frames {
+            var row = [number(frame.timestampSeconds), frame.quality.blockingReason?.rawValue ?? "available"]
+            row += columns.map { key in
+                let outcome = frame.outcome(key.id,key.side)
+                if case .unavailable(let reason) = outcome { return "NA:" + reason.rawValue }
+                return number(outcome.value)
+            }
+            for table in [frame.wristBodyReferenced,frame.wristImagePath] {
+                for side in [BodySide.left,.right] {
+                    let p = table[side]
+                    row += [number(p?.x),number(p?.y),number(p?.z)]
+                }
+            }
+            lines.append(row.joined(separator: ","))
+        }
+        if let data = try? JSONEncoder().encode(swing.keyframes) {
+            lines.append("关键帧来源与时间：" + String(decoding: data, as: UTF8.self))
+        }
+        if let frame = currentPoseFrame, let data = try? JSONEncoder().encode(frame) {
+            lines.append("当前帧原始检测/平滑坐标（未显示补全）：" + String(decoding: data, as: UTF8.self))
+        }
+        lines.append("本次未传输视频、其他挥杆或全程逐关节原始坐标；逐帧指标已完整提供。")
+        return lines.joined(separator: "\n")
     }
 }

@@ -31,6 +31,15 @@
   </tr>
 </table>
 
+## 本次功能更新
+
+- MediaPipe Heavy 默认姿态模型；本地 SwingNet 自动识别六个阶段，支持旧记录重试和人工调整。
+- 二维/三维显示骨架按时序与人体比例补全，虚线表示估计；二维躯干使用中央脊柱避免投影交叉。补全不参与指标评分。
+- 可配置 OpenAI、Claude、Gemini、DeepSeek 和 OpenAI 兼容 API，支持当前挥杆数据解读与连续问答。密钥存于本机钥匙串。
+- 核心回归 64 项通过，后补认证/超时用例通过；聊天模拟器集成 6 项通过。真实 LLM 调用需填入自己的 API Key 后验证。
+
+新导入自动生成阶段标记；已有视频可点「重新自动识别关键帧」。模型来源、转换及许可见 [tools/swingnet](tools/swingnet/README.md)，AI 配置与数据范围见 [接入说明](docs/AI_INTEGRATION.md)。
+
 ## 现在可以做什么
 
 - 从相册导入真实挥杆视频，在设备本地完成分析
@@ -77,12 +86,12 @@ Xcode 15.4 / iOS 17.5 SDK 上验证。MediaPipeTasksVision 0.10.21 已链接。
 ### 构建并运行
 
 ```bash
-tools/download-model.sh          # 下载 MediaPipe pose_landmarker_lite.task
+tools/download-model.sh          # 下载 MediaPipe pose_landmarker_heavy.task
 tools/setup-xcode-project.sh     # 生成工程、安装 Pod、修正工程格式
 open CoachMe.xcworkspace         # 打开 workspace，而不是 .xcodeproj
 ```
 
-仓库不会提交生成的 Xcode 工程，也不会提交 5.5 MB 的 MediaPipe 模型；脚本会准备好
+仓库不会提交生成的 Xcode 工程，也不会提交 29 MB 的 MediaPipe 模型；脚本会准备好
 这两项依赖。
 
 ### 在真机上运行
@@ -150,7 +159,7 @@ project.yml                  XcodeGen 工程描述文件
 
 1. **算不出来就明确说明。** 指标数据不足时返回原因，不使用默认角度或推算值。
 2. **不替教练编标准。** 参考范围必须由教练提供，并记录来源与适用条件。
-3. **不假装已经接入 AI。** v1 的 `UnconfiguredChatService` 不发起网络请求；模型尚未配置时只返回明确状态。
+3. **不假装已经接入 AI。** 配置后才调用所选接口；未配置时只显示状态提示，不上传视频。
 
 ## 文档
 
@@ -170,7 +179,7 @@ project.yml                  XcodeGen 工程描述文件
 - [ ] 测量准确度基准测试
 - [ ] 历史分析对比
 - [ ] 实时摄像头分析
-- [ ] 可配置的 AI 教练服务
+- [x] 可配置的 AI 教练服务
 
 ## 许可
 

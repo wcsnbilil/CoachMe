@@ -33,15 +33,18 @@ enum AnalysisError: LocalizedError {
 /// Runs decode → pose detection → per-frame landmark capture off the main actor.
 ///
 /// Metric computation is deliberately NOT done here: metrics depend on the
-/// address keyframe, which the coach marks after seeing the video. Landmarks are
+/// address keyframe, which is generated automatically or placed by the coach. Landmarks are
 /// cached once; metrics are recomputed cheaply from the cache whenever keyframes
 /// or the handedness change, so re-marking a keyframe never re-runs inference.
 actor SwingAnalyzer {
 
     private let detector: PoseDetecting
+    private let phaseDetector: SwingNetPhaseDetector?
+    private(set) var keyframes: [Keyframe] = []
 
-    init(detector: PoseDetecting) {
+    init(detector: PoseDetecting, phaseDetector: SwingNetPhaseDetector? = nil) {
         self.detector = detector
+        self.phaseDetector = phaseDetector
     }
 
     func analyse(asset: AVAsset,
@@ -50,10 +53,14 @@ actor SwingAnalyzer {
 
         try detector.prepare()
         detector.reset()
+        keyframes = []
+        try phaseDetector?.prepare()
 
         let reader = VideoAssetReader(asset: asset)
         do {
-            try await reader.start(timeRange: timeRange)
+            // Keep source detail for SwingNet; a second resize from 720 pixels
+            // changed event maxima in the verified 4K regression clip.
+            try await reader.start(timeRange: timeRange, maxDimension: phaseDetector == nil ? 720 : 4096)
         } catch let error as VideoReaderError {
             throw AnalysisError.video(error)
         }
@@ -83,8 +90,10 @@ actor SwingAnalyzer {
             let milliseconds = Int((decoded.timestampSeconds * 1000).rounded())
             let result: PoseDetectionResult
             do {
-                result = try detector.detect(pixelBuffer: decoded.pixelBuffer,
-                                             timestampMilliseconds: milliseconds)
+                result = try autoreleasepool {
+                    try detector.detect(pixelBuffer: decoded.pixelBuffer,
+                                        timestampMilliseconds: milliseconds)
+                }
             } catch let error as PoseDetectorError {
                 throw AnalysisError.detector(error)
             }
@@ -94,6 +103,10 @@ actor SwingAnalyzer {
                                     worldLandmarks: result.worldLandmarks,
                                     detectedPersonCount: result.personCount))
 
+            try autoreleasepool {
+                try phaseDetector?.append(pixelBuffer: decoded.pixelBuffer, timestamp: decoded.timestampSeconds)
+            }
+
             processed += 1
             onProgress(AnalysisProgress(framesProcessed: processed,
                                         estimatedTotalFrames: estimatedTotal,
@@ -101,6 +114,7 @@ actor SwingAnalyzer {
         }
 
         guard !frames.isEmpty else { throw AnalysisError.noFramesProduced }
+        keyframes = try phaseDetector?.finish() ?? []
         return frames
     }
 

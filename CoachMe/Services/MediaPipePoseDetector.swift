@@ -12,10 +12,7 @@ import CoachMeCore
 /// Expect to fix small signature mismatches on the first Xcode build.
 final class MediaPipePoseDetector: PoseDetecting {
 
-    /// Model file expected in the app bundle. `lite` is the default because all
-    /// three variants share the same input size and lite is fastest on device;
-    /// the official docs publish no accuracy/latency comparison, so pick by
-    /// measuring on your own footage.
+    /// Model file expected in the app bundle. Heavy is the default for analysis.
     enum ModelVariant: String {
         case lite = "pose_landmarker_lite"
         case full = "pose_landmarker_full"
@@ -32,7 +29,7 @@ final class MediaPipePoseDetector: PoseDetecting {
     /// MediaPipe's video mode requires strictly increasing timestamps.
     private var lastTimestamp: Int = -1
 
-    init(variant: ModelVariant = .lite,
+    init(variant: ModelVariant = .heavy,
          numPoses: Int = 2,               // detect a second person so we can REPORT it, not hide it
          minDetectionConfidence: Float = 0.5,
          minPresenceConfidence: Float = 0.5,

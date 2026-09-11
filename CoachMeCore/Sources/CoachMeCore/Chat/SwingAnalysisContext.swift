@@ -107,6 +107,9 @@ public struct SwingAnalysisContext: Sendable, Codable, Equatable {
         }
     }
 
+    /// Compact full metric timeline and selected-frame detector data, never display completion.
+    public var analysisDetails: String?
+
     public let swingID: UUID
     public let analysisVersion: Int
     public let handedness: Handedness

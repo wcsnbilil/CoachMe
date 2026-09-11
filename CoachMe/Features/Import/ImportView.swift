@@ -79,7 +79,7 @@ struct ImportView: View {
                 if let progress, phase == .analysing {
                     Section("分析中") {
                         ProgressView(value: progress.fraction) {
-                            Text("已处理 \(progress.framesProcessed) / \(progress.estimatedTotalFrames) 帧")
+                            Text("识别骨骼与动作阶段：\(progress.framesProcessed) / \(progress.estimatedTotalFrames) 帧")
                         }
                         Text(String(format: "当前 %.2f 秒", progress.currentTimestampSeconds))
                             .font(.caption).foregroundStyle(.secondary)
@@ -185,7 +185,7 @@ struct ImportView: View {
             handedness: handedness,
             club: club,
             cameraView: cameraView,
-            poseModelIdentifier: MediaPipePoseDetector.ModelVariant.lite.rawValue
+            poseModelIdentifier: MediaPipePoseDetector.ModelVariant.heavy.rawValue
         )
 
         analysisTask = Task {
@@ -200,11 +200,14 @@ struct ImportView: View {
                     start: CMTime(seconds: clipStart, preferredTimescale: 600),
                     end: CMTime(seconds: clipEnd, preferredTimescale: 600))
 
-                let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector())
+                let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(),
+                                             phaseDetector: SwingNetPhaseDetector())
                 let frames = try await analyzer.analyse(asset: asset, timeRange: range) { p in
                     Task { @MainActor in progress = p }
                 }
                 try Task.checkCancellation()
+
+                saved.keyframes = await analyzer.keyframes
 
                 let cache = AnalysisCache(swingID: swingID,
                                           analysisVersion: saved.analysisVersion,

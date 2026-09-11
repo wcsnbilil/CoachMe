@@ -18,6 +18,10 @@ use_frameworks!
 
 target 'CoachMe' do
   pod 'MediaPipeTasksVision', '0.10.21'
+
+  target 'CoachMeTests' do
+    inherit! :search_paths
+  end
 end
 
 post_install do |installer|

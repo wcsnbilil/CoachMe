@@ -73,4 +73,8 @@ final class SwingLibrary {
 
     func videoURL(for swing: SwingRecord) -> URL { store.videoURL(for: swing) }
     func analysis(for swing: SwingRecord) -> AnalysisCache? { store.loadAnalysis(swingID: swing.id) }
+    /// Cheap existence check for list rows; does not decode the cache.
+    func hasAnalysis(for swing: SwingRecord) -> Bool {
+        FileManager.default.fileExists(atPath: store.analysisURL(swingID: swing.id).path)
+    }
 }

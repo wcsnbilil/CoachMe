@@ -125,7 +125,7 @@ public struct RuleEngine: Sendable {
                          view: CameraView) -> [RuleFinding] {
         var out: [RuleFinding] = []
 
-        for rule in rules {
+        for rule in rules where rule.isEnabled {
             let definition = MetricCatalog.definition(for: rule.metricID)
             for phase in rule.phases.sorted(by: { $0.order < $1.order }) {
                 guard let metrics = metricsByPhase[phase] else {
@@ -158,7 +158,7 @@ public struct RuleEngine: Sendable {
     /// can say "暂无参考范围" instead of leaving them out silently.
     public func metricsWithoutRules(rules: [CoachRule],
                                     metricsByPhase: [SwingPhase: FrameMetrics]) -> [MetricID] {
-        let covered = Set(rules.map(\.metricID))
+        let covered = Set(rules.filter(\.isEnabled).map(\.metricID))
         return MetricID.allCases.filter { !covered.contains($0) }
     }
 }

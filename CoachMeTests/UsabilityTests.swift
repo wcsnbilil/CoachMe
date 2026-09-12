@@ -43,6 +43,36 @@ final class UsabilityTests: XCTestCase {
         let reviewed = WorkbenchModel(swing:record,cache:nil,videoURL:URL(fileURLWithPath:"/none.mp4")).buildContext(rules:[])
         XCTAssertEqual(reviewed.markedPhases,[.top])
     }
+    @MainActor func testReportContextExcludesUnreviewedPhaseNames() {
+        var record = swing()
+        record.keyframes = [Keyframe(phase: .top, timestampSeconds: 8, markedByCoach: false),
+                            Keyframe(phase: .impact, timestampSeconds: 9, markedByCoach: true)]
+        let timeline = MetricTimeline(poseFrames: [], record: record)
+        let context = WorkbenchModelContextShim(swing: record, timeline: timeline).build(rules: [])
+        XCTAssertEqual(context.markedPhases, [.impact])
+        XCTAssertFalse(context.readings.contains { $0.phase == .top })
+    }
+
+    @MainActor func testReportQuestionCarriesMetricAndSide() {
+        let row = ReportRow.make(metric: .kneeInteriorAngle, side: .left, phase: .impact,
+                                 time: 9, outcome: .value(145), finding: nil, handedness: .rightHanded)
+        XCTAssertTrue(row.coachingQuestion.contains(SwingPhase.impact.nameZH))
+        XCTAssertTrue(row.coachingQuestion.contains("引导侧"))
+        XCTAssertTrue(row.coachingQuestion.contains("145.0"))
+        XCTAssertTrue(row.coachingQuestion.contains(row.name))
+    }
+
+    @MainActor func testChartBreaksAtMissingAndNonfiniteReadings() {
+        let points = AngleChartView.segmentedSamples([(5, 140), (5.1, 145), (5.2, nil),
+                                                       (5.3, 150), (5.4, .nan), (5.5, 155)],
+                                                      series: "引导臂", clipStart: 5)
+        XCTAssertEqual(points[0].segment, points[1].segment)
+        XCTAssertNotEqual(points[1].segment, points[3].segment)
+        XCTAssertNotEqual(points[3].segment, points[5].segment)
+        XCTAssertNil(points[4].value)
+        XCTAssertEqual(points[0].t, 0)
+    }
+
     func testFailedImportCleanupDoesNotDeleteSavedSwing() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at:root) }

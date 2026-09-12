@@ -32,104 +32,30 @@ struct ImportView: View {
     /// cutoff has to match the footage's time base — see SmoothingParameters.
     @State private var isSlowMotion = false
     @State private var title = ""
+    @State private var tipsOpen = false
 
     @State private var phase: Phase = .idle
     @State private var progress: AnalysisProgress?
     @State private var errorMessage: String?
+    @State private var wasCancelled = false
     @State private var analysisTask: Task<Void, Never>?
 
     enum Phase: Equatable { case idle, loading, ready, analysing, failed }
 
     var body: some View {
         NavigationStack {
-            Form {
-                shootingGuidance
-
-                Section("视频") {
-                    PhotosPicker(selection: $pickerItem, matching: .videos) {
-                        VStack(alignment:.leading,spacing:12) {
-                            Image(systemName:videoURL == nil ? "plus.rectangle.on.rectangle" : "arrow.triangle.2.circlepath")
-                                .font(.title2.weight(.light))
-                            Text(videoURL == nil ? "选择一段挥杆" : "更换视频").font(.headline)
-                            if videoURL == nil { Text("从准备到收杆，记录一次完整动作。")
-                                .font(.caption).foregroundStyle(.secondary) }
-                        }.frame(maxWidth:.infinity,alignment:.leading).padding(.vertical,16)
-                    }
-                    if phase == .loading {
-                        HStack { ProgressView(); Text("正在读取视频…") }
-                    }
-                    if videoURL != nil {
-                        if let preview { VideoPlayer(player: preview).frame(height: 240) }
-                        Text("只保留一次完整挥杆：从准备姿势到收杆，去掉重复播放和片尾字幕。")
-                            .font(.caption).foregroundStyle(.secondary)
-                        clipRangeControls
-                    }
-                }.disabled(phase == .analysing)
-
-                if videoURL != nil {
-                    Section("设置") {
-                        TextField("名称（选填）", text: $title)
-
-                        Picker("持杆手", selection: $handedness) {
-                            Text("右手（引导臂为左臂）").tag(Handedness.rightHanded)
-                            Text("左手（引导臂为右臂）").tag(Handedness.leftHanded)
-                        }
-
-                        Picker("球杆", selection: $club) {
-                            ForEach(ClubType.allCases, id: \.self) { Text($0.nameZH).tag($0) }
-                        }
-
-                        Picker("拍摄视角", selection: $cameraView) {
-                            ForEach(CoachMeCore.CameraView.allCases, id: \.self) { Text($0.nameZH).tag($0) }
-                        }
-                        Text("视角会影响哪些指标可用，选「未知」时部分指标不会给出评价。")
-                            .font(.caption).foregroundStyle(.secondary)
-
-                        Toggle("这是慢动作视频", isOn: $isSlowMotion)
-                        Text(isSlowMotion
-                             ? "将按慢动作校准关键点平滑。适用于手机慢动作模式，或已降速导出的片段。"
-                             : "按正常速度校准关键点平滑。若视频其实是慢动作，读数会比可达到的更抖。")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }.disabled(phase == .analysing)
-                }
-
-                if let errorMessage {
-                    Section {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.primary)
-                        if videoURL != nil { Button("重试分析") { startAnalysis() }.disabled(phase == .analysing) }
-                    }
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .background(CoachStyle.background)
-            .safeAreaInset(edge:.bottom) {
+            Group {
                 if phase == .analysing {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(progress?.stage ?? "正在准备视频…").font(.subheadline.weight(.medium))
-                            Spacer()
-                            Button("取消", role: .destructive) { cancelAnalysis() }
-                        }
-                        if let progress, progress.estimatedTotalFrames > 0 {
-                            ProgressView(value: progress.fraction)
-                            Text("\(progress.framesProcessed) / \(progress.estimatedTotalFrames) 帧 · \(Int(progress.fraction * 100))%")
-                                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                        } else {
-                            ProgressView().frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }.padding(.horizontal,20).padding(.vertical,12).background(.ultraThinMaterial)
+                    AnalysisProgressPanel(progress: progress, videoURL: videoURL, clipStart: clipStart,
+                                          clipEnd: clipEnd, onCancel: cancelAnalysis)
                 } else {
-                    Button { startAnalysis() } label: {
-                        HStack { Text("开始分析"); Spacer(); Image(systemName:"arrow.right") }.padding(.horizontal,18)
-                    }
-                    .buttonStyle(CoachPrimaryButton())
-                    .disabled(videoURL == nil || phase == .loading || clipEnd - clipStart < 0.1)
-                    .padding(.horizontal,20).padding(.vertical,12).background(.ultraThinMaterial)
+                    form
                 }
             }
+            .background(CoachStyle.background)
             .navigationTitle("新的分析")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(CoachStyle.background, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") { cancelAnalysis(); dismiss() }
@@ -156,36 +82,286 @@ struct ImportView: View {
         }
     }
 
-    private var shootingGuidance: some View {
-        Section {
-            DisclosureGroup("怎样拍得更清楚") {
-                Label("固定机位，全身入镜",systemImage:"camera")
-                Label("只保留一次完整挥杆",systemImage:"figure.golf")
-                Label("光线充足，避免遮挡",systemImage:"sun.max")
-            }.font(.subheadline)
+    // MARK: - Form
+
+    private var form: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                banners
+
+                videoArea.padding(.horizontal, 10)
+
+                if let videoURL {
+                    trimSection(videoURL)
+                        .padding(.horizontal, 18)
+                        .padding(.top, 20)
+                    settings
+                        .padding(.horizontal, 18)
+                        .padding(.top, 24)
+                }
+
+                tips
+                    .padding(.horizontal, 18)
+                    .padding(.top, 16)
+
+                FootnoteLine(symbol: "lock", text: "视频只在本机分析，不会上传。")
+                    .padding(.horizontal, 22)
+                    .padding(.top, 16)
+                    .padding(.bottom, 24)
+            }
+            .padding(.top, 4)
+        }
+        .scrollIndicators(.hidden)
+        .safeAreaInset(edge: .bottom) {
+            Button { startAnalysis() } label: {
+                HStack {
+                    Text(phase == .failed ? "重试分析" : "开始分析")
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                }
+                .padding(.horizontal, 18)
+            }
+            .buttonStyle(CoachPrimaryButton())
+            .disabled(videoURL == nil || phase == .loading || clipEnd - clipStart < 0.1)
+            .padding(.horizontal, 18)
+            .padding(.top, 10)
+            .padding(.bottom, 6)
+            .background(CoachStyle.background.overlay(alignment: .top) {
+                Rectangle().fill(CoachStyle.line).frame(height: 1)
+            })
         }
     }
 
     @ViewBuilder
-    private var clipRangeControls: some View {
+    private var banners: some View {
+        if wasCancelled && errorMessage == nil {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Image(systemName: "info.circle")
+                Text("已取消分析。选段和设置已保留，可以随时重新开始。")
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .font(.subheadline)
+            .foregroundStyle(CoachStyle.text)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(CoachStyle.neutralFill, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.horizontal, 18)
+            .padding(.bottom, 12)
+        }
+        if let errorMessage {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle")
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("分析没有完成").font(.subheadline.weight(.semibold))
+                        Text(errorMessage).font(.footnote).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .foregroundStyle(CoachStyle.alert)
+                if videoURL != nil {
+                    Button("重试分析") { startAnalysis() }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 36)
+                        .background(CoachStyle.alert, in: RoundedRectangle(cornerRadius: 10))
+                        .padding(.leading, 28)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(CoachStyle.alertFill, in: RoundedRectangle(cornerRadius: 16))
+            .padding(.horizontal, 18)
+            .padding(.bottom, 12)
+        }
+    }
+
+    @ViewBuilder
+    private var videoArea: some View {
+        if phase == .loading {
+            VStack(spacing: 14) {
+                ProgressView().tint(CoachStyle.onStage)
+                Text("正在读取视频…").font(.subheadline.weight(.semibold))
+                Text("从相册复制到 App 内，较长的视频需要稍等").font(.caption).opacity(0.6)
+            }
+            .foregroundStyle(CoachStyle.onStage)
+            .frame(maxWidth: .infinity)
+            .frame(height: 330)
+            .background(CoachStyle.stage, in: RoundedRectangle(cornerRadius: 22))
+        } else if let preview {
+            VideoPlayer(player: preview)
+                .frame(height: 330)
+                .background(CoachStyle.stage)
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+                .overlay(alignment: .topTrailing) {
+                    PhotosPicker(selection: $pickerItem, matching: .videos) {
+                        Label("更换视频", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.footnote.weight(.semibold))
+                            .padding(.horizontal, 12)
+                    }
+                    .buttonStyle(StageButton())
+                    .padding(8)
+                }
+        } else {
+            PhotosPicker(selection: $pickerItem, matching: .videos) {
+                VStack(spacing: 12) {
+                    Image(systemName: "plus.rectangle.on.rectangle")
+                        .font(.system(size: 34, weight: .light))
+                        .foregroundStyle(CoachStyle.accent)
+                    Text("选择一段挥杆").font(.headline).foregroundStyle(CoachStyle.text)
+                    Text("从准备姿势到收杆，记录一次完整动作。")
+                        .font(.footnote)
+                        .foregroundStyle(CoachStyle.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 260)
+                .background(CoachStyle.surface, in: RoundedRectangle(cornerRadius: 22))
+                .overlay(RoundedRectangle(cornerRadius: 22)
+                    .strokeBorder(CoachStyle.accent.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func trimSection(_ url: URL) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("选取一次完整挥杆").font(.headline)
+                Text("拖动两端，从准备姿势到收杆，去掉重复播放和片尾。")
+                    .font(.footnote)
+                    .foregroundStyle(CoachStyle.textSecondary)
+            }
+            ClipTrimmer(url: url, duration: assetDuration, start: $clipStart, end: $clipEnd)
+            HStack(spacing: 8) {
+                stat("起点", clipStart)
+                stat("终点", clipEnd)
+                stat("时长", max(0, clipEnd - clipStart))
+            }
+        }
+    }
+
+    private func stat(_ title: String, _ seconds: Double) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title).font(.caption2).foregroundStyle(CoachStyle.textTertiary)
+            Text(String(format: "%.2f 秒", seconds)).font(.callout.weight(.semibold).monospacedDigit())
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(CoachStyle.surface, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var settings: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(String(format: "分析片段：%.2f – %.2f 秒（共 %.2f 秒）",
-                        clipStart, clipEnd, max(0, clipEnd - clipStart)))
-                .font(.subheadline)
-            HStack {
-                Text("起点").font(.caption).frame(width: 32, alignment: .leading)
-                Slider(value: $clipStart, in: 0...max(assetDuration, 0.01)) { _ in
-                    if clipStart > clipEnd { clipStart = max(0, clipEnd - 0.1) }
+            SectionLabel("分析设置")
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    Text("名称")
+                    TextField(defaultTitle(), text: $title)
+                        .multilineTextAlignment(.trailing)
+                        .foregroundStyle(CoachStyle.textSecondary)
                 }
-                .accessibilityLabel("片段起点")
-            }
-            HStack {
-                Text("终点").font(.caption).frame(width: 32, alignment: .leading)
-                Slider(value: $clipEnd, in: 0...max(assetDuration, 0.01)) { _ in
-                    if clipEnd < clipStart { clipEnd = min(assetDuration, clipStart + 0.1) }
+                .padding(.horizontal, 16)
+                .frame(minHeight: 50)
+                GroupDivider()
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("持杆手")
+                        Spacer()
+                        CoachSegmented(options: [(Handedness.rightHanded, "右手"), (.leftHanded, "左手")],
+                                       selection: $handedness, segmentWidth: 64)
+                    }
+                    caption(handedness == .rightHanded ? "右手持杆：引导臂为左臂" : "左手持杆：引导臂为右臂")
                 }
-                .accessibilityLabel("片段终点")
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                GroupDivider()
+
+                HStack {
+                    Text("球杆")
+                    Spacer()
+                    Picker("球杆", selection: $club) {
+                        ForEach(ClubType.allCases, id: \.self) { Text($0.nameZH).tag($0) }
+                    }
+                    .labelsHidden()
+                    .tint(CoachStyle.textSecondary)
+                }
+                .padding(.horizontal, 16)
+                .frame(minHeight: 50)
+                GroupDivider()
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("拍摄视角")
+                        Spacer()
+                        Picker("拍摄视角", selection: $cameraView) {
+                            ForEach(CoachMeCore.CameraView.allCases, id: \.self) { Text($0.nameZH).tag($0) }
+                        }
+                        .labelsHidden()
+                        .tint(CoachStyle.textSecondary)
+                    }
+                    caption("视角会影响哪些指标可用；选择“未知”时，部分指标不会与参考范围比较。")
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                GroupDivider()
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("这是慢动作视频", isOn: $isSlowMotion).tint(CoachStyle.accent)
+                    caption(isSlowMotion
+                            ? "将按慢动作校准关键点平滑。适用于手机慢动作模式，或已降速导出的片段。"
+                            : "按正常速度校准关键点平滑。若视频其实是慢动作，读数会比实际更抖。")
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
+            .coachGroup()
+        }
+    }
+
+    private func caption(_ text: String) -> some View {
+        Text(text)
+            .font(.caption)
+            .foregroundStyle(CoachStyle.textTertiary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var tips: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button { withAnimation(.snappy) { tipsOpen.toggle() } } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "camera").foregroundStyle(CoachStyle.accent)
+                    Text("怎样拍得更清楚").foregroundStyle(CoachStyle.text)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(CoachStyle.textTertiary)
+                        .rotationEffect(.degrees(tipsOpen ? 90 : 0))
+                }
+                .padding(.horizontal, 16)
+                .frame(minHeight: 52)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if tipsOpen {
+                VStack(alignment: .leading, spacing: 12) {
+                    tip("固定机位，全身入镜", "三脚架或稳定支撑，头顶到脚底都在画面内，留出球杆空间。")
+                    tip("正面或沿目标线后方", "镜头约与手部同高，尽量正对或沿目标线拍摄。")
+                    tip("避免遮挡与多人入镜", "光线充足，衣服与背景有区分；画面里只保留一位挥杆者。")
+                }
+                .padding(.leading, 48)
+                .padding(.trailing, 16)
+                .padding(.bottom, 16)
+            }
+        }
+        .coachGroup()
+    }
+
+    private func tip(_ title: String, _ detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.subheadline.weight(.semibold))
+            Text(detail).font(.footnote).foregroundStyle(CoachStyle.textSecondary)
         }
     }
 
@@ -198,6 +374,7 @@ struct ImportView: View {
         preview = nil
         clipEnd = 0
         errorMessage = nil
+        wasCancelled = false
         do {
             guard let movie = try await item.loadTransferable(type: VideoFile.self) else {
                 throw ImportError.unreadable
@@ -237,6 +414,7 @@ struct ImportView: View {
         let selectedSlowMotion = isSlowMotion
         preview?.pause()
         errorMessage = nil
+        wasCancelled = false
         phase = .analysing
         progress = nil
 
@@ -310,6 +488,7 @@ struct ImportView: View {
     }
 
     private func cancelAnalysis() {
+        if phase == .analysing { wasCancelled = true }
         analysisTask?.cancel()
         // Remain busy until the task has actually unwound and cleaned its files.
         preview?.pause()
@@ -324,6 +503,250 @@ struct ImportView: View {
     enum ImportError: LocalizedError {
         case unreadable
         var errorDescription: String? { "无法读取所选视频。" }
+    }
+}
+
+/// Filmstrip with two handles; the frame between them is what gets analysed.
+@MainActor
+struct ClipTrimmer: View {
+    let url: URL
+    let duration: Double
+    @Binding var start: Double
+    @Binding var end: Double
+
+    private static let minimumLength = 0.1
+    private static let handleWidth: CGFloat = 16
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = max(geometry.size.width, 1)
+            let span = max(duration, 0.01)
+            let x: (Double) -> CGFloat = { CGFloat($0 / span) * width }
+            ZStack(alignment: .leading) {
+                HStack(spacing: 0) {
+                    ForEach(0..<10, id: \.self) { index in
+                        VideoFrameImage(url: url, time: span * (Double(index) + 0.5) / 10, maxPixel: 160)
+                            .frame(width: width / 10, height: 64)
+                            .clipped()
+                    }
+                }
+                Rectangle().fill(CoachStyle.background.opacity(0.72)).frame(width: x(start))
+                Rectangle().fill(CoachStyle.background.opacity(0.72))
+                    .frame(width: max(0, width - x(end)))
+                    .offset(x: x(end))
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(CoachStyle.forest, lineWidth: 3)
+                    .frame(width: max(Self.handleWidth * 2, x(end) - x(start)))
+                    .offset(x: x(start))
+                    .allowsHitTesting(false)
+                handle
+                    .offset(x: x(start))
+                    .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("trim")).onChanged { drag in
+                        let t = Double(drag.location.x / width) * span
+                        start = min(max(0, t), end - Self.minimumLength)
+                    })
+                    .accessibilityElement()
+                    .accessibilityLabel("片段起点")
+                    .accessibilityValue(String(format: "%.2f 秒", start))
+                    .accessibilityAdjustableAction { direction in
+                        start = min(max(0, start + (direction == .increment ? 0.05 : -0.05)), end - Self.minimumLength)
+                    }
+                handle
+                    .offset(x: max(0, x(end) - Self.handleWidth))
+                    .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("trim")).onChanged { drag in
+                        let t = Double(drag.location.x / width) * span
+                        end = max(min(span, t), start + Self.minimumLength)
+                    })
+                    .accessibilityElement()
+                    .accessibilityLabel("片段终点")
+                    .accessibilityValue(String(format: "%.2f 秒", end))
+                    .accessibilityAdjustableAction { direction in
+                        end = max(min(span, end + (direction == .increment ? 0.05 : -0.05)), start + Self.minimumLength)
+                    }
+            }
+            .coordinateSpace(name: "trim")
+        }
+        .frame(height: 64)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private var handle: some View {
+        ZStack {
+            Rectangle().fill(CoachStyle.forest)
+            HStack(spacing: 2) {
+                Capsule().fill(CoachStyle.lime).frame(width: 2, height: 20)
+                Capsule().fill(CoachStyle.lime).frame(width: 2, height: 20)
+            }
+        }
+        .frame(width: Self.handleWidth, height: 64)
+        // Wider than it looks, so the handle meets the 44 pt touch minimum.
+        .contentShape(Rectangle().inset(by: -14))
+    }
+}
+
+/// Shows what the analysis is doing. Steps with a known frame count show real
+/// progress; steps without one only say they are running — no invented percentage.
+@MainActor
+struct AnalysisProgressPanel: View {
+    let progress: AnalysisProgress?
+    let videoURL: URL?
+    let clipStart: Double
+    let clipEnd: Double
+    let onCancel: () -> Void
+
+    private static let steps = ["加载分析模型", "识别人体关键点", "识别动作阶段", "保存分析结果"]
+
+    private var activeStep: Int {
+        guard let stage = progress?.stage else { return 0 }
+        if stage.contains("保存") { return 3 }
+        if stage.contains("动作阶段（") || stage.contains("整理关键帧") { return 2 }
+        if stage.contains("骨骼") { return 1 }
+        return 0
+    }
+
+    private var knownTotal: Bool { (progress?.estimatedTotalFrames ?? 0) > 0 }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .bottomLeading) {
+                if let videoURL {
+                    VideoFrameImage(url: videoURL, time: floor(currentTime * 4) / 4, maxPixel: 700).opacity(0.6)
+                } else {
+                    CoachStyle.stage
+                }
+                if knownTotal {
+                    GeometryReader { geometry in
+                        Rectangle().fill(CoachStyle.limeOnDark)
+                            .frame(width: geometry.size.width * (progress?.fraction ?? 0), height: 3)
+                            .frame(maxHeight: .infinity, alignment: .bottom)
+                    }
+                }
+                Text(String(format: "当前 %.2f 秒", currentTime - clipStart))
+                    .font(.caption.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(CoachStyle.onStage)
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(CoachStyle.stage.opacity(0.82), in: RoundedRectangle(cornerRadius: 8))
+                    .padding(10)
+            }
+            .frame(height: 280)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .padding(.horizontal, 10)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("正在分析这次挥杆").font(.title2.weight(.semibold))
+                Text("分析在本机进行，离开此页面会中断。")
+                    .font(.subheadline)
+                    .foregroundStyle(CoachStyle.textSecondary)
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 22)
+
+            VStack(spacing: 0) {
+                ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, name in
+                    if index > 0 { GroupDivider(inset: 0) }
+                    stepRow(index: index, name: name)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+            .coachGroup()
+            .padding(.horizontal, 18)
+            .padding(.top, 18)
+
+            Text("帧数已知的步骤显示处理进度；其余步骤无法预估耗时，只显示正在进行。")
+                .font(.caption)
+                .foregroundStyle(CoachStyle.textTertiary)
+                .padding(.horizontal, 22)
+                .padding(.top, 12)
+
+            }
+            .padding(.bottom, 20)
+        }
+        .scrollIndicators(.hidden)
+        .safeAreaInset(edge: .bottom) {
+            Button("取消分析", action: onCancel)
+                .buttonStyle(CoachSecondaryButton(tint: CoachStyle.alert))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 8)
+                .background(CoachStyle.background)
+        }
+        .padding(.top, 4)
+    }
+
+    private var currentTime: Double {
+        let time = progress?.currentTimestampSeconds ?? 0
+        return time > 0 ? time : clipStart
+    }
+
+    private func stepRow(index: Int, name: String) -> some View {
+        let done = index < activeStep
+        let active = index == activeStep
+        return HStack(alignment: .top, spacing: 12) {
+            Group {
+                if done {
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(CoachStyle.accent)
+                } else if active {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Image(systemName: "circle").foregroundStyle(CoachStyle.textTertiary.opacity(0.6))
+                }
+            }
+            .frame(width: 22, height: 22)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(name)
+                        .font(.subheadline.weight(active ? .semibold : .regular))
+                        .foregroundStyle(done || active ? CoachStyle.text : CoachStyle.textTertiary)
+                    Spacer()
+                    Text(meta(index: index, done: done, active: active))
+                        .font(.footnote.monospacedDigit())
+                        .foregroundStyle(CoachStyle.textSecondary)
+                }
+                if active {
+                    if knownTotal && (index == 1 || index == 2) {
+                        ProgressView(value: progress?.fraction ?? 0).tint(CoachStyle.accent)
+                    } else {
+                        IndeterminateBar()
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 12)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func meta(index: Int, done: Bool, active: Bool) -> String {
+        if done { return "完成" }
+        guard active else { return "等待中" }
+        if knownTotal, let progress, index == 1 || index == 2 {
+            return "\(progress.framesProcessed) / \(progress.estimatedTotalFrames) 帧"
+        }
+        return "进行中"
+    }
+}
+
+/// Moving bar for work whose length is unknown.
+struct IndeterminateBar: View {
+    @State private var moving = false
+
+    var body: some View {
+        GeometryReader { geometry in
+            Capsule().fill(CoachStyle.fill)
+                .overlay(alignment: .leading) {
+                    Capsule().fill(CoachStyle.accent)
+                        .frame(width: geometry.size.width * 0.4)
+                        .offset(x: moving ? geometry.size.width : -geometry.size.width * 0.4)
+                }
+                .clipShape(Capsule())
+        }
+        .frame(height: 4)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: false)) { moving = true }
+        }
+        .accessibilityLabel("正在进行")
     }
 }
 

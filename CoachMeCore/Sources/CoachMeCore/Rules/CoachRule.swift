@@ -67,6 +67,8 @@ public struct CoachRule: Sendable, Codable, Identifiable, Equatable {
 
     public var createdAt: Date
     public var updatedAt: Date
+    /// A paused rule is kept with its source and conditions but never evaluated.
+    public var isEnabled: Bool
 
     public init(id: UUID = UUID(),
                 version: Int = 1,
@@ -85,7 +87,8 @@ public struct CoachRule: Sendable, Codable, Identifiable, Equatable {
                 outOfRangeExplanation: String = "",
                 drillSuggestion: String = "",
                 createdAt: Date = Date(),
-                updatedAt: Date = Date()) {
+                updatedAt: Date = Date(),
+                isEnabled: Bool = true) {
         self.id = id
         self.version = version
         self.metricID = metricID
@@ -104,6 +107,37 @@ public struct CoachRule: Sendable, Codable, Identifiable, Equatable {
         self.drillSuggestion = drillSuggestion
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.isEnabled = isEnabled
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, version, metricID, metricDefinitionHash, phases, side, clubs, views
+        case studentConditionNote, lowerBound, upperBound, unit, sourceNote, coachNote
+        case outOfRangeExplanation, drillSuggestion, createdAt, updatedAt, isEnabled
+    }
+
+    /// Rules saved before `isEnabled` existed decode as enabled.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        version = try c.decode(Int.self, forKey: .version)
+        metricID = try c.decode(MetricID.self, forKey: .metricID)
+        metricDefinitionHash = try c.decode(String.self, forKey: .metricDefinitionHash)
+        phases = try c.decode(Set<SwingPhase>.self, forKey: .phases)
+        side = try c.decode(RuleSide.self, forKey: .side)
+        clubs = try c.decode(Set<ClubType>.self, forKey: .clubs)
+        views = try c.decode(Set<CameraView>.self, forKey: .views)
+        studentConditionNote = try c.decode(String.self, forKey: .studentConditionNote)
+        lowerBound = try c.decodeIfPresent(Double.self, forKey: .lowerBound)
+        upperBound = try c.decodeIfPresent(Double.self, forKey: .upperBound)
+        unit = try c.decode(String.self, forKey: .unit)
+        sourceNote = try c.decode(String.self, forKey: .sourceNote)
+        coachNote = try c.decode(String.self, forKey: .coachNote)
+        outOfRangeExplanation = try c.decode(String.self, forKey: .outOfRangeExplanation)
+        drillSuggestion = try c.decode(String.self, forKey: .drillSuggestion)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decode(Date.self, forKey: .updatedAt)
+        isEnabled = try c.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
     }
 
     public var hasUsableRange: Bool { lowerBound != nil || upperBound != nil }

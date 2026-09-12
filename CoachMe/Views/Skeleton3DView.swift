@@ -42,6 +42,8 @@ struct AvatarSceneView: UIViewRepresentable {
     let angle: Double
     let reset: Int
     let showBones: Bool
+    /// Draws on the workbench's dark video panel instead of the grouped background.
+    var darkStage = false
 
     func makeCoordinator() -> AvatarSceneCoordinator { AvatarSceneCoordinator() }
     func makeUIView(context:Context) -> SCNView {
@@ -55,6 +57,10 @@ struct AvatarSceneView: UIViewRepresentable {
         view.defaultCameraController.interactionMode = .orbitTurntable
         view.preferredFramesPerSecond=30
         view.autoenablesDefaultLighting=false
+        if darkStage {
+            view.backgroundColor=UIColor(hex:0x0E1311)
+            context.coordinator.scene.background.contents=UIColor(hex:0x0E1311)
+        }
         return view
     }
     func updateUIView(_ view:SCNView,context:Context) {

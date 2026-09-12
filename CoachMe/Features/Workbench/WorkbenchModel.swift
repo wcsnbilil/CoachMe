@@ -124,6 +124,32 @@ final class WorkbenchModel {
         persist(library)
     }
 
+    /// Confirms one automatically detected keyframe after the user has checked it.
+    func confirmKeyframe(_ phase: SwingPhase, library: SwingLibrary) {
+        guard let index = swing.keyframes.firstIndex(where: { $0.phase == phase }),
+              !swing.keyframes[index].markedByCoach else { return }
+        swing.keyframes[index].markedByCoach = true
+        swing.keyframes[index].note += " · 用户已复核"
+        persist(library)
+    }
+
+    /// Drops every mark and runs automatic detection again.
+    func redetectKeyframes(library: SwingLibrary, usePersonCrop: Bool) async {
+        guard !findingPhases else { return }
+        swing.keyframes = []
+        persist(library)
+        await findKeyframes(library: library, usePersonCrop: usePersonCrop)
+    }
+
+    /// 1-based number of the analysed frame nearest a time, for display.
+    func frameNumber(at time: Double) -> Int? {
+        guard !poseFrames.isEmpty else { return nil }
+        let index = poseFrames.indices.min {
+            abs(poseFrames[$0].timestampSeconds - time) < abs(poseFrames[$1].timestampSeconds - time)
+        }
+        return index.map { $0 + 1 }
+    }
+
     var reviewSummary: String {
         guard !poseFrames.isEmpty else { return "没有可用的姿态帧，请重新分析。" }
         let single = poseFrames.filter { $0.detectedPersonCount == 1 }.count
@@ -165,7 +191,7 @@ final class WorkbenchModel {
                     // A range is attached only when the coach actually authored one
                     // for this metric, phase and view. Otherwise it stays nil.
                     let rule = rules.first {
-                        $0.metricID == id && $0.phases.contains(phase)
+                        $0.isEnabled && $0.metricID == id && $0.phases.contains(phase)
                             && $0.views.contains(swing.cameraView)
                             && $0.clubs.contains(swing.club)
                             && $0.side.resolve(handedness: swing.handedness) == side
@@ -221,7 +247,7 @@ final class WorkbenchModel {
             quality: quality,
             comparison: nil)
         result.analysisDetails = analysisDetails()
-        let applicableRules = rules.filter { $0.clubs.contains(swing.club) && $0.views.contains(swing.cameraView) }
+        let applicableRules = rules.filter { $0.isEnabled && $0.clubs.contains(swing.club) && $0.views.contains(swing.cameraView) }
         if let data = try? JSONEncoder().encode(applicableRules) {
             result.analysisDetails = (result.analysisDetails ?? "") + "\n适用教练规则（需按阶段匹配）：" + String(decoding: data, as: UTF8.self)
         }
@@ -282,4 +308,9 @@ final class WorkbenchModel {
         lines.append("本次未传输视频、其他挥杆或全程逐关节原始坐标；逐帧指标已完整提供。")
         return lines.joined(separator: "\n")
     }
+}
+
+extension Keyframe {
+    /// Hand-placed marks carry no detector note; confirmed automatic marks keep theirs.
+    var isManualMark: Bool { markedByCoach && note.isEmpty }
 }

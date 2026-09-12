@@ -119,3 +119,54 @@ final class PlaybackController {
         if isPlaying { player.rate = newRate }
     }
 }
+
+/// Decodes single video frames for thumbnails, cached by file, time and size.
+@MainActor
+final class VideoFrameCache {
+    static let shared = VideoFrameCache()
+    private let cache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.totalCostLimit = 32 * 1024 * 1024
+        cache.countLimit = 100
+        return cache
+    }()
+
+    func image(url: URL, time: Double, maxPixel: CGFloat) async -> UIImage? {
+        let key = "\(url.path)#\(time)#\(maxPixel)" as NSString
+        if let hit = cache.object(forKey: key) { return hit }
+        let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: maxPixel, height: maxPixel)
+        generator.requestedTimeToleranceBefore = .zero
+        generator.requestedTimeToleranceAfter = CMTime(seconds: 0.02, preferredTimescale: 600)
+        guard let result = try? await generator.image(at: CMTime(seconds: time, preferredTimescale: 600)) else { return nil }
+        let image = UIImage(cgImage: result.image)
+        cache.setObject(image, forKey: key, cost: result.image.bytesPerRow * result.image.height)
+        return image
+    }
+}
+
+/// One frame of a video, filled into its frame; dark until decoded.
+@MainActor
+struct VideoFrameImage: View {
+    let url: URL
+    let time: Double
+    var maxPixel: CGFloat = 240
+    @State private var image: UIImage?
+
+    var body: some View {
+        // The colour takes the offered size; the image only fills it, so a wide
+        // frame can never push a grid cell or row wider than it was given.
+        CoachStyle.stage
+            .overlay {
+                if let image { Image(uiImage: image).resizable().scaledToFill() }
+            }
+            .clipped()
+            .task(id: "\(url.path)#\(time)") {
+            let next = await VideoFrameCache.shared.image(url: url, time: time, maxPixel: maxPixel)
+            guard !Task.isCancelled else { return }
+            image = next
+        }
+        .accessibilityHidden(true)
+    }
+}

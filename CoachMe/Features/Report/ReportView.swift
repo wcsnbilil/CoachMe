@@ -287,8 +287,7 @@ struct ReportView: View {
         guard let cache = library.analysis(for: swing) else { return }
         // Same smoothed landmarks as the workbench, so both show the same numbers.
         let timeline = MetricTimeline(poseFrames: cache.smoothedFrames(), record: swing)
-        let confirmed = swing.keyframes.filter { $0.markedByCoach }
-        let byPhase = timeline.metricsByPhase(confirmed)
+        let byPhase = timeline.metricsByPhase(swing.keyframes)
         let findings = RuleEngine().findings(rules: library.rules, metricsByPhase: byPhase,
                                              handedness: swing.handedness, club: swing.club, view: swing.cameraView)
 

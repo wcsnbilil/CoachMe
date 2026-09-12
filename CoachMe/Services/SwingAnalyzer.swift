@@ -8,6 +8,8 @@ struct AnalysisProgress: Equatable {
     var estimatedTotalFrames: Int
     var currentTimestampSeconds: Double
 
+    var stage: String? = nil
+
     var fraction: Double {
         guard estimatedTotalFrames > 0 else { return 0 }
         return min(1, Double(framesProcessed) / Double(estimatedTotalFrames))
@@ -41,6 +43,7 @@ actor SwingAnalyzer {
     private let detector: PoseDetecting
     private let phaseDetector: SwingNetPhaseDetector?
     private(set) var keyframes: [Keyframe] = []
+    private(set) var phaseDetectionNote: String?
 
     init(detector: PoseDetecting, phaseDetector: SwingNetPhaseDetector? = nil) {
         self.detector = detector
@@ -54,7 +57,13 @@ actor SwingAnalyzer {
         try detector.prepare()
         detector.reset()
         keyframes = []
-        try phaseDetector?.prepare()
+        phaseDetectionNote = nil
+        var phaseActive = phaseDetector != nil
+        do { try phaseDetector?.prepare() }
+        catch {
+            phaseActive = false
+            phaseDetectionNote = "姿态分析已保留；动作阶段模型无法载入，可稍后重试或手动标记。"
+        }
 
         let reader = VideoAssetReader(asset: asset)
         do {
@@ -103,8 +112,16 @@ actor SwingAnalyzer {
                                     worldLandmarks: result.worldLandmarks,
                                     detectedPersonCount: result.personCount))
 
-            try autoreleasepool {
-                try phaseDetector?.append(pixelBuffer: decoded.pixelBuffer, timestamp: decoded.timestampSeconds)
+            if phaseActive {
+                do {
+                    try autoreleasepool {
+                        try phaseDetector?.append(pixelBuffer: decoded.pixelBuffer, timestamp: decoded.timestampSeconds)
+                    }
+                } catch is CancellationError { throw CancellationError() }
+                catch {
+                    phaseActive = false
+                    phaseDetectionNote = "姿态分析已保留；阶段识别中断，可稍后重试或手动标记。"
+                }
             }
 
             processed += 1
@@ -114,7 +131,29 @@ actor SwingAnalyzer {
         }
 
         guard !frames.isEmpty else { throw AnalysisError.noFramesProduced }
-        keyframes = try phaseDetector?.finish() ?? []
+        if phaseActive {
+            do {
+                keyframes = try phaseDetector?.finish() ?? []
+                if keyframes.isEmpty { phaseDetectionNote = "未找到顺序一致的挥杆阶段。请只保留一次完整挥杆，或手动标记。" }
+            } catch is CancellationError { throw CancellationError() }
+            catch { phaseDetectionNote = "阶段识别失败，姿态分析已保留。" }
+        }
+        if keyframes.isEmpty, phaseDetector != nil, PersonCrop.estimate(from: frames) != nil,
+           let urlAsset = asset as? AVURLAsset {
+            try Task.checkCancellation()
+            onProgress(AnalysisProgress(framesProcessed: processed, estimatedTotalFrames: processed,
+                                        currentTimestampSeconds: frames.last?.timestampSeconds ?? 0,
+                                        stage: "优化动作阶段（人物增强）"))
+            do {
+                keyframes = try await SavedSwingPhaseAnalysis().run(url: urlAsset.url,
+                    start: timeRange?.start.seconds ?? 0, end: timeRange?.end.seconds,
+                    frames: frames, usePersonCrop: true)
+                phaseDetectionNote = keyframes.isEmpty
+                    ? "人物增强仍未找到一致阶段。请重新选取一次挥杆，或手动标记。"
+                    : "已使用人物增强生成关键帧候选，请逐帧复核。"
+            } catch is CancellationError { throw CancellationError() }
+            catch { phaseDetectionNote = "人物增强失败，姿态分析已保留；可手动标记。" }
+        }
         return frames
     }
 

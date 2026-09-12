@@ -5,11 +5,12 @@ import CoachMeCore
 struct HomeView: View {
     @Environment(SwingLibrary.self) private var library
     @State private var showingImport = false
+    @State private var path: [SwingRecord] = []
     @State private var showingRules = false
     @State private var showingAISettings = false
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 Section {
                     Button {
@@ -59,7 +60,7 @@ struct HomeView: View {
                 WorkbenchView(swing: swing)
             }
             .sheet(isPresented: $showingImport) {
-                ImportView()
+                ImportView(onImported: { record in path.append(record) })
             }
             .sheet(isPresented: $showingAISettings) { AISettingsView() }
             .sheet(isPresented: $showingRules) {

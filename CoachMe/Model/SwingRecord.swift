@@ -22,6 +22,7 @@ struct SwingRecord: Codable, Identifiable, Equatable {
     var cameraView: CameraView
 
     var keyframes: [Keyframe]
+    var phaseDetectionNote: String?
 
     /// Bumped every time the swing is re-analysed. Chat messages record the
     /// version they were written against so stale references can be flagged.

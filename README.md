@@ -38,7 +38,7 @@
 - OpenAI, Claude, Gemini, DeepSeek, and OpenAI-compatible APIs for swing-data interpretation and follow-up questions. User API keys are stored in the device Keychain.
 - 64 core regression tests passed, followed by added authentication/timeout checks; six simulator chat integration tests passed. Real-provider calls require a user API key for verification.
 
-New imports receive automatic phase candidates. Saved records can retry phase detection in the workbench. See [model conversion and upstream terms](tools/swingnet/README.md) and [AI setup/data scope](docs/AI_INTEGRATION.md).
+Preview and trim one complete swing before importing; completed analysis opens the workbench. If full-frame phase detection fails, a person crop is attempted. Automatic phase candidates require review. Saved records support retry, manual marks, and reselecting a clip. See [model conversion and upstream terms](tools/swingnet/README.md) and [AI setup/data scope](docs/AI_INTEGRATION.md).
 
 ## What works today
 

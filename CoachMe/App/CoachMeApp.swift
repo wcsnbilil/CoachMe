@@ -34,6 +34,11 @@ final class SwingLibrary {
         rules = store.loadRules()
     }
 
+    func saveChecked(_ swing: SwingRecord) throws {
+        try store.upsert(swing)
+        reload()
+    }
+
     func save(_ swing: SwingRecord) {
         try? store.upsert(swing)
         reload()

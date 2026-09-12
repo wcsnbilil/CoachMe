@@ -32,10 +32,10 @@ final class SwingNetPhaseDetector {
         return try MLModel(contentsOf: url, configuration: configuration)
     }
 
-    func append(pixelBuffer: CVPixelBuffer, timestamp: Double) throws {
+    func append(pixelBuffer: CVPixelBuffer, timestamp: Double, crop: CGRect? = nil) throws {
         try Task.checkCancellation()
         guard let encoder else { throw DetectionError.invalidOutput }
-        let image = try Self.normalizedInput(pixelBuffer)
+        let image = try Self.normalizedInput(pixelBuffer, crop: crop)
         let input = try MLDictionaryFeatureProvider(dictionary: ["image": MLFeatureValue(multiArray: image)])
         let prediction = try encoder.prediction(from: input)
         guard let vector = prediction.featureValue(for: "features")?.multiArrayValue,
@@ -76,7 +76,7 @@ final class SwingNetPhaseDetector {
 
     /// RGB, aspect-fit to 160 square, ImageNet mean-colour padding, then normalization.
     /// Bilinear sampling uses half-pixel centres, matching the OpenCV test pipeline.
-    static func normalizedInput(_ buffer: CVPixelBuffer) throws -> MLMultiArray {
+    static func normalizedInput(_ buffer: CVPixelBuffer, crop: CGRect? = nil) throws -> MLMultiArray {
         guard CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_32BGRA else {
             throw DetectionError.invalidPixelBuffer
         }
@@ -89,8 +89,12 @@ final class SwingNetPhaseDetector {
         guard width > 0, height > 0 else { throw DetectionError.invalidPixelBuffer }
         let stride = CVPixelBufferGetBytesPerRow(buffer)
         let bytes = base.assumingMemoryBound(to: UInt8.self)
-        let scale = 160.0 / Double(max(width, height))
-        let w = max(1, Int(Double(width) * scale)), h = max(1, Int(Double(height) * scale))
+        let roi = (crop ?? CGRect(x: 0, y: 0, width: 1, height: 1))
+        let cropWidth = max(1, Int(Double(width)*roi.width))
+        let cropHeight = max(1, Int(Double(height)*roi.height))
+        let ox = Int(Double(width)*roi.minX), oy = Int(Double(height)*roi.minY)
+        let scale = 160.0 / Double(max(cropWidth, cropHeight))
+        let w = max(1, Int(Double(cropWidth) * scale)), h = max(1, Int(Double(cropHeight) * scale))
         let left = (160 - w) / 2, top = (160 - h) / 2
         let means: [Float] = [0.485, 0.456, 0.406]
         let stds: [Float] = [0.229, 0.224, 0.225]
@@ -102,10 +106,10 @@ final class SwingNetPhaseDetector {
             for i in 0..<(160 * 160) { dst[channel * 160 * 160 + i] = value }
         }
         for y in 0..<h {
-            let sy = max(0, min(Double(height - 1), (Double(y) + 0.5) * Double(height) / Double(h) - 0.5))
+            let sy = max(0, min(Double(height - 1), Double(oy) + (Double(y) + 0.5) * Double(cropHeight) / Double(h) - 0.5))
             let y0 = Int(sy), y1 = min(y0 + 1, height - 1), fy = Float(sy - Double(y0))
             for x in 0..<w {
-                let sx = max(0, min(Double(width - 1), (Double(x) + 0.5) * Double(width) / Double(w) - 0.5))
+                let sx = max(0, min(Double(width - 1), Double(ox) + (Double(x) + 0.5) * Double(cropWidth) / Double(w) - 0.5))
                 let x0 = Int(sx), x1 = min(x0 + 1, width - 1), fx = Float(sx - Double(x0))
                 for channel in 0..<3 {
                     let bgra = 2 - channel
@@ -135,18 +139,23 @@ final class SwingNetPhaseDetector {
 
 /// Re-runs phase detection on a saved video without recomputing pose landmarks.
 actor SavedSwingPhaseAnalysis {
-    func run(url: URL) async throws -> [Keyframe] {
+    func run(url: URL, start: Double = 0, end: Double? = nil, frames: [PoseFrame] = [], usePersonCrop: Bool = false) async throws -> [Keyframe] {
         let detector = SwingNetPhaseDetector()
         try detector.prepare()
+        let bounds = usePersonCrop ? PersonCrop.estimate(from: frames) : nil
+        let crop = bounds.map { CGRect(x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
         let reader = VideoAssetReader(asset: AVURLAsset(url: url))
-        try await reader.start(timeRange: nil, maxDimension: 4096)
+        let range = end.map { CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 600), end: CMTime(seconds: $0, preferredTimescale: 600)) }
+        try await reader.start(timeRange: range, maxDimension: 4096)
         defer { reader.cancel() }
         while let frame = try reader.nextFrame() {
             try Task.checkCancellation()
             try autoreleasepool {
-                try detector.append(pixelBuffer: frame.pixelBuffer, timestamp: frame.timestampSeconds)
+                try detector.append(pixelBuffer: frame.pixelBuffer, timestamp: frame.timestampSeconds, crop: crop)
             }
         }
-        return try detector.finish()
+        var marks = try detector.finish()
+        if crop != nil { for i in marks.indices { marks[i].note += " · 人物增强候选，待复核" } }
+        return marks
     }
 }

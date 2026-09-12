@@ -67,12 +67,22 @@ struct AISettingsView: View {
                         .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                     TextField("模型 ID（按服务商控制台填写）", text: $configuration.model)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    if configuration.provider == .deepSeek {
+                        HStack {
+                            Button("Flash 快速模型") { configuration.model = "deepseek-flash" }
+                            Button("Pro 模型") { configuration.model = "deepseek-v4-pro" }
+                        }.font(.caption)
+                        Toggle("深入分析（较慢）", isOn: Binding(get: { configuration.deepSeekThinking ?? false },
+                            set: { configuration.deepSeekThinking = $0 }))
+                        Text("默认 Flash + 快速解读；深入分析会增加等待时间与用量。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                     SecureField("API Key", text: $key)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                 }
                 Section {
-                    Button("保存配置") {
-                        do { try AISettingsStore.save(configuration, key: key); status = "配置已保存，可返回 AI 教练提问。" }
+                    Button("保存并返回") {
+                        do { try AISettingsStore.save(configuration, key: key); status = "配置已保存，可返回 AI 教练提问。"; dismiss() }
                         catch { status = describe(error) }
                     }.disabled(testing)
                     Button {
@@ -95,7 +105,7 @@ struct AISettingsView: View {
             .onAppear { key = AISettingsStore.key(configuration) }
             .onChange(of: configuration.provider) { _, provider in
                 configuration.baseURL = provider.baseURL
-                configuration.model = ""
+                configuration.model = provider == .deepSeek ? "deepseek-flash" : ""
                 key = ""; status = ""
             }
             .onChange(of: configuration.baseURL) { _, _ in key = ""; status = "" }

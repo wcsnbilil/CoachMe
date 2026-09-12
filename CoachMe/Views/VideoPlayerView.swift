@@ -40,6 +40,9 @@ final class PlaybackController {
 
     private var timeObserver: Any?
     private let itemDuration: Double
+    let startTime: Double
+    let endTime: Double
+    var timeRange: ClosedRange<Double> { startTime...endTime }
 
     /// Observer teardown, captured at init so `deinit` needs no isolated state.
     /// `deinit` is nonisolated, so it cannot touch `player` or `timeObserver`
@@ -47,14 +50,24 @@ final class PlaybackController {
     /// observer token, not `self`, so it creates no retain cycle.
     private nonisolated(unsafe) var removeObserver: (() -> Void)?
 
-    init(url: URL, duration: Double) {
+    init(url: URL, duration: Double, startTime: Double = 0) {
         player = AVPlayer(url: url)
-        itemDuration = duration
+        let start = startTime.isFinite ? max(0, startTime) : 0
+        let length = duration.isFinite ? max(0.01, duration) : 0.01
+        self.startTime = start
+        self.endTime = start + length
+        itemDuration = length
+        currentTime = start
+        player.currentItem?.forwardPlaybackEndTime = CMTime(seconds: start + length, preferredTimescale: 600)
+        player.currentItem?.reversePlaybackEndTime = CMTime(seconds: start, preferredTimescale: 600)
+        player.seek(to: CMTime(seconds: start, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero)
         // 30 Hz UI updates: fine enough for a scrubbing readout without
         // waking the main thread on every frame of a 240 fps clip.
         let interval = CMTime(seconds: 1.0 / 30.0, preferredTimescale: 600)
         let observer = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-            self?.currentTime = time.seconds
+            guard let self, time.seconds.isFinite else { return }
+            self.currentTime = min(self.endTime, max(self.startTime, time.seconds))
+            if self.isPlaying && time.seconds >= self.endTime - 0.015 { self.pause() }
         }
         timeObserver = observer
         let capturedPlayer = player
@@ -68,6 +81,7 @@ final class PlaybackController {
     var duration: Double { itemDuration }
 
     func play() {
+        if currentTime >= endTime - 0.02 { seek(to: startTime) }
         player.rate = rate
         isPlaying = true
     }
@@ -82,7 +96,8 @@ final class PlaybackController {
     /// Exact seek — `zero` tolerances matter for frame stepping and for keeping
     /// the skeleton on the frame the numbers were computed from.
     func seek(to seconds: Double) {
-        let clamped = min(max(0, seconds), max(itemDuration, 0))
+        guard seconds.isFinite else { return }
+        let clamped = min(max(startTime, seconds), endTime)
         player.seek(to: CMTime(seconds: clamped, preferredTimescale: 600),
                     toleranceBefore: .zero, toleranceAfter: .zero)
         currentTime = clamped

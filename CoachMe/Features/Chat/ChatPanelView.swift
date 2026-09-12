@@ -56,6 +56,13 @@ struct ChatPanelView: View {
             .foregroundStyle(.secondary)
 
             // Connection state is stated with an icon and words, not colour alone.
+            if !model.isConfigured {
+                Button("配置 DeepSeek / 其他接口") { showingSettings = true }.buttonStyle(.borderedProminent)
+            } else {
+                Button("解读本次挥杆") {
+                    requestTask = Task { await model.send("请根据本次全部分析数据，给出最重要的发现和下一次练习重点。") }
+                }.buttonStyle(.bordered).disabled(model.isSending)
+            }
             Label(model.connectionLabel, systemImage: model.isConfigured ? "checkmark.circle" : "bolt.horizontal.circle")
                 .font(.caption.bold())
                 .padding(.horizontal, 8).padding(.vertical, 4)
@@ -79,7 +86,16 @@ struct ChatPanelView: View {
                         HStack { ProgressView(); Text("AI 正在分析…"); Button("停止") { requestTask?.cancel() } }
                     }
                     ForEach(model.conversation.messages) { message in
-                        MessageBubble(message: message).id(message.id)
+                        VStack(alignment: .leading, spacing: 4) {
+                            MessageBubble(message: message).id(message.id)
+                            if let version = message.analysisVersion, version != model.swing.analysisVersion {
+                                Text("此消息基于较早的关键帧/分析版本").font(.caption2).foregroundStyle(.secondary)
+                            }
+                            if message.role == .user && (message.status == .failed || message.status == .cancelled) {
+                                Button("重试这个问题") { requestTask = Task { await model.retry(message) } }
+                                    .font(.caption).disabled(model.isSending || !model.isConfigured)
+                            }
+                        }
                     }
                 }
                 .padding()
@@ -120,6 +136,7 @@ struct ChatPanelView: View {
                 .accessibilityLabel("提问输入框")
 
             Button {
+                guard model.isConfigured else { showingSettings = true; return }
                 let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !text.isEmpty else { return }
                 draft = ""
@@ -221,19 +238,27 @@ final class ChatModel {
         connectionLabel = service.isConfigured ? "已配置 · " + AISettingsStore.configuration.provider.name : "AI 尚未配置"
     }
 
-    func send(_ text: String) async {
+    func retry(_ message: ChatMessage) async {
+        guard message.role == .user else { return }
+        await send(message.content, retryID: message.id)
+    }
+
+    func send(_ text: String, retryID: UUID? = nil) async {
         guard !isSending, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         isSending = true
         defer { isSending = false }
 
         let message = ChatMessage(
+            id: retryID ?? UUID(),
             role: .user,
             content: text,
             status: .sent,
             references: [ChatReference(phase: phase, timestampSeconds: timestamp)],
             analysisVersion: swing.analysisVersion,
             producedWhileUnconfigured: !service.isConfigured)
-        conversation.append(message)
+        if let retryID, let index = conversation.messages.firstIndex(where: { $0.id == retryID }) {
+            conversation.messages[index] = message
+        } else { conversation.append(message) }
         persist()
 
         for await event in service.send(message: message,

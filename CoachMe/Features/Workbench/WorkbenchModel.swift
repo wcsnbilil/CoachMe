@@ -33,7 +33,7 @@ final class WorkbenchModel {
             timeline = MetricTimeline(poseFrames: poseFrames, record: swing)
         }
         let asset = AVURLAsset(url: videoURL)
-        playback = PlaybackController(url: videoURL, duration: swing.durationSeconds)
+        playback = PlaybackController(url: videoURL, duration: swing.durationSeconds, startTime: swing.clipStartSeconds)
         Task { await loadVideoSize(asset) }
     }
 
@@ -50,12 +50,12 @@ final class WorkbenchModel {
 
     var currentPoseFrame: PoseFrame? {
         guard let cache, let time = playback?.currentTime else { return nil }
-        return poseFrames.nearest(to: time)
+        return poseFrames.nearest(to: time).flatMap { abs($0.timestampSeconds - time) <= 0.15 ? $0 : nil }
     }
 
     var currentDisplayPoseFrame: PoseFrame? {
         guard let time = playback?.currentTime else { return nil }
-        return displayFrames.nearest(to: time)
+        return displayFrames.nearest(to: time).flatMap { abs($0.timestampSeconds - time) <= 0.15 ? $0 : nil }
     }
 
     var currentMetrics: FrameMetrics? {
@@ -74,13 +74,13 @@ final class WorkbenchModel {
 
     // MARK: - Keyframes
 
-    func findKeyframes(library: SwingLibrary) async {
+    func findKeyframes(library: SwingLibrary, usePersonCrop: Bool = true) async {
         guard !findingPhases, swing.keyframes.isEmpty else { return }
         findingPhases = true
         phaseDetectionMessage = nil
         defer { findingPhases = false }
         do {
-            let marks = try await SavedSwingPhaseAnalysis().run(url: library.videoURL(for: swing))
+            let marks = try await SavedSwingPhaseAnalysis().run(url: library.videoURL(for: swing), start: swing.clipStartSeconds, end: swing.clipEndSeconds, frames: poseFrames, usePersonCrop: usePersonCrop)
             // Do not overwrite marks added while the background analysis ran.
             guard swing.keyframes.isEmpty else { return }
             if marks.isEmpty {
@@ -89,6 +89,8 @@ final class WorkbenchModel {
                 swing.keyframes = marks
                 persist(library)
             }
+        } catch is CancellationError {
+            phaseDetectionMessage = "已取消关键帧识别。"
         } catch {
             phaseDetectionMessage = "阶段识别失败：\(error.localizedDescription)"
         }
@@ -96,11 +98,38 @@ final class WorkbenchModel {
 
     func markKeyframe(_ phase: SwingPhase, library: SwingLibrary) {
         guard let time = playback?.currentTime else { return }
+        let earlier = swing.keyframes.filter { $0.phase.order < phase.order }.map(\.timestampSeconds).max()
+        let later = swing.keyframes.filter { $0.phase.order > phase.order }.map(\.timestampSeconds).min()
+        guard earlier.map({ time > $0 }) ?? true, later.map({ time < $0 }) ?? true else {
+            phaseDetectionMessage = "此时间与其他阶段顺序冲突，请先调整或清除相邻标记。"
+            return
+        }
         var keyframes = swing.keyframes
         keyframes.removeAll { $0.phase == phase }
         keyframes.append(Keyframe(phase: phase, timestampSeconds: time))
         swing.keyframes = keyframes.sorted { $0.phase.order < $1.phase.order }
         persist(library)
+    }
+
+    func confirmKeyframes(library: SwingLibrary) {
+        let times = swing.keyframes.sorted { $0.phase.order < $1.phase.order }.map(\.timestampSeconds)
+        guard times.count == 6, zip(times,times.dropFirst()).allSatisfy({ $0 < $1 }) else {
+            phaseDetectionMessage = "请先补齐六个阶段，并检查时间顺序。"
+            return
+        }
+        for i in swing.keyframes.indices where !swing.keyframes[i].markedByCoach {
+            swing.keyframes[i].markedByCoach = true
+            swing.keyframes[i].note += " · 用户已复核"
+        }
+        persist(library)
+    }
+
+    var reviewSummary: String {
+        guard !poseFrames.isEmpty else { return "没有可用的姿态帧，请重新分析。" }
+        let single = poseFrames.filter { $0.detectedPersonCount == 1 }.count
+        let missing = poseFrames.filter { $0.detectedPersonCount == 0 }.count
+        let unconfirmed = swing.keyframes.filter { !$0.markedByCoach }.count
+        return "共 \(poseFrames.count) 帧，单人检出 \(Int(Double(single)/Double(poseFrames.count)*100))%，未检出 \(missing) 帧。关键帧 \(swing.keyframes.count)/6，\(unconfirmed) 个待复核。"
     }
 
     func clearKeyframe(_ phase: SwingPhase, library: SwingLibrary) {
@@ -109,6 +138,7 @@ final class WorkbenchModel {
     }
 
     private func persist(_ library: SwingLibrary) {
+        swing.analysisVersion += 1
         library.save(swing)
         displayFrames = PoseDisplayCompleter(minVisibility: swing.qualityPolicy.minVisibility)
             .complete(poseFrames, keyframes: swing.keyframes)
@@ -210,6 +240,17 @@ final class WorkbenchModel {
         for (i,key) in columns.enumerated() {
             let d = MetricCatalog.definition(for: key.id)
             lines.append("c\(i)=\(d.nameZH)/\(key.side?.rawValue ?? "bilateral")/\(d.unit)/\(d.space.rawValue)；\(d.caveatZH)")
+        }
+        lines.append("全程标量统计（只计可用值；不是标准范围）：")
+        for (i,key) in columns.enumerated() {
+            let samples = frames.compactMap { frame -> (Double,Double)? in
+                guard let value = frame.outcome(key.id,key.side).value, value.isFinite else { return nil }
+                return (frame.timestampSeconds,value)
+            }
+            if let low = samples.min(by: { $0.1 < $1.1 }), let high = samples.max(by: { $0.1 < $1.1 }) {
+                let mean = samples.reduce(0) { $0+$1.1 }/Double(samples.count)
+                lines.append("c\(i): valid=\(samples.count)/\(frames.count), min=\(number(low.1))@\(number(low.0))s, max=\(number(high.1))@\(number(high.0))s, mean=\(number(mean))")
+            } else { lines.append("c\(i): 无可用数据") }
         }
         lines.append("每行 timeSeconds,quality," + columns.indices.map { "c\($0)" }.joined(separator: ",") + ",leftWristBodyXYZ,rightWristBodyXYZ,leftWristImageXYZ,rightWristImageXYZ")
         for frame in frames {

@@ -1,6 +1,7 @@
 import SwiftUI
 import PhotosUI
 import AVFoundation
+import AVKit
 import CoachMeCore
 
 /// Import + setup + run the analysis. Everything the analysis needs that cannot
@@ -10,6 +11,14 @@ struct ImportView: View {
     @Environment(SwingLibrary.self) private var library
     @Environment(\.dismiss) private var dismiss
 
+    let initialVideoURL: URL?
+    let onImported: ((SwingRecord) -> Void)?
+    init(initialVideoURL: URL? = nil, onImported: ((SwingRecord) -> Void)? = nil) {
+        self.initialVideoURL = initialVideoURL
+        self.onImported = onImported
+    }
+    @State private var preview: AVPlayer?
+    @State private var loadTask: Task<Void, Never>?
     @State private var pickerItem: PhotosPickerItem?
     @State private var videoURL: URL?
     @State private var assetDuration: Double = 0
@@ -45,6 +54,9 @@ struct ImportView: View {
                         HStack { ProgressView(); Text("正在读取视频…") }
                     }
                     if videoURL != nil {
+                        if let preview { VideoPlayer(player: preview).frame(height: 240) }
+                        Text("只保留一次完整挥杆：从准备姿势到收杆，去掉重复播放和片尾字幕。")
+                            .font(.caption).foregroundStyle(.secondary)
                         clipRangeControls
                     }
                 }
@@ -79,7 +91,7 @@ struct ImportView: View {
                 if let progress, phase == .analysing {
                     Section("分析中") {
                         ProgressView(value: progress.fraction) {
-                            Text("识别骨骼与动作阶段：\(progress.framesProcessed) / \(progress.estimatedTotalFrames) 帧")
+                            Text("\(progress.stage ?? "识别骨骼与动作阶段")：\(progress.framesProcessed) / \(progress.estimatedTotalFrames) 帧")
                         }
                         Text(String(format: "当前 %.2f 秒", progress.currentTimestampSeconds))
                             .font(.caption).foregroundStyle(.secondary)
@@ -91,8 +103,15 @@ struct ImportView: View {
                     Section {
                         Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.primary)
-                        Button("重试") { startAnalysis() }
+                        if videoURL != nil { Button("重试分析") { startAnalysis() }.disabled(phase == .analysing) }
                     }
+                }
+            }
+            .disabled(phase == .analysing)
+            .overlay(alignment: .bottom) {
+                if phase == .analysing {
+                    Button("取消分析", role: .destructive) { cancelAnalysis() }
+                        .buttonStyle(.borderedProminent).padding().background(.thinMaterial, in: Capsule())
                 }
             }
             .navigationTitle("新的分析")
@@ -103,15 +122,28 @@ struct ImportView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("开始分析") { startAnalysis() }
-                        .disabled(videoURL == nil || phase == .analysing || phase == .loading)
+                        .disabled(videoURL == nil || phase == .analysing || phase == .loading || clipEnd - clipStart < 0.1)
                 }
             }
             .onChange(of: pickerItem) { _, item in
                 guard let item else { return }
-                Task { await load(item) }
+                loadTask?.cancel()
+                loadTask = Task { await load(item) }
             }
         }
         .interactiveDismissDisabled(phase == .analysing)
+        .task { if let initialVideoURL, videoURL == nil { await prepareVideo(initialVideoURL) } }
+        .onDisappear { loadTask?.cancel(); analysisTask?.cancel(); preview?.pause() }
+        .onChange(of: clipStart) { _, time in
+            preview?.pause()
+            preview?.seek(to: CMTime(seconds: time, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero)
+        }
+        .onChange(of: clipEnd) { old, time in
+            guard old > 0 else { return }
+            preview?.currentItem?.forwardPlaybackEndTime = CMTime(seconds: time, preferredTimescale: 600)
+            preview?.pause()
+            preview?.seek(to: CMTime(seconds: max(clipStart, time - 0.04), preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero)
+        }
     }
 
     private var shootingGuidance: some View {
@@ -151,26 +183,49 @@ struct ImportView: View {
 
     private func load(_ item: PhotosPickerItem) async {
         phase = .loading
+        videoURL = nil
+        preview?.pause()
+        preview = nil
+        clipEnd = 0
         errorMessage = nil
         do {
             guard let movie = try await item.loadTransferable(type: VideoFile.self) else {
                 throw ImportError.unreadable
             }
-            let asset = AVURLAsset(url: movie.url)
-            let duration = try await asset.load(.duration).seconds
-            videoURL = movie.url
-            assetDuration = duration
-            clipStart = 0
-            clipEnd = duration
-            phase = .ready
-        } catch {
+            try Task.checkCancellation()
+            await prepareVideo(movie.url)
+        } catch is CancellationError { return }
+        catch {
             errorMessage = "读取视频失败：\(error.localizedDescription)"
             phase = .failed
         }
     }
 
+    private func prepareVideo(_ url: URL) async {
+        phase = .loading
+        preview?.pause()
+        videoURL = nil
+        errorMessage = nil
+        do {
+            let duration = try await AVURLAsset(url: url).load(.duration).seconds
+            try Task.checkCancellation()
+            guard duration.isFinite, duration >= 0.1 else { throw ImportError.unreadable }
+            videoURL = url
+            assetDuration = duration
+            clipStart = 0
+            clipEnd = duration
+            preview = AVPlayer(url: url)
+            phase = .ready
+        } catch is CancellationError { return }
+        catch { phase = .failed; errorMessage = "读取视频失败：\(error.localizedDescription)" }
+    }
+
     private func startAnalysis() {
-        guard let videoURL else { return }
+        guard let videoURL, phase != .analysing, phase != .loading,
+              clipStart.isFinite, clipEnd.isFinite, clipEnd - clipStart >= 0.1 else { return }
+        let selectedStart = clipStart, selectedEnd = clipEnd
+        let selectedSlowMotion = isSlowMotion
+        preview?.pause()
         errorMessage = nil
         phase = .analysing
         progress = nil
@@ -189,16 +244,20 @@ struct ImportView: View {
         )
 
         analysisTask = Task {
+            var storedFilename: String?
+            var committed = false
+            defer { if !committed { LocalStore.shared.discardPendingImport(id: swingID, filename: storedFilename) } }
             do {
                 let filename = try LocalStore.shared.importVideo(from: videoURL, swingID: swingID)
+                storedFilename = filename
                 var saved = record
                 saved.videoFilename = filename
 
                 let storedURL = LocalStore.shared.videosDirectory.appendingPathComponent(filename)
                 let asset = AVURLAsset(url: storedURL)
                 let range = CMTimeRange(
-                    start: CMTime(seconds: clipStart, preferredTimescale: 600),
-                    end: CMTime(seconds: clipEnd, preferredTimescale: 600))
+                    start: CMTime(seconds: selectedStart, preferredTimescale: 600),
+                    end: CMTime(seconds: selectedEnd, preferredTimescale: 600))
 
                 let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(),
                                              phaseDetector: SwingNetPhaseDetector())
@@ -208,6 +267,7 @@ struct ImportView: View {
                 try Task.checkCancellation()
 
                 saved.keyframes = await analyzer.keyframes
+                saved.phaseDetectionNote = await analyzer.phaseDetectionNote
 
                 let cache = AnalysisCache(swingID: swingID,
                                           analysisVersion: saved.analysisVersion,
@@ -215,15 +275,17 @@ struct ImportView: View {
                                           poseModelIdentifier: saved.poseModelIdentifier,
                                           createdAt: Date(),
                                           frames: frames,
-                                          smoothing: isSlowMotion ? .slowMotion : .realTime)
+                                          smoothing: selectedSlowMotion ? .slowMotion : .realTime)
                 try LocalStore.shared.saveAnalysis(cache)
 
-                await MainActor.run {
-                    library.save(saved)
-                    dismiss()
-                }
+                try library.saveChecked(saved)
+                committed = true
+                onImported?(saved)
+                dismiss()
             } catch is CancellationError {
-                await MainActor.run { phase = .ready }
+                phase = .ready
+            } catch AnalysisError.cancelled {
+                phase = .ready
             } catch {
                 await MainActor.run {
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -235,8 +297,8 @@ struct ImportView: View {
 
     private func cancelAnalysis() {
         analysisTask?.cancel()
-        analysisTask = nil
-        if phase == .analysing { phase = .ready }
+        // Remain busy until the task has actually unwound and cleaned its files.
+        preview?.pause()
     }
 
     private func defaultTitle() -> String {

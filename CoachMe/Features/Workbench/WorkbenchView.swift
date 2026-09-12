@@ -7,6 +7,9 @@ struct WorkbenchView: View {
     @Environment(SwingLibrary.self) private var library
     @State private var model: WorkbenchModel?
     @State private var showingChat = false
+    @State private var showingReanalysis = false
+    @State private var usePersonCrop = true
+    @State private var phaseTask: Task<Void, Never>?
     let swing: SwingRecord
 
     var body: some View {
@@ -17,6 +20,7 @@ struct WorkbenchView: View {
                 ProgressView("正在读取分析结果…")
             }
         }
+        .onDisappear { phaseTask?.cancel() }
         .navigationTitle(swing.title)
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -41,6 +45,8 @@ struct WorkbenchView: View {
         } else {
             ScrollView {
                 VStack(spacing: 16) {
+                    Text(model.reviewSummary).font(.footnote).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     videoSection(model)
                     if model.showSkeleton {
                         Text("骨架已启用时序与人体比例补全；虚线为估计位置，不用于角度评分。")
@@ -56,6 +62,7 @@ struct WorkbenchView: View {
                 }
                 .padding()
             }
+            .sheet(isPresented: $showingReanalysis) { ImportView(initialVideoURL: library.videoURL(for: model.swing)) }
             .sheet(isPresented: $showingChat) {
                 ChatPanelView(swing: model.swing,
                               phase: model.currentPhase,
@@ -113,7 +120,7 @@ struct WorkbenchView: View {
             VStack(spacing: 8) {
                 Slider(value: Binding(get: { playback.currentTime },
                                       set: { playback.seek(to: $0) }),
-                       in: 0...max(playback.duration, 0.01))
+                       in: playback.timeRange)
                     .accessibilityLabel("播放进度")
 
                 HStack(spacing: 20) {
@@ -166,9 +173,20 @@ struct WorkbenchView: View {
                  : "自动标记可直接跳转查看；需要调整时，拖动视频后重新标记该阶段。")
                 .font(.caption).foregroundStyle(.secondary)
 
+            if model.swing.keyframes.contains(where: { !$0.markedByCoach }) {
+                Text("自动结果是候选。先跳转检查各帧，必要时重新标记，再确认。")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("已逐帧检查，确认这些关键帧") { model.confirmKeyframes(library: library) }
+                    .buttonStyle(.bordered)
+            }
             if model.swing.keyframes.isEmpty {
+                Button("重新选取单次挥杆分析") { showingReanalysis = true }
+                    .disabled(model.findingPhases)
+                Toggle("人物增强识别", isOn: $usePersonCrop).font(.subheadline).disabled(model.findingPhases)
+                Text("人物较小时优先开启；关闭可使用原图。请只保留一次完整挥杆。")
+                    .font(.caption).foregroundStyle(.secondary)
                 Button {
-                    Task { await model.findKeyframes(library: library) }
+                    phaseTask = Task { await model.findKeyframes(library: library, usePersonCrop: usePersonCrop) }
                 } label: {
                     HStack {
                         if model.findingPhases { ProgressView() }
@@ -178,7 +196,8 @@ struct WorkbenchView: View {
                 .disabled(model.findingPhases)
                 .buttonStyle(.bordered)
             }
-            if let message = model.phaseDetectionMessage {
+            if model.findingPhases { Button("停止识别") { phaseTask?.cancel() } }
+            if let message = model.phaseDetectionMessage ?? model.swing.phaseDetectionNote {
                 Text(message).font(.caption).foregroundStyle(.secondary)
             }
 

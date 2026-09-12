@@ -50,6 +50,15 @@ final class LocalStore {
         _ = resource
     }
 
+    /// Only removes a new, uncommitted import owned by the caller.
+    func discardPendingImport(id: UUID, filename: String?) {
+        guard !loadSwings().contains(where: { $0.id == id }) else { return }
+        if let filename, filename.hasPrefix(id.uuidString + "."), !filename.contains("/") {
+            try? fm.removeItem(at: videosDirectory.appendingPathComponent(filename))
+        }
+        try? fm.removeItem(at: analysisURL(swingID: id))
+    }
+
     // MARK: - Swings
 
     func loadSwings() -> [SwingRecord] {

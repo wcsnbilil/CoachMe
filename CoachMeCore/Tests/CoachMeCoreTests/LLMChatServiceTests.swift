@@ -82,6 +82,22 @@ final class LLMChatServiceTests: XCTestCase {
             }
         }
     }
+    func testDeepSeekModesAndStaleAnalysisHistory() throws {
+        for thinking in [false,true] {
+            var c = config(.deepSeek); c.deepSeekThinking = thinking
+            let service = LLMChatService(configuration:c,apiKey:"test")
+            let data = context()
+            let old = ChatMessage(role:.assistant,content:"旧分析结论",analysisVersion:0)
+            let req = try service.makeRequest(message:.init(role:.user,content:"新问题"),
+                conversation:.init(swingID:data.swingID,messages:[old]),context:data,options:.init())
+            let body = try JSONSerialization.jsonObject(with:req.httpBody!) as! [String:Any]
+            XCTAssertEqual((body["thinking"] as? [String:String])?["type"],thinking ? "enabled" : "disabled")
+            XCTAssertEqual(body["max_tokens"] as? Int,thinking ? 8192 : 2048)
+            let messages = body["messages"] as! [[String:String]]
+            XCTAssertFalse(messages.contains { $0["content"] == "旧分析结论" })
+        }
+    }
+
     func testActualURLSessionUsesMockTransport() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [ChatMockProtocol.self]

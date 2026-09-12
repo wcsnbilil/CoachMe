@@ -25,6 +25,19 @@ final class VideoPipelineTests: XCTestCase {
         return AVURLAsset(url: url)
     }
 
+    @MainActor func testThirtyOriginalFramesCanBePreparedForAI() async throws {
+        let asset = try fixtureAsset()
+        let record = SwingRecord(title: "30-frame test", videoFilename: "swing3s.mp4",
+                                 clipStartSeconds: 0, clipEndSeconds: 2.8,
+                                 handedness: .rightHanded, club: .driver,
+                                 cameraView: .downTheLine, poseModelIdentifier: "test")
+        let images = try await AIKeyframeImages.load(swing: record, videoURL: asset.url)
+        XCTAssertEqual(images.count, 30)
+        XCTAssertTrue(images.allSatisfy { $0.jpegData.starts(with: [0xff, 0xd8]) })
+        XCTAssertLessThanOrEqual(images.reduce(0) { $0 + $1.jpegData.count }, 16_000_000)
+        XCTAssertTrue(images.allSatisfy { $0.label.contains("原视频") })
+    }
+
     /// The regression test for the crop bug. Under the bug this was 0 of N.
     func testSubjectIsDetectedInDecodedFrames() async throws {
         let reader = VideoAssetReader(asset: try fixtureAsset())

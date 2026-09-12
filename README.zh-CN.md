@@ -16,7 +16,7 @@
   <img alt="iOS 17+" src="https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white">
   <img alt="SwiftUI" src="https://img.shields.io/badge/SwiftUI-native-F05138?logo=swift&logoColor=white">
   <img alt="MediaPipe Heavy" src="https://img.shields.io/badge/Pose-MediaPipe_Heavy-204B3B">
-  <img alt="Core tests 81 passed" src="https://img.shields.io/badge/Core_tests-81_passed-2EA44F">
+  <img alt="Core tests 82 passed" src="https://img.shields.io/badge/Core_tests-82_passed-2EA44F">
 </p>
 
 导入一段挥杆视频，逐帧看清关键动作，再与 AI 教练讨论具体问题。CoachMe 将视频回放、关节角度、阶段复核、分析报告和连续提问放进同一个原生 SwiftUI App。
@@ -65,7 +65,7 @@
 | AI 教练 | 多服务配置、本机钥匙串保存 Key、具体指标提问、新消息自动滚动 |
 | 本地记录 | 保存视频、分析结果和历史对话 |
 
-姿态识别、动作阶段识别和角度计算在本机完成。向已配置的 AI 服务提问时，会发送相关分析、对话上下文，以及启用时最多 13 张选定的视频画面；不上传完整视频。详见 [AI 配置与数据范围](docs/AI_INTEGRATION.md)。
+姿态识别、动作阶段识别和角度计算在本机完成。向已配置的 AI 服务提问时，会发送相关分析、对话上下文，以及启用时最多 30 张选定的视频画面；不上传完整视频。详见 [AI 配置与数据范围](docs/AI_INTEGRATION.md)。
 
 ## 最近更新
 
@@ -81,9 +81,10 @@
 
 | 验证项 | 结果 |
 |---|---|
-| Core 测试 | 81 项通过 |
+| Core 测试 | 82 项通过 |
 | iOS 回归测试 | 33 项通过，1 项真实 API 测试按配置跳过 |
 | 界面逻辑定向回归 | 新增报告上下文、具体指标提问、曲线断线用例后，9 项通过；与完整套件有重叠 |
+| 视频定向回归 | 5 项通过，包含 30 张原视频取帧及图片总大小限制验证 |
 | 构建 | iOS 模拟器与真机版本构建通过 |
 | 视频流程 | 8.8 秒视频完成分析，生成 7 个待复核候选帧 |
 | 界面走查 | 首页、二维 / 三维、横屏、曲线、报告详情、AI 提问跳转、规则、设置与选段 |

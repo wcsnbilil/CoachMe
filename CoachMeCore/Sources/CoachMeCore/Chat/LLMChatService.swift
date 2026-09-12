@@ -95,7 +95,7 @@ public struct LLMChatService: ChatService {
         guard estimate <= options.contextTokenLimit else {
             throw ChatServiceError.contextTooLarge(tokenEstimate: estimate, limit: options.contextTokenLimit)
         }
-        guard images.count <= 13, images.allSatisfy({ !$0.jpegData.isEmpty }),
+        guard images.count <= AIFramePlan.maximumImageCount, images.allSatisfy({ !$0.jpegData.isEmpty }),
               images.reduce(0, { $0 + $1.jpegData.count }) <= 16_000_000 else {
             throw ChatServiceError.transport("分析内容过大，请缩短选段后重试。")
         }

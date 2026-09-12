@@ -16,7 +16,7 @@
   <img alt="iOS 17+" src="https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white">
   <img alt="SwiftUI" src="https://img.shields.io/badge/SwiftUI-native-F05138?logo=swift&logoColor=white">
   <img alt="MediaPipe Heavy" src="https://img.shields.io/badge/Pose-MediaPipe_Heavy-204B3B">
-  <img alt="Core tests 81 passed" src="https://img.shields.io/badge/Core_tests-81_passed-2EA44F">
+  <img alt="Core tests 82 passed" src="https://img.shields.io/badge/Core_tests-82_passed-2EA44F">
 </p>
 
 Import a swing video, review the key moments, and discuss a specific movement with your AI coach. CoachMe brings playback, joint angles, phase review, reports, and follow-up questions into one native SwiftUI app.
@@ -65,7 +65,7 @@ The redesigned app, running on the iPhone 17 Pro Simulator. These are real app c
 | AI coach | Provider settings, Keychain storage, contextual questions and scrolling to new messages |
 | Storage | Local videos, analysis records and conversation history |
 
-Pose, phase detection, and angle calculations run on the device. When you ask the configured AI service, the app sends the relevant analysis, conversation context and, if enabled, up to 13 selected video frames; it does not upload the complete video. See [AI setup and data scope](docs/AI_INTEGRATION.md).
+Pose, phase detection, and angle calculations run on the device. When you ask the configured AI service, the app sends the relevant analysis, conversation context and, if enabled, up to 30 selected video frames; it does not upload the complete video. See [AI setup and data scope](docs/AI_INTEGRATION.md).
 
 ## Recent improvements
 
@@ -81,9 +81,10 @@ Recorded on September 11, 2026:
 
 | Check | Result |
 |---|---|
-| Core tests | 81 passed |
+| Core tests | 82 passed |
 | iOS regression suite | 33 passed; 1 real-provider API test skipped |
 | Targeted UI-logic regression | 9 passed after adding report-context, metric-question, and curve-gap cases; overlaps the full suite |
+| Video regression | 5 passed, including extraction of 30 original frames within the image payload limit |
 | Builds | iOS Simulator and physical-device builds succeeded |
 | Video workflow | An 8.8-second clip completed analysis and produced seven candidates for review |
 | UI walkthrough | Home, 2D/3D, landscape, curves, report details, AI question handoff, rules, settings and clip selection |

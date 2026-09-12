@@ -214,7 +214,7 @@ struct AISettingsView: View {
                                                    set: { configuration.includeKeyframeImages = $0 }))
                     .tint(CoachStyle.accent)
                 Text(sendsImages
-                     ? "提问时附带最多 13 张原视频截图，不上传完整视频。需选择支持图像输入的模型。"
+                     ? "提问时附带最多 30 张原视频截图，不上传完整视频。需选择支持图像输入的模型。"
                      : "只发送角度数据与文字，AI 教练看不到画面。")
                     .font(.caption)
                     .foregroundStyle(CoachStyle.textTertiary)
@@ -232,7 +232,7 @@ struct AISettingsView: View {
             GroupDivider(inset: 0)
             flowRow(symbol: "icloud.and.arrow.up", tint: CoachStyle.textSecondary, fill: CoachStyle.neutralFill,
                     title: "提问时发送给 " + (configuration.provider == .compatible ? "你填写的接口" : configuration.provider.name),
-                    text: "本次角度数据、关键帧复核状态、适用的规则范围、提问与最近对话\(sendsImages ? "，以及最多 13 张关键帧截图" : "")；不上传完整视频。测试连接只发送一句测试消息，可能产生少量 API 费用。")
+                    text: "本次角度数据、关键帧复核状态、适用的规则范围、提问与最近对话\(sendsImages ? "，以及最多 30 张关键帧截图" : "")；不上传完整视频。测试连接只发送一句测试消息，可能产生少量 API 费用。")
         }
         .padding(.horizontal, 16)
         .coachGroup()

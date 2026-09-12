@@ -10,7 +10,7 @@ struct CoachMeApp: App {
         WindowGroup {
             HomeView()
                 .environment(library)
-                .tint(Palette.leadArm)
+                .tint(CoachStyle.accent)
         }
     }
 }

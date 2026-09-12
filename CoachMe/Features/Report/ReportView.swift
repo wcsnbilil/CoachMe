@@ -81,7 +81,10 @@ struct ReportView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(CoachStyle.background)
         .navigationTitle("分析报告")
+        .toolbar(.visible,for:.navigationBar)
         .navigationBarTitleDisplayMode(.inline)
         .task { rebuild() }
         .sheet(isPresented: $showingChat) {

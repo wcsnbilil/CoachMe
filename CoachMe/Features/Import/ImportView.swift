@@ -47,8 +47,13 @@ struct ImportView: View {
 
                 Section("视频") {
                     PhotosPicker(selection: $pickerItem, matching: .videos) {
-                        Label(videoURL == nil ? "从相册导入视频" : "更换视频",
-                              systemImage: "photo.on.rectangle")
+                        VStack(alignment:.leading,spacing:12) {
+                            Image(systemName:videoURL == nil ? "plus.rectangle.on.rectangle" : "arrow.triangle.2.circlepath")
+                                .font(.title2.weight(.light))
+                            Text(videoURL == nil ? "选择一段挥杆" : "更换视频").font(.headline)
+                            if videoURL == nil { Text("从准备到收杆，记录一次完整动作。")
+                                .font(.caption).foregroundStyle(.secondary) }
+                        }.frame(maxWidth:.infinity,alignment:.leading).padding(.vertical,16)
                     }
                     if phase == .loading {
                         HStack { ProgressView(); Text("正在读取视频…") }
@@ -107,6 +112,8 @@ struct ImportView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(CoachStyle.background)
             .disabled(phase == .analysing)
             .overlay(alignment: .bottom) {
                 if phase == .analysing {
@@ -114,15 +121,21 @@ struct ImportView: View {
                         .buttonStyle(.borderedProminent).padding().background(.thinMaterial, in: Capsule())
                 }
             }
+            .safeAreaInset(edge:.bottom) {
+                if phase != .analysing {
+                    Button { startAnalysis() } label: {
+                        HStack { Text("开始分析"); Spacer(); Image(systemName:"arrow.right") }.padding(.horizontal,18)
+                    }
+                    .buttonStyle(CoachPrimaryButton())
+                    .disabled(videoURL == nil || phase == .loading || clipEnd - clipStart < 0.1)
+                    .padding(.horizontal,20).padding(.vertical,12).background(.ultraThinMaterial)
+                }
+            }
             .navigationTitle("新的分析")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") { cancelAnalysis(); dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("开始分析") { startAnalysis() }
-                        .disabled(videoURL == nil || phase == .analysing || phase == .loading || clipEnd - clipStart < 0.1)
                 }
             }
             .onChange(of: pickerItem) { _, item in
@@ -147,12 +160,12 @@ struct ImportView: View {
     }
 
     private var shootingGuidance: some View {
-        Section("拍摄建议") {
-            Label("固定机位，不要手持跟拍", systemImage: "camera.metering.center.weighted")
-            Label("全身入镜，脚和头都不要出画", systemImage: "figure.stand")
-            Label("避免遮挡，背景尽量干净、画面中只有一个人", systemImage: "person.crop.rectangle")
-            Text("这些条件直接决定关键点能否被稳定识别。不满足时，App 会显示「无法可靠计算」而不是给出不可靠的数字。")
-                .font(.caption).foregroundStyle(.secondary)
+        Section {
+            DisclosureGroup("怎样拍得更清楚") {
+                Label("固定机位，全身入镜",systemImage:"camera")
+                Label("只保留一次完整挥杆",systemImage:"figure.golf")
+                Label("光线充足，避免遮挡",systemImage:"sun.max")
+            }.font(.subheadline)
         }
     }
 

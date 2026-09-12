@@ -29,7 +29,10 @@ struct RuleListView: View {
                 for index in offsets { library.delete(rule: library.rules[index]) }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(CoachStyle.background)
         .navigationTitle("教练规则")
+        .toolbar(.visible,for:.navigationBar)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button { creating = true } label: { Image(systemName: "plus") }

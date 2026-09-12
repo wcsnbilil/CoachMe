@@ -7,6 +7,7 @@ struct WorkbenchView: View {
     @Environment(SwingLibrary.self) private var library
     @State private var model: WorkbenchModel?
     @State private var showingChat = false
+    @State private var section = 0
     @State private var showingReanalysis = false
     @State private var usePersonCrop = true
     @State private var phaseTask: Task<Void, Never>?
@@ -21,7 +22,11 @@ struct WorkbenchView: View {
             }
         }
         .onDisappear { phaseTask?.cancel() }
-        .navigationTitle(swing.title)
+        .navigationTitle("挥杆分析")
+        .toolbar(.visible,for:.navigationBar)
+        .toolbarBackground(CoachStyle.background,for:.navigationBar)
+        .toolbarBackground(.visible,for:.navigationBar)
+        .background(CoachStyle.background)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             if model == nil {
@@ -44,23 +49,54 @@ struct WorkbenchView: View {
             }
         } else {
             ScrollView {
-                VStack(spacing: 16) {
-                    Text(model.reviewSummary).font(.footnote).foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    videoSection(model)
-                    if model.showSkeleton {
-                        Text("骨架已启用时序与人体比例补全；虚线为估计位置，不用于角度评分。")
-                            .font(.caption).foregroundStyle(.secondary)
+                VStack(spacing: 20) {
+                    HStack {
+                        VStack(alignment:.leading,spacing:5) {
+                            Text(model.swing.club.nameZH).font(.title2.weight(.semibold))
+                            Text(model.swing.createdAt,format:.dateTime.month().day().hour().minute())
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(model.swing.cameraView.nameZH).font(.caption.weight(.medium))
+                            .padding(.horizontal,12).padding(.vertical,8)
+                            .background(CoachStyle.surface,in:Capsule())
                     }
-                    transportControls(model)
-                    keyframeSection(model)
-                    readoutSection(model)
-                    chartSection(model)
-                    skeleton3DSection(model)
-                    reportLink(model)
-                    discussButton
+                    VStack(spacing:12) {
+                        videoSection(model)
+                        transportControls(model).padding(.horizontal,14).padding(.bottom,12)
+                    }.background(CoachStyle.surface,in:RoundedRectangle(cornerRadius:22))
+                    Picker("分析内容",selection:$section) {
+                        Text("动作").tag(0)
+                        Text("数据").tag(1)
+                        Text("三维").tag(2)
+                    }.pickerStyle(.segmented)
+                    if section == 0 {
+                        keyframeSection(model).coachCard()
+                    } else if section == 1 {
+                        readoutSection(model).coachCard()
+                        chartSection(model).coachCard()
+                        DisclosureGroup("分析说明") {
+                            Text(model.reviewSummary).font(.caption).foregroundStyle(.secondary)
+                            Text("虚线骨架为估计位置，不参与角度计算。")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }.coachCard()
+                        reportLink(model)
+                    } else {
+                        VStack(alignment:.leading,spacing:12) {
+                            Text("空间姿态").font(.headline)
+                            Text("拖动旋转，切换视角。三维姿态为模型估计。")
+                                .font(.caption).foregroundStyle(.secondary)
+                            Skeleton3DView(frame:model.currentDisplayPoseFrame,handedness:model.swing.handedness)
+                                .frame(height:340)
+                        }.coachCard()
+                    }
                 }
-                .padding()
+                .padding(.horizontal,18).padding(.top,8).padding(.bottom,24)
+            }
+            .background(CoachStyle.background)
+            .safeAreaInset(edge:.bottom) {
+                discussButton.padding(.horizontal,18).padding(.top,10).padding(.bottom,8)
+                    .background(.ultraThinMaterial)
             }
             .sheet(isPresented: $showingReanalysis) { ImportView(initialVideoURL: library.videoURL(for: model.swing)) }
             .sheet(isPresented: $showingChat) {
@@ -91,7 +127,9 @@ struct WorkbenchView: View {
         }
         .aspectRatio(model.videoSize.width / max(model.videoSize.height, 1), contentMode: .fit)
         .frame(maxWidth: .infinity)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .frame(maxHeight:420)
+        .background(.black)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(alignment: .topTrailing) {
             Toggle(isOn: Binding(get: { model.showSkeleton },
                                  set: { model.showSkeleton = $0 })) {
@@ -169,14 +207,14 @@ struct WorkbenchView: View {
                 }
             }
             Text(model.swing.keyframes.isEmpty
-                 ? "尚无可用的自动标记：可能未运行阶段识别，或预测阶段顺序冲突。可手动标记；重新拍摄时尽量让人物占满画面并只保留一次完整挥杆。"
-                 : "自动标记可直接跳转查看；需要调整时，拖动视频后重新标记该阶段。")
+                 ? "选择视频中的对应动作，添加阶段标记。"
+                 : "点击阶段，可跳转查看或调整标记。")
                 .font(.caption).foregroundStyle(.secondary)
 
             if model.swing.keyframes.contains(where: { !$0.markedByCoach }) {
-                Text("自动结果是候选。先跳转检查各帧，必要时重新标记，再确认。")
+                Text("请检查自动标记是否对应正确动作。")
                     .font(.caption).foregroundStyle(.secondary)
-                Button("已逐帧检查，确认这些关键帧") { model.confirmKeyframes(library: library) }
+                Button("确认阶段") { model.confirmKeyframes(library: library) }
                     .buttonStyle(.bordered)
             }
             if model.swing.keyframes.isEmpty {
@@ -277,11 +315,10 @@ struct WorkbenchView: View {
         Button {
             showingChat = true
         } label: {
-            Label("与 AI 教练讨论", systemImage: "bubble.left.and.text.bubble.right")
+            HStack { Image(systemName:"sparkles"); Text("听听教练怎么说"); Spacer(); Image(systemName:"arrow.up.right") }.padding(.horizontal,18)
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .buttonStyle(CoachPrimaryButton())
     }
 }
 
@@ -323,7 +360,7 @@ struct KeyframeChipLabel: View {
             // unmarked even without colour perception.
             Image(systemName: marked == nil ? "circle.dashed" : "checkmark.circle.fill")
                 .foregroundStyle(marked == nil ? AnyShapeStyle(.secondary)
-                                               : AnyShapeStyle(Palette.leadArm))
+                                               : AnyShapeStyle(CoachStyle.accent))
             VStack(alignment: .leading, spacing: 1) {
                 Text(phase.nameZH)
                     .font(.subheadline.weight(marked == nil ? .regular : .medium))
@@ -335,11 +372,11 @@ struct KeyframeChipLabel: View {
         }
         .padding(.horizontal, 12)
         // 44pt is the iOS minimum touch target; the old chip was about 32pt.
-        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-        .background(.quaternary.opacity(marked == nil ? 0.35 : 0.6),
+        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+        .background(CoachStyle.background,
                     in: RoundedRectangle(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10)
-            .strokeBorder(marked == nil ? .clear : Palette.leadArm.opacity(0.4), lineWidth: 1))
+            .strokeBorder(marked == nil ? .clear : CoachStyle.accent.opacity(0.18), lineWidth: 1))
     }
 }
 

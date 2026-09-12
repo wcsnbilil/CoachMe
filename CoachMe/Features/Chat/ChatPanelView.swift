@@ -26,50 +26,36 @@ struct ChatPanelView: View {
                 suggestions
                 inputBar
             }
-            .navigationTitle("AI 教练")
+            .background(CoachStyle.background)
+            .navigationTitle("你的 AI 教练")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("接口设置") { showingSettings = true }.disabled(model.isSending)
+                    Button("设置") { showingSettings = true }.disabled(model.isSending)
                 }
                 ToolbarItem(placement: .cancellationAction) { Button("返回视频") { dismiss() } }
             }
         }
         .sheet(isPresented: $showingSettings, onDismiss: { model.reloadConfiguration() }) { AISettingsView() }
         .onDisappear { requestTask?.cancel() }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(model.swing.title).font(.subheadline.bold())
-            HStack(spacing: 6) {
-                if let phase = model.phase {
-                    Label(phase.nameZH, systemImage: "mappin.circle").font(.caption)
-                } else {
-                    Text("未选中关键帧").font(.caption)
-                }
-                Text("·").font(.caption)
-                Text(String(format: "%.2f 秒", model.timestamp)).font(.caption.monospacedDigit())
+        HStack(alignment:.center,spacing:12) {
+            Image(systemName:"sparkles").font(.title3)
+                .foregroundStyle(CoachStyle.accent)
+                .frame(width:44,height:44).background(CoachStyle.surface,in:RoundedRectangle(cornerRadius:14))
+            VStack(alignment:.leading,spacing:4) {
+                Text(model.swing.title).font(.subheadline.weight(.medium)).lineLimit(1)
+                Text("一起找到下一次练习的重点").font(.caption).foregroundStyle(.secondary)
             }
-            .foregroundStyle(.secondary)
-
-            // Connection state is stated with an icon and words, not colour alone.
+            Spacer(minLength:0)
             if !model.isConfigured {
-                Button("配置 DeepSeek / 其他接口") { showingSettings = true }.buttonStyle(.borderedProminent)
-            } else {
-                Button("解读本次挥杆") {
-                    requestTask = Task { await model.send("请像面对面带课一样看看我的挥杆，告诉我最值得调整的一两点，以及下一次该怎么练。") }
-                }.buttonStyle(.bordered).disabled(model.isSending)
+                Button("连接教练") { showingSettings = true }.font(.caption.weight(.semibold))
             }
-            Label(model.connectionLabel, systemImage: model.isConfigured ? "checkmark.circle" : "bolt.horizontal.circle")
-                .font(.caption.bold())
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(.quaternary, in: Capsule())
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
+        }.padding(.horizontal,20).padding(.vertical,14)
     }
 
     private var messageList: some View {
@@ -77,10 +63,18 @@ struct ChatPanelView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     if model.conversation.messages.isEmpty {
-                        Text("让教练帮你找到最值得调整的动作，再给出适合下一次练习的建议。也可以直接问你最关心的问题。")
-                            .font(.footnote).foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.top, 24)
+                        VStack(alignment:.leading,spacing:18) {
+                            Text("今天，先改进一点。")
+                                .font(.system(.title2,design:.serif,weight:.medium))
+                            Text("一起看看这次挥杆，找到值得保留的动作，和下一次可以练习的重点。")
+                                .font(.subheadline).foregroundStyle(.secondary).lineSpacing(5)
+                            Button {
+                                if model.isConfigured {
+                                    requestTask = Task { await model.send("请像面对面带课一样看看我的挥杆，告诉我最值得调整的一两点，以及下一次该怎么练。") }
+                                } else { showingSettings = true }
+                            } label: { Label("解读这次挥杆",systemImage:"sparkles") }
+                                .buttonStyle(CoachPrimaryButton()).disabled(model.isSending)
+                        }.coachCard().padding(.top,14)
                     }
                     if model.isSending {
                         HStack { ProgressView(); Text(model.preparationLabel); Button("停止") { requestTask?.cancel() } }
@@ -119,7 +113,7 @@ struct ChatPanelView: View {
                     }
                     .font(.caption)
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(.quaternary, in: Capsule())
+                    .background(CoachStyle.surface, in: Capsule())
                 }
             }
             .padding(.horizontal)
@@ -131,7 +125,9 @@ struct ChatPanelView: View {
         HStack(alignment: .bottom, spacing: 8) {
             TextField("输入你的问题", text: $draft, axis: .vertical)
                 .lineLimit(1...5)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.plain)
+                .padding(.horizontal,16).padding(.vertical,14)
+                .background(CoachStyle.surface,in:RoundedRectangle(cornerRadius:22))
                 .focused($inputFocused)
                 .accessibilityLabel("提问输入框")
 
@@ -142,7 +138,9 @@ struct ChatPanelView: View {
                 draft = ""
                 requestTask = Task { await model.send(text) }
             } label: {
-                Image(systemName: "arrow.up.circle.fill").font(.title2)
+                Image(systemName: "arrow.up").font(.body.weight(.semibold))
+                    .foregroundStyle(.white).frame(width:46,height:46)
+                    .background(CoachStyle.forest,in:Circle())
             }
             .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.isSending)
             .accessibilityLabel("发送")
@@ -179,12 +177,17 @@ struct MessageBubble: View {
                 .background(.yellow.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
 
             case .text:
-                Text(.init(message.content))
-                    .textSelection(.enabled)
-                    .padding(10)
-                    .background(message.role == .user ? AnyShapeStyle(Palette.leadArm.opacity(0.2))
-                                                      : AnyShapeStyle(.quaternary),
-                                in: RoundedRectangle(cornerRadius: 12))
+                VStack(alignment:.leading,spacing:9) {
+                    if message.role == .assistant {
+                        Label("COACH",systemImage:"sparkles").font(.caption2.weight(.bold))
+                            .tracking(1.5).foregroundStyle(CoachStyle.accent)
+                    }
+                    Text(.init(message.content)).font(.body).lineSpacing(5).textSelection(.enabled)
+                }
+                .padding(16)
+                .foregroundStyle(message.role == .user ? Color.white : Color.primary)
+                .background(message.role == .user ? CoachStyle.forest : CoachStyle.surface,
+                            in:RoundedRectangle(cornerRadius:20))
             }
 
             if message.status == .failed {

@@ -1,11 +1,11 @@
 # CoachMe
 
 <p align="center">
-  <strong>把一段挥杆视频，变成可复核的姿态、角度与教练反馈。</strong>
+  <strong>看清每一次挥杆，让下一次练习更有方向。</strong>
 </p>
 
 <p align="center">
-  本地视频分析 · MediaPipe 姿态识别 · 关键帧与关节角度 · 自定义教练规则
+  iOS 高尔夫分析工作台 · 七阶段复核 · 二维 / 三维动作查看 · AI 教练
 </p>
 
 <p align="center">
@@ -14,78 +14,82 @@
 
 <p align="center">
   <img alt="iOS 17+" src="https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white">
-  <img alt="Swift 5.9" src="https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white">
-  <img alt="版本 0.1.0" src="https://img.shields.io/badge/version-0.1.0-2F81F7">
-  <img alt="Core 测试 46/46" src="https://img.shields.io/badge/Core_tests-46%2F46-2EA44F">
-  <img alt="App 测试 24/24" src="https://img.shields.io/badge/App_tests-24%2F24-2EA44F">
+  <img alt="SwiftUI" src="https://img.shields.io/badge/SwiftUI-native-F05138?logo=swift&logoColor=white">
+  <img alt="MediaPipe Heavy" src="https://img.shields.io/badge/Pose-MediaPipe_Heavy-204B3B">
+  <img alt="Core tests 81 passed" src="https://img.shields.io/badge/Core_tests-81_passed-2EA44F">
 </p>
+
+导入一段挥杆视频，逐帧看清关键动作，再与 AI 教练讨论具体问题。CoachMe 将视频回放、关节角度、阶段复核、分析报告和连续提问放进同一个原生 SwiftUI App。
 
 ## 运行截图
 
-以下为 iPhone 17 Pro 模拟器中的真实运行截图。三维页展示标准准备姿势；AI 页为已保存的对话示例，不代表教练结论经过准确性验证。
+新版界面在 iPhone 17 Pro 模拟器中的真实运行截图。AI 页面展示已保存的回复和待发送的具体问题。
 
 <table>
   <tr>
     <td align="center"><a href="docs/screenshots/home.png"><img src="docs/screenshots/home.png" alt="首页 · 最近挥杆" width="300"></a></td>
-    <td align="center"><a href="docs/screenshots/analysis.png"><img src="docs/screenshots/analysis.png" alt="视频分析 · 骨架叠加" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/analysis.png"><img src="docs/screenshots/analysis.png" alt="工作台 · 七阶段复核" width="300"></a></td>
   </tr>
   <tr>
     <td align="center"><sub>首页 · 最近挥杆</sub></td>
-    <td align="center"><sub>视频分析 · 骨架叠加</sub></td>
+    <td align="center"><sub>工作台 · 七阶段复核</sub></td>
   </tr>
   <tr>
-    <td align="center"><a href="docs/screenshots/avatar.png"><img src="docs/screenshots/avatar.png" alt="三维视图 · 标准人体" width="300"></a></td>
-    <td align="center"><a href="docs/screenshots/ai-coach.png"><img src="docs/screenshots/ai-coach.png" alt="AI 教练 · 连续提问" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/report.png"><img src="docs/screenshots/report.png" alt="分析报告 · 指标与复核状态" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/ai-coach.png"><img src="docs/screenshots/ai-coach.png" alt="AI 教练 · 讨论具体动作" width="300"></a></td>
   </tr>
   <tr>
-    <td align="center"><sub>三维视图 · 标准人体</sub></td>
-    <td align="center"><sub>AI 教练 · 连续提问</sub></td>
+    <td align="center"><sub>分析报告 · 指标与复核状态</sub></td>
+    <td align="center"><sub>AI 教练 · 讨论具体动作</sub></td>
   </tr>
 </table>
 
-## 本次功能更新
+## 从视频到下一次练习
 
-- MediaPipe Heavy 默认姿态模型；本地 SwingNet 自动识别七个阶段，支持旧记录重试和人工调整。
-- 二维/三维显示骨架按时序与人体比例补全，虚线表示估计；二维躯干使用中央脊柱避免投影交叉。补全不参与指标评分。
-- 可配置 OpenAI、Claude、Gemini、DeepSeek 和 OpenAI 兼容 API，支持结合原视频关键帧的教练式指导与连续问答，指标辅助判断。密钥存于本机钥匙串。
-- 核心回归 64 项通过，后补认证/超时用例通过；聊天模拟器集成 6 项通过。真实 LLM 调用需填入自己的 API Key 后验证。
+1. **导入与选段。** 从相册选择视频，保留一次完整挥杆，设置持杆手、球杆、视角和慢动作模式，在设备上查看分析进度。
+2. **复核七个阶段。** 准备、上杆下段、上杆中段、顶点、下杆中段、击球、收杆。支持慢放、逐帧前后移动、确认候选帧或用当前画面重新标记。
+3. **看清动作变化。** 在二维骨架叠加和可旋转三维人体之间切换，查看两侧肘、膝角度；支持横屏回放，从角度曲线定位回视频。
+4. **阅读分析报告。** 按动作阶段查看指标和自定义参考范围，明确哪些关键帧仍待复核。点开指标可查看定义，并直接带着这个问题进入 AI 教练。
+5. **继续提问。** 使用 OpenAI、Claude、Gemini、DeepSeek 或 OpenAI 兼容接口，讨论动作重点和练习思路。支持图像输入的模型可结合挥杆画面解读，角度数据辅助判断。
 
-导入时可预览并选择单次完整挥杆，分析后直接进入工作台。全图识别失败会尝试人物增强；生成的阶段仍需逐帧复核。已有视频可重试、手动调整或重新选段分析。模型来源、转换及许可见 [tools/swingnet](tools/swingnet/README.md)，AI 配置与数据范围见 [接入说明](docs/AI_INTEGRATION.md)。
+## 功能一览
 
-## 现在可以做什么
+| 模块 | 当前实现 |
+|---|---|
+| 界面 | 暖白与森林绿 SwiftUI 界面、统一控件、底部固定报告与 AI 入口 |
+| 姿态 | MediaPipe Heavy、33 个关键点、时序平滑与仅用于显示的骨架补全 |
+| 关键帧 | 本地 SwingNet 七阶段识别、人物增强重试、手动标记与复核 |
+| 三维视图 | 由姿态估计驱动绑定骨骼的人体模型，支持旋转与缩放 |
+| 角度曲线 | 区分两侧的角度变化；缺失数据处断开，不跨空白连线 |
+| 教练规则 | 自定义范围、来源和适用条件，可单独启用或停用 |
+| AI 教练 | 多服务配置、本机钥匙串保存 Key、具体指标提问、新消息自动滚动 |
+| 本地记录 | 保存视频、分析结果和历史对话 |
 
-- 从相册导入真实挥杆视频，在设备本地完成分析
-- 使用 MediaPipe 生成 33 个关键点与 world landmarks
-- 自动识别关键帧，计算关节和躯干相关指标
-- 使用 One Euro 滤波平滑关键点，并区分实时与慢动作预设
-- 由教练录入参考范围、来源和适用条件，再生成规则判定
-- 将分析结果整理成结构化上下文，由已配置的大模型解读并支持连续提问
+姿态识别、动作阶段识别和角度计算在本机完成。向已配置的 AI 服务提问时，会发送相关分析、对话上下文，以及启用时最多 13 张选定的视频画面；不上传完整视频。详见 [AI 配置与数据范围](docs/AI_INTEGRATION.md)。
 
-> [!IMPORTANT]
-> CoachMe **不内置任何“正确”角度**。超出范围只表示“超出你设置的范围”，
-> 不代表动作错误。数据不足时会明确显示“无法可靠计算”，不会用 0 或推算值填充。
+## 最近更新
 
-## 可运行状态
+- 首页、导入、工作台、报告、AI 教练、规则与设置统一为新版界面。
+- 分析进度可滚动，取消按钮固定在底部；限制缩略图缓存与预览刷新频率。
+- 二维显示骨架增加平滑，显示补全与测量数据分开处理。
+- 报告显示真实待复核数量，所选阶段、侧别与角度可带入 AI 提问框。
+- 待复核阶段保留指标；曲线在缺失或非有限读数处断开。
 
-当前版本已在模拟器和真机完成端到端运行验证。
+## 验证记录
+
+2026 年 9 月 11 日验证结果：
 
 | 验证项 | 结果 |
 |---|---|
-| `CoachMeCore` 编译 | ✅ 0 error，0 warning |
-| `CoachMeCore` 测试 | ✅ **46/46**（XCTest） |
-| iOS App 测试 | ✅ **24/24**（iPhone 15 模拟器） |
-| 真实视频分析链路 | ✅ 解码 → 姿态 → 关键帧 → 指标 → 规则判定 → 聊天上下文 |
-| MediaPipe 推理 | ✅ 在真实素材上输出 33 个关键点与 world landmarks |
-| Node 参考验证 | ✅ 几何 31/31，规则 25/25 |
-| 真机运行 | ✅ iPhone 16 Pro / iOS 26.4.2：安装、启动并完成一次分析 |
+| Core 测试 | 81 项通过 |
+| iOS 回归测试 | 33 项通过，1 项真实 API 测试按配置跳过 |
+| 界面逻辑定向回归 | 新增报告上下文、具体指标提问、曲线断线用例后，9 项通过；与完整套件有重叠 |
+| 构建 | iOS 模拟器与真机版本构建通过 |
+| 视频流程 | 8.8 秒视频完成分析，生成 7 个待复核候选帧 |
+| 界面走查 | 首页、二维 / 三维、横屏、曲线、报告详情、AI 提问跳转、规则、设置与选段 |
+| 手机安装 | 最新版已覆盖安装到 iPhone 16 Pro；自动启动因手机锁屏被系统阻止 |
 
-**真机环境：** Xcode 26.6、iOS 26.5 SDK、免费个人团队签名。模拟器构建也已在
-Xcode 15.4 / iOS 17.5 SDK 上验证。MediaPipeTasksVision 0.10.21 已链接。
-
-> [!NOTE]
-> “可运行”不等于“测量准确度已验证”。项目尚未与人工标注或动作捕捉系统做对照，
-> 因此不提供准确率数字。骨架对齐、性能、内存和电量也尚未完成系统评估。
-> 详见 [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md)。
+上述验证针对功能运行，不代表测量或教练建议的准确度已经验证。姿态估计和自动阶段仍需复核，参考范围来自用户设置的教练规则。相关说明见 [测量限制](docs/LIMITATIONS.md)、[SwingNet 来源与许可](tools/swingnet/README.md)、[三维模型归属](CoachMe/Resources/GolfAvatar-LICENSE.txt)。
 
 ## 快速开始
 
@@ -124,7 +128,7 @@ Xcode Signing 面板，否则重新生成工程时会被覆盖。
 swift test --package-path CoachMeCore
 
 xcodebuild -workspace CoachMe.xcworkspace -scheme CoachMe \
-  -destination 'platform=iOS Simulator,name=iPhone 15' test
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 ```
 
 只有 Command Line Tools、没有完整 Xcode 时，可以运行：
@@ -152,10 +156,10 @@ CoachMeCore/                 纯 Swift 逻辑，不依赖 SwiftUI / AVFoundation
     Smoothing/               One Euro 滤波与序列平滑
     Rules/                   教练规则与判定引擎
     Chat/                    消息、会话、分析上下文、ChatService 接口
-  Tests/                     46 个测试
+  Tests/                     核心回归测试
 
 CoachMe/                     iOS App 目标
-CoachMeTests/                24 个 App 测试
+CoachMeTests/                iOS 回归与集成测试
 tools/reference/             Node 几何与规则参考实现
 tools/no-xcode-testrunner/   无完整 Xcode 时的 XCTest 垫片
 tools/setup-xcode-project.sh 生成工程并安装依赖

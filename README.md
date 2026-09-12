@@ -1,95 +1,95 @@
 # CoachMe
 
 <p align="center">
-  <strong>Turn a golf swing video into reviewable pose data, joint angles, and coach-defined feedback.</strong>
+  <strong>See your swing. Understand your next practice.</strong>
 </p>
 
 <p align="center">
-  On-device video analysis · MediaPipe pose tracking · Keyframes and angles · Coach-defined rules
+  An iOS golf workbench for video review, seven swing phases, 2D/3D pose views, and AI coaching.
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="README.zh-CN.md">Chinese</a>
+  <strong>English</strong> · <a href="README.zh-CN.md">简体中文</a>
 </p>
 
 <p align="center">
   <img alt="iOS 17+" src="https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white">
-  <img alt="Swift 5.9" src="https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white">
-  <img alt="Version 0.1.0" src="https://img.shields.io/badge/version-0.1.0-2F81F7">
-  <img alt="Core tests 46/46" src="https://img.shields.io/badge/Core_tests-46%2F46-2EA44F">
-  <img alt="App tests 24/24" src="https://img.shields.io/badge/App_tests-24%2F24-2EA44F">
+  <img alt="SwiftUI" src="https://img.shields.io/badge/SwiftUI-native-F05138?logo=swift&logoColor=white">
+  <img alt="MediaPipe Heavy" src="https://img.shields.io/badge/Pose-MediaPipe_Heavy-204B3B">
+  <img alt="Core tests 81 passed" src="https://img.shields.io/badge/Core_tests-81_passed-2EA44F">
 </p>
+
+Import a swing video, review the key moments, and discuss a specific movement with your AI coach. CoachMe brings playback, joint angles, phase review, reports, and follow-up questions into one native SwiftUI app.
 
 ## App screenshots
 
-Captured from the running app on the iPhone 17 Pro Simulator. The 3D view shows the standard address pose; the AI page shows a saved conversation, not a validated coaching assessment.
+The redesigned app, running on the iPhone 17 Pro Simulator. These are real app captures; the AI page contains a saved response and a draft question.
 
 <table>
   <tr>
     <td align="center"><a href="docs/screenshots/home.png"><img src="docs/screenshots/home.png" alt="Home · recent swings" width="300"></a></td>
-    <td align="center"><a href="docs/screenshots/analysis.png"><img src="docs/screenshots/analysis.png" alt="Video analysis · pose overlay" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/analysis.png"><img src="docs/screenshots/analysis.png" alt="Workbench · seven-phase review" width="300"></a></td>
   </tr>
   <tr>
     <td align="center"><sub>Home · recent swings</sub></td>
-    <td align="center"><sub>Video analysis · pose overlay</sub></td>
+    <td align="center"><sub>Workbench · seven-phase review</sub></td>
   </tr>
   <tr>
-    <td align="center"><a href="docs/screenshots/avatar.png"><img src="docs/screenshots/avatar.png" alt="3D view · standard human model" width="300"></a></td>
-    <td align="center"><a href="docs/screenshots/ai-coach.png"><img src="docs/screenshots/ai-coach.png" alt="AI coach · follow-up questions" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/report.png"><img src="docs/screenshots/report.png" alt="Report · metrics and review status" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/ai-coach.png"><img src="docs/screenshots/ai-coach.png" alt="AI coach · discuss a specific movement" width="300"></a></td>
   </tr>
   <tr>
-    <td align="center"><sub>3D view · standard human model</sub></td>
-    <td align="center"><sub>AI coach · follow-up questions</sub></td>
+    <td align="center"><sub>Report · metrics and review status</sub></td>
+    <td align="center"><sub>AI coach · discuss a specific movement</sub></td>
   </tr>
 </table>
 
-## Latest functionality
+## From video to practice
 
-- MediaPipe Heavy by default; local SwingNet detects seven phases, with retry for saved records and manual correction.
-- Display-only temporal/body-proportion skeleton completion in 2D and 3D. Estimated segments are dashed and excluded from measurements. A central spine avoids crossed torso diagonals in the 2D projection.
-- OpenAI, Claude, Gemini, DeepSeek, and OpenAI-compatible APIs for coaching from original keyframe images, supported by metrics, and follow-up questions. User API keys are stored in the device Keychain.
-- 64 core regression tests passed, followed by added authentication/timeout checks; six simulator chat integration tests passed. Real-provider calls require a user API key for verification.
+1. **Import and trim.** Select a video from Photos, keep one complete swing, and set handedness, club, camera view, and slow-motion mode. Follow analysis progress on the device.
+2. **Review seven phases.** Move through address, takeaway, mid-backswing, top, mid-downswing, impact, and finish. Play slowly, step frame by frame, confirm a candidate, or mark the current frame.
+3. **Explore the movement.** Switch between the video with a 2D pose overlay and a rotatable 3D human model. Inspect sided elbow and knee angles, use landscape playback, and scrub angle curves to return to the video.
+4. **Read the report.** Check metrics by phase, compare them with your coach-defined ranges, and see exactly which keyframes still need review. Tap a metric for its definition and a direct route to the AI coach.
+5. **Ask follow-up questions.** Discuss priorities and practice ideas using OpenAI, Claude, Gemini, DeepSeek, or an OpenAI-compatible endpoint. A supported vision model can interpret swing images with angle data as supporting context.
 
-Preview and trim one complete swing before importing; completed analysis opens the workbench. If full-frame phase detection fails, a person crop is attempted. Automatic phase candidates require review. Saved records support retry, manual marks, and reselecting a clip. See [model conversion and upstream terms](tools/swingnet/README.md) and [AI setup/data scope](docs/AI_INTEGRATION.md).
+## Inside the app
 
-## What works today
+| Area | Current implementation |
+|---|---|
+| Interface | Warm-white and forest-green SwiftUI screens, shared controls, fixed report/AI actions |
+| Pose | MediaPipe Heavy, 33 landmarks, temporal smoothing and display-only completion |
+| Keyframes | Local SwingNet inference with seven app phases, person-crop retry, manual marking and review |
+| 3D view | Rigged human mesh driven by pose estimates, with rotation and zoom |
+| Curves | Sided angle traces; missing readings break the line instead of being bridged |
+| Rules | Editable ranges, sources and applicable conditions; rules can be enabled or disabled |
+| AI coach | Provider settings, Keychain storage, contextual questions and scrolling to new messages |
+| Storage | Local videos, analysis records and conversation history |
 
-- Import real swing footage from Photos and analyze it on the device
-- Produce 33 landmarks and world landmarks with MediaPipe
-- Detect keyframes and calculate joint- and torso-based metrics
-- Smooth landmarks with tuned One Euro presets for real-time and slow-motion footage
-- Evaluate coach-entered ranges together with their sources and conditions
-- Package results into structured chat context for a future model integration
+Pose, phase detection, and angle calculations run on the device. When you ask the configured AI service, the app sends the relevant analysis, conversation context and, if enabled, up to 13 selected video frames; it does not upload the complete video. See [AI setup and data scope](docs/AI_INTEGRATION.md).
 
-> [!IMPORTANT]
-> CoachMe ships **no built-in “correct” angles**. Outside a range means only
-> “outside the range you set,” never “wrong.” When data is insufficient, the app
-> says it cannot calculate reliably instead of substituting zero or an estimate.
+## Recent improvements
 
-## Runnable and verified
+- Unified the Home, Import, Workbench, Report, AI Coach, Rules, and Settings screens.
+- Made analysis progress scrollable with a fixed cancel action; limited thumbnail caching and preview refreshes.
+- Smoothed the 2D display skeleton while keeping measurement data separate from display completion.
+- Fixed report pending counts and carried the selected phase, side, and metric into an editable AI question.
+- Preserved provisional report rows and broke angle curves at missing or non-finite readings.
 
-The current version completes the full analysis path on both the iOS Simulator
-and a physical iPhone.
+## Verification
+
+Recorded on September 11, 2026:
 
 | Check | Result |
 |---|---|
-| `CoachMeCore` build | ✅ 0 errors, 0 warnings |
-| `CoachMeCore` tests | ✅ **46/46** with XCTest |
-| iOS app tests | ✅ **24/24** on the iPhone 15 Simulator |
-| Real-video pipeline | ✅ decode → pose → keyframes → metrics → rules → chat context |
-| MediaPipe inference | ✅ 33 landmarks and world landmarks on real footage |
-| Node reference checks | ✅ geometry 31/31, rules 25/25 |
-| Physical device | ✅ iPhone 16 Pro / iOS 26.4.2: installed, launched, and completed one analysis |
+| Core tests | 81 passed |
+| iOS regression suite | 33 passed; 1 real-provider API test skipped |
+| Targeted UI-logic regression | 9 passed after adding report-context, metric-question, and curve-gap cases; overlaps the full suite |
+| Builds | iOS Simulator and physical-device builds succeeded |
+| Video workflow | An 8.8-second clip completed analysis and produced seven candidates for review |
+| UI walkthrough | Home, 2D/3D, landscape, curves, report details, AI question handoff, rules, settings and clip selection |
+| Physical device | Latest build installed on iPhone 16 Pro; automatic launch was blocked by the lock screen |
 
-**Device environment:** Xcode 26.6, iOS 26.5 SDK, and a free Personal Team.
-The Simulator build was also verified with Xcode 15.4 and the iOS 17.5 SDK.
-MediaPipeTasksVision 0.10.21 is linked.
-
-> [!NOTE]
-> Runnable does not mean measurement accuracy has been established. The output
-> has not been compared with manual annotation or motion capture, so this project
-> publishes no accuracy figure. Device alignment, performance, memory, and battery
-> behavior also await systematic evaluation. See [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
+These checks establish functionality, not measurement or coaching accuracy. Pose estimates and automatic phase labels still need review. Reference ranges come from the user's coach rules. See [measurement limitations](docs/LIMITATIONS.md), [SwingNet sources and terms](tools/swingnet/README.md), and [3D model attribution](CoachMe/Resources/GolfAvatar-LICENSE.txt).
 
 ## Quick start
 
@@ -129,7 +129,7 @@ lost the next time the generated project is rebuilt.
 swift test --package-path CoachMeCore
 
 xcodebuild -workspace CoachMe.xcworkspace -scheme CoachMe \
-  -destination 'platform=iOS Simulator,name=iPhone 15' test
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 ```
 
 With only the Command Line Tools and no full Xcode installation:
@@ -157,10 +157,10 @@ CoachMeCore/                 Pure Swift logic; no SwiftUI, AVFoundation, or Medi
     Smoothing/               One Euro filter and pose-sequence smoothing
     Rules/                   Coach rules and the evaluation engine
     Chat/                    Messages, conversations, context, and ChatService
-  Tests/                     46 tests
+  Tests/                     Core regression tests
 
 CoachMe/                     iOS app target
-CoachMeTests/                24 app tests
+CoachMeTests/                iOS regression and integration tests
 tools/reference/             Node geometry and rules reference implementation
 tools/no-xcode-testrunner/   XCTest shim for machines without full Xcode
 tools/setup-xcode-project.sh Generate the project and install dependencies

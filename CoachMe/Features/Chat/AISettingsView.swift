@@ -77,9 +77,9 @@ struct AISettingsView: View {
                         Text("默认 Flash + 快速解读；深入分析会增加等待时间与用量。")
                             .font(.caption).foregroundStyle(.secondary)
                     }
-                    Toggle("让教练看动作截图", isOn: Binding(get: { configuration.includeKeyframeImages ?? true },
+                    Toggle("动作视觉分析", isOn: Binding(get: { configuration.includeKeyframeImages ?? true },
                         set: { configuration.includeKeyframeImages = $0 }))
-                    Text("发送原视频关键帧，画面优先、指标辅助。DeepSeek 看图使用 Flash；其他服务请选择支持图片的模型。")
+                    Text("结合动作表现与指标提供指导。DeepSeek 使用 Flash；其他服务需选择支持视觉分析的模型。")
                         .font(.caption).foregroundStyle(.secondary)
                     SecureField("API Key", text: $key)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -101,7 +101,7 @@ struct AISettingsView: View {
                     }.disabled(testing)
                     if !status.isEmpty { Text(status).font(.footnote).textSelection(.enabled) }
                 } footer: {
-                    Text("密钥仅存于本机钥匙串。发送问题时会将当前挥杆分析数据及最近聊天记录发送到上方地址，由该服务商处理；开启看图时会发送最多 13 张原视频截图，不上传完整视频。测试连接只发送一句测试消息，可能产生少量 API 费用。")
+                    Text("密钥仅存于本机钥匙串。发送问题时会将当前挥杆分析数据及最近聊天记录发送到上方地址，由该服务商处理；开启动作视觉分析时会发送最多 13 张原视频截图，不上传完整视频。测试连接只发送一句测试消息，可能产生少量 API 费用。")
                 }
             }
             .navigationTitle("AI 接口设置")

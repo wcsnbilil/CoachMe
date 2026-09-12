@@ -14,14 +14,14 @@ enum AIKeyframeImages {
         defer { generator.cancelAllCGImageGeneration() }
         let targets = AIFramePlan(keyframes: swing.keyframes, start: swing.clipStartSeconds,
                                   end: swing.clipEndSeconds).samples
-        guard !targets.isEmpty else { throw ChatServiceError.transport("没有可用的动作截图，请检查选段。") }
+        guard !targets.isEmpty else { throw ChatServiceError.transport("没有可用的动作内容，请检查选段。") }
         var result: [LLMFrameImage] = []
         for target in targets {
             let time = target.timestamp, label = target.label
             try Task.checkCancellation()
             let frame = try await generator.image(at: CMTime(seconds: time, preferredTimescale: 60000))
             guard let jpeg = UIImage(cgImage: frame.image).jpegData(compressionQuality: 0.8) else {
-                throw ChatServiceError.transport("无法准备动作截图，请重试。")
+                throw ChatServiceError.transport("暂时无法准备挥杆分析，请重试。")
             }
             result.append(LLMFrameImage(jpegData: jpeg,
                 label: String(format: "原视频 %.3f 秒 · %@", frame.actualTime.seconds, label)))

@@ -77,7 +77,7 @@ struct ChatPanelView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     if model.conversation.messages.isEmpty {
-                        Text("发送时会附上原视频动作截图，让教练结合画面指导你；指标用于辅助判断。可在接口设置关闭截图发送。")
+                        Text("让教练帮你找到最值得调整的动作，再给出适合下一次练习的建议。也可以直接问你最关心的问题。")
                             .font(.footnote).foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 24)
@@ -266,16 +266,16 @@ final class ChatModel {
         if !injectedService && service.isConfigured {
             let configuration = AISettingsStore.configuration
             if configuration.includeKeyframeImages ?? true {
-                preparationLabel = "正在准备动作截图…"
+                preparationLabel = "正在准备挥杆分析…"
                 do {
                     let images = try await AIKeyframeImages.load(swing: swing, videoURL: store.videoURL(for: swing))
                     try Task.checkCancellation()
                     requestService = LLMChatService(configuration: configuration, apiKey: AISettingsStore.key(configuration), images: images)
-                    preparationLabel = "教练正在看 \(images.count) 张动作截图…"
+                    preparationLabel = "教练正在查看你的动作…"
                 } catch {
                     conversation.updateStatus(messageID: message.id, to: Task.isCancelled ? .cancelled : .failed)
                     conversation.append(ChatMessage(role: .system, kind: .statusNotice,
-                        content: Task.isCancelled ? "已停止生成。" : "动作截图准备失败，请重试或在接口设置关闭截图发送。", status: .delivered))
+                        content: Task.isCancelled ? "已停止生成。" : "暂时无法分析这段动作，请重试或重新选择挥杆片段。", status: .delivered))
                     persist()
                     return
                 }

@@ -16,13 +16,16 @@ final class LiveDeepSeekTests: XCTestCase {
         // Verify the tuned mode using the user's selected model and endpoint.
         if tuned.model.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty { tuned.model = "deepseek-flash" }
         tuned.deepSeekThinking = false
-        let service = LLMChatService(configuration:tuned,apiKey:key)
+
         let store = LocalStore.shared
         let library = SwingLibrary(store:store)
         let record = try XCTUnwrap(library.swings.first { library.analysis(for:$0) != nil })
         let model = WorkbenchModel(swing:record,cache:library.analysis(for:record),videoURL:library.videoURL(for:record))
         let context = model.buildContext(rules:library.rules)
-        let message = ChatMessage(role:.user,content:"请解读这次挥杆。先说明数据是否足够可靠，再给最多三项有具体数据依据的发现与练习建议。不能计算的指标请直接说明。",analysisVersion:record.analysisVersion)
+        let images = try await AIKeyframeImages.load(swing:record,videoURL:library.videoURL(for:record))
+        XCTAssertFalse(images.isEmpty)
+        let service = LLMChatService(configuration:tuned,apiKey:key,images:images)
+        let message = ChatMessage(role:.user,content:"请像面对面带课一样看看我的挥杆，告诉我最值得调整的一两点，以及下一次该怎么练。",analysisVersion:record.analysisVersion)
         var reply: ChatMessage?
         for try await event in service.send(message:message,conversation:Conversation(swingID:record.id),context:context,
             options:ChatRequestOptions(timeout:120,maxRetries:0,contextTokenLimit:128_000)) {
@@ -35,7 +38,7 @@ final class LiveDeepSeekTests: XCTestCase {
         let directory = store.root.appendingPathComponent("diagnostics",isDirectory:true)
         try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
         try Data(answer.content.utf8).write(to:directory.appendingPathComponent("deepseek-live-answer.txt"),options:.atomic)
-        let info = "provider=DeepSeek\nmodel=\(tuned.model)\nswing=\(record.id)\nframes=\(context.quality.framesAnalysed)\nanswerCharacters=\(answer.content.count)\n"
+        let info = "provider=DeepSeek\nmodel=deepseek-flash\nimages=\(images.count)\nswing=\(record.id)\nframes=\(context.quality.framesAnalysed)\nanswerCharacters=\(answer.content.count)\n"
         try Data(info.utf8).write(to:directory.appendingPathComponent("deepseek-live-result.txt"),options:.atomic)
     }
 }

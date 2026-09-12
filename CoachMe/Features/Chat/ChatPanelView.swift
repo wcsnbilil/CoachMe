@@ -60,7 +60,7 @@ struct ChatPanelView: View {
                 Button("配置 DeepSeek / 其他接口") { showingSettings = true }.buttonStyle(.borderedProminent)
             } else {
                 Button("解读本次挥杆") {
-                    requestTask = Task { await model.send("请根据本次全部分析数据，给出最重要的发现和下一次练习重点。") }
+                    requestTask = Task { await model.send("请像面对面带课一样看看我的挥杆，告诉我最值得调整的一两点，以及下一次该怎么练。") }
                 }.buttonStyle(.bordered).disabled(model.isSending)
             }
             Label(model.connectionLabel, systemImage: model.isConfigured ? "checkmark.circle" : "bolt.horizontal.circle")
@@ -77,13 +77,13 @@ struct ChatPanelView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     if model.conversation.messages.isEmpty {
-                        Text("配置接口后，可解读本次挥杆并连续追问。发送会附带全程指标、关键帧、质量与当前帧数据。")
+                        Text("发送时会附上原视频动作截图，让教练结合画面指导你；指标用于辅助判断。可在接口设置关闭截图发送。")
                             .font(.footnote).foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 24)
                     }
                     if model.isSending {
-                        HStack { ProgressView(); Text("AI 正在分析…"); Button("停止") { requestTask?.cancel() } }
+                        HStack { ProgressView(); Text(model.preparationLabel); Button("停止") { requestTask?.cancel() } }
                     }
                     ForEach(model.conversation.messages) { message in
                         VStack(alignment: .leading, spacing: 4) {
@@ -207,6 +207,7 @@ final class ChatModel {
     let context: SwingAnalysisContext
     private(set) var conversation: Conversation
     private(set) var isSending = false
+    private(set) var preparationLabel = "教练正在看动作…"
 
     private var service: ChatService
     private let injectedService: Bool
@@ -261,7 +262,26 @@ final class ChatModel {
         } else { conversation.append(message) }
         persist()
 
-        for await event in service.send(message: message,
+        var requestService = service
+        if !injectedService && service.isConfigured {
+            let configuration = AISettingsStore.configuration
+            if configuration.includeKeyframeImages ?? true {
+                preparationLabel = "正在准备动作截图…"
+                do {
+                    let images = try await AIKeyframeImages.load(swing: swing, videoURL: store.videoURL(for: swing))
+                    try Task.checkCancellation()
+                    requestService = LLMChatService(configuration: configuration, apiKey: AISettingsStore.key(configuration), images: images)
+                    preparationLabel = "教练正在看 \(images.count) 张动作截图…"
+                } catch {
+                    conversation.updateStatus(messageID: message.id, to: Task.isCancelled ? .cancelled : .failed)
+                    conversation.append(ChatMessage(role: .system, kind: .statusNotice,
+                        content: Task.isCancelled ? "已停止生成。" : "动作截图准备失败，请重试或在接口设置关闭截图发送。", status: .delivered))
+                    persist()
+                    return
+                }
+            } else { preparationLabel = "教练正在分析…" }
+        }
+        for await event in requestService.send(message: message,
                                         conversation: conversation,
                                         context: context,
                                         options: ChatRequestOptions(timeout: 120, maxRetries: 0, contextTokenLimit: 128_000)).mapErrorToEvents() {

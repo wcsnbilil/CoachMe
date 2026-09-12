@@ -35,7 +35,7 @@
 
 - MediaPipe Heavy 默认姿态模型；本地 SwingNet 自动识别六个阶段，支持旧记录重试和人工调整。
 - 二维/三维显示骨架按时序与人体比例补全，虚线表示估计；二维躯干使用中央脊柱避免投影交叉。补全不参与指标评分。
-- 可配置 OpenAI、Claude、Gemini、DeepSeek 和 OpenAI 兼容 API，支持当前挥杆数据解读与连续问答。密钥存于本机钥匙串。
+- 可配置 OpenAI、Claude、Gemini、DeepSeek 和 OpenAI 兼容 API，支持结合原视频关键帧的教练式指导与连续问答，指标辅助判断。密钥存于本机钥匙串。
 - 核心回归 64 项通过，后补认证/超时用例通过；聊天模拟器集成 6 项通过。真实 LLM 调用需填入自己的 API Key 后验证。
 
 导入时可预览并选择单次完整挥杆，分析后直接进入工作台。全图识别失败会尝试人物增强；生成的阶段仍需逐帧复核。已有视频可重试、手动调整或重新选段分析。模型来源、转换及许可见 [tools/swingnet](tools/swingnet/README.md)，AI 配置与数据范围见 [接入说明](docs/AI_INTEGRATION.md)。

@@ -152,7 +152,8 @@ final class WorkbenchModel {
     // MARK: - Analysis context for chat
 
     func buildContext(rules: [CoachRule]) -> SwingAnalysisContext {
-        let byPhase = timeline?.metricsByPhase(swing.keyframes) ?? [:]
+        let confirmedKeyframes = swing.keyframes.filter { $0.markedByCoach }
+        let byPhase = timeline?.metricsByPhase(confirmedKeyframes) ?? [:]
         var readings: [SwingAnalysisContext.MetricReading] = []
 
         for (phase, metrics) in byPhase.sorted(by: { $0.key.order < $1.key.order }) {
@@ -213,8 +214,8 @@ final class WorkbenchModel {
             handedness: swing.handedness,
             club: swing.club,
             cameraView: swing.cameraView,
-            markedPhases: swing.keyframes.orderedPhases,
-            selectedPhase: currentPhase,
+            markedPhases: confirmedKeyframes.orderedPhases,
+            selectedPhase: confirmedKeyframes.contains(where: { $0.phase == currentPhase }) ? currentPhase : nil,
             selectedTimestampSeconds: playback?.currentTime,
             readings: readings,
             quality: quality,
@@ -268,7 +269,11 @@ final class WorkbenchModel {
             }
             lines.append(row.joined(separator: ","))
         }
-        if let data = try? JSONEncoder().encode(swing.keyframes) {
+        let confirmed = swing.keyframes.filter { $0.markedByCoach }
+        let candidates = swing.keyframes.filter { !$0.markedByCoach }.map { number($0.timestampSeconds) }
+        lines.append("未复核的自动取样时间（不赋予阶段含义）：" + candidates.joined(separator: ","))
+        if !candidates.isEmpty { lines.append("准备姿势参考可能未复核，相对转角不能用于确定动作结论。请先独立看图，不能从数值猜阶段。") }
+        if let data = try? JSONEncoder().encode(confirmed) {
             lines.append("关键帧来源与时间：" + String(decoding: data, as: UTF8.self))
         }
         if let frame = currentPoseFrame, let data = try? JSONEncoder().encode(frame) {

@@ -30,6 +30,19 @@ final class UsabilityTests: XCTestCase {
         XCTAssertTrue(context.analysisDetails?.contains("全程指标") == true)
         XCTAssertEqual(context.quality.framesAnalysed,1)
     }
+    @MainActor func testUnreviewedPhaseNamesDoNotAnchorAIContext() {
+        var record = swing()
+        record.keyframes = [Keyframe(phase:.top,timestampSeconds:8,markedByCoach:false)]
+        let model = WorkbenchModel(swing:record,cache:nil,videoURL:URL(fileURLWithPath:"/none.mp4"))
+        let context = model.buildContext(rules:[])
+        XCTAssertTrue(context.markedPhases.isEmpty)
+        XCTAssertTrue(context.readings.isEmpty)
+        XCTAssertTrue(context.analysisDetails?.contains("8.000") == true)
+        XCTAssertFalse(context.analysisDetails?.contains("\"phase\":\"top\"") == true)
+        record.keyframes[0].markedByCoach = true
+        let reviewed = WorkbenchModel(swing:record,cache:nil,videoURL:URL(fileURLWithPath:"/none.mp4")).buildContext(rules:[])
+        XCTAssertEqual(reviewed.markedPhases,[.top])
+    }
     func testFailedImportCleanupDoesNotDeleteSavedSwing() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at:root) }

@@ -98,6 +98,31 @@ final class LLMChatServiceTests: XCTestCase {
         }
     }
 
+    func testVisionImagesReachUserMessageAndUseProviderFormat() throws {
+        for provider in [LLMProvider.deepSeek,.openAI,.gemini,.claude] {
+            let bytes = Data([0xff,0xd8,0xff,0xd9])
+            let service = LLMChatService(configuration:config(provider),apiKey:"test",
+                images:[.init(jpegData:bytes,label:"原视频 1.25 秒 · 顶点候选")])
+            let req = try service.makeRequest(message:.init(role:.user,content:"看看动作"),
+                conversation:.init(swingID:UUID()),context:context(),options:.init())
+            let body = try JSONSerialization.jsonObject(with:req.httpBody!) as! [String:Any]
+            let messages = body["messages"] as! [[String:Any]]
+            XCTAssertEqual(messages.last?["role"] as? String,"user")
+            let parts = messages.last!["content"] as! [[String:Any]]
+            XCTAssertTrue((parts.first?["text"] as? String)?.contains("看看动作") == true)
+            XCTAssertEqual(parts[1]["text"] as? String,"原视频 1.25 秒 · 顶点候选")
+            if provider == .claude {
+                let source = parts[2]["source"] as! [String:String]
+                XCTAssertEqual(source["data"],bytes.base64EncodedString())
+                // Claude's merged context must survive the conversion to image parts.
+                XCTAssertTrue((parts[0]["text"] as! String).contains("本次挥杆分析数据"))
+            } else {
+                XCTAssertEqual((parts[2]["image_url"] as! [String:String])["url"],"data:image/jpeg;base64,"+bytes.base64EncodedString())
+            }
+            if provider == .deepSeek { XCTAssertEqual(body["model"] as? String,"deepseek-flash") }
+        }
+    }
+
     func testActualURLSessionUsesMockTransport() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [ChatMockProtocol.self]

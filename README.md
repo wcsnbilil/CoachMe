@@ -172,12 +172,6 @@ project.yml                  XcodeGen project specification
 
 </details>
 
-## Product principles
-
-1. **Say when a value cannot be computed.** Return the reason; never insert a default angle or estimate.
-2. **Do not invent standards for the coach.** Every reference range needs a source and applicable conditions.
-3. **Do not pretend AI is connected.** Configured requests call the selected service; unconfigured requests show a status notice. Video stays local.
-
 ## Documentation
 
 | Document | Contents |

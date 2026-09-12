@@ -27,8 +27,8 @@ final class WorkbenchModel {
         self.swing = swing
         self.cache = cache
         self.poseFrames = cache?.smoothedFrames() ?? []
-        self.displayFrames = PoseDisplayCompleter(minVisibility: swing.qualityPolicy.minVisibility)
-            .complete(self.poseFrames, keyframes: swing.keyframes)
+        self.displayFrames = PoseDisplaySmoother().smooth(PoseDisplayCompleter(minVisibility: swing.qualityPolicy.minVisibility)
+            .complete(self.poseFrames, keyframes: swing.keyframes))
         if cache != nil {
             timeline = MetricTimeline(poseFrames: poseFrames, record: swing)
         }
@@ -140,8 +140,8 @@ final class WorkbenchModel {
     private func persist(_ library: SwingLibrary) {
         swing.analysisVersion += 1
         library.save(swing)
-        displayFrames = PoseDisplayCompleter(minVisibility: swing.qualityPolicy.minVisibility)
-            .complete(poseFrames, keyframes: swing.keyframes)
+        displayFrames = PoseDisplaySmoother().smooth(PoseDisplayCompleter(minVisibility: swing.qualityPolicy.minVisibility)
+            .complete(poseFrames, keyframes: swing.keyframes))
         // Address may have moved, which changes every rotation metric. Recompute
         // from the cached landmarks; no inference re-run.
         if let cache {

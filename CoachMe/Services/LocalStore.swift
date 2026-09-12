@@ -158,3 +158,13 @@ final class LocalStore {
         return filename
     }
 }
+
+/// Dedicated store/encoder instance: large copies and cache encoding never block UI scrolling.
+actor AnalysisImportStorage {
+    private let store: LocalStore
+    init(root: URL) { store = LocalStore(root: root) }
+    func importVideo(from source: URL, swingID: UUID) throws -> String {
+        try store.importVideo(from: source, swingID: swingID)
+    }
+    func saveAnalysis(_ cache: AnalysisCache) throws { try store.saveAnalysis(cache) }
+}

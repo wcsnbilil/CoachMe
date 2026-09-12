@@ -64,7 +64,7 @@ struct ImportView: View {
                             .font(.caption).foregroundStyle(.secondary)
                         clipRangeControls
                     }
-                }
+                }.disabled(phase == .analysing)
 
                 if videoURL != nil {
                     Section("设置") {
@@ -90,18 +90,7 @@ struct ImportView: View {
                              ? "将按慢动作校准关键点平滑。适用于手机慢动作模式，或已降速导出的片段。"
                              : "按正常速度校准关键点平滑。若视频其实是慢动作，读数会比可达到的更抖。")
                             .font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-
-                if let progress, phase == .analysing {
-                    Section("分析中") {
-                        ProgressView(value: progress.fraction) {
-                            Text("\(progress.stage ?? "识别骨骼与动作阶段")：\(progress.framesProcessed) / \(progress.estimatedTotalFrames) 帧")
-                        }
-                        Text(String(format: "当前 %.2f 秒", progress.currentTimestampSeconds))
-                            .font(.caption).foregroundStyle(.secondary)
-                        Button("取消分析", role: .destructive) { cancelAnalysis() }
-                    }
+                    }.disabled(phase == .analysing)
                 }
 
                 if let errorMessage {
@@ -114,15 +103,23 @@ struct ImportView: View {
             }
             .scrollContentBackground(.hidden)
             .background(CoachStyle.background)
-            .disabled(phase == .analysing)
-            .overlay(alignment: .bottom) {
-                if phase == .analysing {
-                    Button("取消分析", role: .destructive) { cancelAnalysis() }
-                        .buttonStyle(.borderedProminent).padding().background(.thinMaterial, in: Capsule())
-                }
-            }
             .safeAreaInset(edge:.bottom) {
-                if phase != .analysing {
+                if phase == .analysing {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(progress?.stage ?? "正在准备视频…").font(.subheadline.weight(.medium))
+                            Spacer()
+                            Button("取消", role: .destructive) { cancelAnalysis() }
+                        }
+                        if let progress, progress.estimatedTotalFrames > 0 {
+                            ProgressView(value: progress.fraction)
+                            Text("\(progress.framesProcessed) / \(progress.estimatedTotalFrames) 帧 · \(Int(progress.fraction * 100))%")
+                                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        } else {
+                            ProgressView().frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }.padding(.horizontal,20).padding(.vertical,12).background(.ultraThinMaterial)
+                } else {
                     Button { startAnalysis() } label: {
                         HStack { Text("开始分析"); Spacer(); Image(systemName:"arrow.right") }.padding(.horizontal,18)
                     }
@@ -261,8 +258,10 @@ struct ImportView: View {
             var committed = false
             defer { if !committed { LocalStore.shared.discardPendingImport(id: swingID, filename: storedFilename) } }
             do {
-                let filename = try LocalStore.shared.importVideo(from: videoURL, swingID: swingID)
+                let storage = AnalysisImportStorage(root: LocalStore.shared.root)
+                let filename = try await storage.importVideo(from: videoURL, swingID: swingID)
                 storedFilename = filename
+                try Task.checkCancellation()
                 var saved = record
                 saved.videoFilename = filename
 
@@ -289,7 +288,9 @@ struct ImportView: View {
                                           createdAt: Date(),
                                           frames: frames,
                                           smoothing: selectedSlowMotion ? .slowMotion : .realTime)
-                try LocalStore.shared.saveAnalysis(cache)
+                progress = AnalysisProgress(framesProcessed: 0, estimatedTotalFrames: 0, currentTimestampSeconds: 0, stage: "正在保存分析…")
+                try await storage.saveAnalysis(cache)
+                try Task.checkCancellation()
 
                 try library.saveChecked(saved)
                 committed = true

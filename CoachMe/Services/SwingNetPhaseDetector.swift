@@ -139,7 +139,8 @@ final class SwingNetPhaseDetector {
 
 /// Re-runs phase detection on a saved video without recomputing pose landmarks.
 actor SavedSwingPhaseAnalysis {
-    func run(url: URL, start: Double = 0, end: Double? = nil, frames: [PoseFrame] = [], usePersonCrop: Bool = false) async throws -> [Keyframe] {
+    func run(url: URL, start: Double = 0, end: Double? = nil, frames: [PoseFrame] = [], usePersonCrop: Bool = false,
+             onProgress: @Sendable @escaping (AnalysisProgress) -> Void = { _ in }) async throws -> [Keyframe] {
         let detector = SwingNetPhaseDetector()
         try detector.prepare()
         let bounds = usePersonCrop ? PersonCrop.estimate(from: frames) : nil
@@ -148,12 +149,21 @@ actor SavedSwingPhaseAnalysis {
         let range = end.map { CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 600), end: CMTime(seconds: $0, preferredTimescale: 600)) }
         try await reader.start(timeRange: range, maxDimension: 4096)
         defer { reader.cancel() }
+        var processed = 0
+        var lastProgress = Date.distantPast
         while let frame = try reader.nextFrame() {
             try Task.checkCancellation()
             try autoreleasepool {
                 try detector.append(pixelBuffer: frame.pixelBuffer, timestamp: frame.timestampSeconds, crop: crop)
             }
+            processed += 1
+            if Date().timeIntervalSince(lastProgress) >= 0.1 {
+                lastProgress = Date()
+                onProgress(AnalysisProgress(framesProcessed: processed, estimatedTotalFrames: max(frames.count, processed),
+                    currentTimestampSeconds: frame.timestampSeconds, stage: "优化动作阶段（人物增强）"))
+            }
         }
+        onProgress(AnalysisProgress(framesProcessed: 0, estimatedTotalFrames: 0, currentTimestampSeconds: 0, stage: "正在整理关键帧…"))
         var marks = try detector.finish()
         if crop != nil { for i in marks.indices { marks[i].note += " · 人物增强候选，待复核" } }
         return marks

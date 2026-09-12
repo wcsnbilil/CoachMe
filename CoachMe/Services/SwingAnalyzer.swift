@@ -54,6 +54,7 @@ actor SwingAnalyzer {
                  timeRange: CMTimeRange?,
                  onProgress: @Sendable @escaping (AnalysisProgress) -> Void) async throws -> [PoseFrame] {
 
+        onProgress(AnalysisProgress(framesProcessed: 0, estimatedTotalFrames: 0, currentTimestampSeconds: 0, stage: "正在加载分析模型…"))
         try detector.prepare()
         detector.reset()
         keyframes = []
@@ -82,6 +83,7 @@ actor SwingAnalyzer {
         var frames: [PoseFrame] = []
         frames.reserveCapacity(max(estimatedTotal, 16))
         var processed = 0
+        var lastProgress = Date.distantPast
 
         while true {
             // Cooperative cancellation: checked every frame so cancelling is
@@ -125,13 +127,18 @@ actor SwingAnalyzer {
             }
 
             processed += 1
-            onProgress(AnalysisProgress(framesProcessed: processed,
-                                        estimatedTotalFrames: estimatedTotal,
-                                        currentTimestampSeconds: decoded.timestampSeconds))
+            if Date().timeIntervalSince(lastProgress) >= 0.1 || processed == estimatedTotal {
+                lastProgress = Date()
+                onProgress(AnalysisProgress(framesProcessed: processed,
+                                            estimatedTotalFrames: estimatedTotal,
+                                            currentTimestampSeconds: decoded.timestampSeconds,
+                                            stage: "识别骨骼与动作阶段"))
+            }
         }
 
         guard !frames.isEmpty else { throw AnalysisError.noFramesProduced }
         if phaseActive {
+            onProgress(AnalysisProgress(framesProcessed: 0, estimatedTotalFrames: 0, currentTimestampSeconds: frames.last?.timestampSeconds ?? 0, stage: "正在整理关键帧…"))
             do {
                 keyframes = try phaseDetector?.finish() ?? []
                 if keyframes.isEmpty { phaseDetectionNote = "未找到顺序一致的挥杆阶段。请只保留一次完整挥杆，或手动标记。" }
@@ -147,7 +154,7 @@ actor SwingAnalyzer {
             do {
                 keyframes = try await SavedSwingPhaseAnalysis().run(url: urlAsset.url,
                     start: timeRange?.start.seconds ?? 0, end: timeRange?.end.seconds,
-                    frames: frames, usePersonCrop: true)
+                    frames: frames, usePersonCrop: true, onProgress: onProgress)
                 phaseDetectionNote = keyframes.isEmpty
                     ? "人物增强仍未找到一致阶段。请重新选取一次挥杆，或手动标记。"
                     : "已使用人物增强生成关键帧候选，请逐帧复核。"

@@ -20,14 +20,26 @@
   <img alt="App 测试 24/24" src="https://img.shields.io/badge/App_tests-24%2F24-2EA44F">
 </p>
 
+## 运行截图
+
+以下为 iPhone 17 Pro 模拟器中的真实运行截图。三维页展示标准准备姿势；AI 页为已保存的对话示例，不代表教练结论经过准确性验证。
+
 <table>
   <tr>
-    <td align="center"><img src="simulator-launch.png" alt="CoachMe 首页" width="320"></td>
-    <td align="center"><img src="device-analysis.png" alt="CoachMe 真机挥杆分析" width="320"></td>
+    <td align="center"><a href="docs/screenshots/home.png"><img src="docs/screenshots/home.png" alt="首页 · 最近挥杆" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/analysis.png"><img src="docs/screenshots/analysis.png" alt="视频分析 · 骨架叠加" width="300"></a></td>
   </tr>
   <tr>
-    <td align="center"><sub>清晰、直接的分析入口</sub></td>
-    <td align="center"><sub>真机视频上的骨架与角度叠加</sub></td>
+    <td align="center"><sub>首页 · 最近挥杆</sub></td>
+    <td align="center"><sub>视频分析 · 骨架叠加</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/screenshots/avatar.png"><img src="docs/screenshots/avatar.png" alt="三维视图 · 标准人体" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/ai-coach.png"><img src="docs/screenshots/ai-coach.png" alt="AI 教练 · 连续提问" width="300"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>三维视图 · 标准人体</sub></td>
+    <td align="center"><sub>AI 教练 · 连续提问</sub></td>
   </tr>
 </table>
 

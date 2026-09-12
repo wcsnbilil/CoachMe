@@ -20,14 +20,26 @@
   <img alt="App tests 24/24" src="https://img.shields.io/badge/App_tests-24%2F24-2EA44F">
 </p>
 
+## App screenshots
+
+Captured from the running app on the iPhone 17 Pro Simulator. The 3D view shows the standard address pose; the AI page shows a saved conversation, not a validated coaching assessment.
+
 <table>
   <tr>
-    <td align="center"><img src="simulator-launch.png" alt="CoachMe home screen" width="320"></td>
-    <td align="center"><img src="device-analysis.png" alt="CoachMe swing analysis on an iPhone" width="320"></td>
+    <td align="center"><a href="docs/screenshots/home.png"><img src="docs/screenshots/home.png" alt="Home · recent swings" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/analysis.png"><img src="docs/screenshots/analysis.png" alt="Video analysis · pose overlay" width="300"></a></td>
   </tr>
   <tr>
-    <td align="center"><sub>A focused starting point for every analysis</sub></td>
-    <td align="center"><sub>Skeleton and angle overlays on real swing footage</sub></td>
+    <td align="center"><sub>Home · recent swings</sub></td>
+    <td align="center"><sub>Video analysis · pose overlay</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/screenshots/avatar.png"><img src="docs/screenshots/avatar.png" alt="3D view · standard human model" width="300"></a></td>
+    <td align="center"><a href="docs/screenshots/ai-coach.png"><img src="docs/screenshots/ai-coach.png" alt="AI coach · follow-up questions" width="300"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>3D view · standard human model</sub></td>
+    <td align="center"><sub>AI coach · follow-up questions</sub></td>
   </tr>
 </table>
 

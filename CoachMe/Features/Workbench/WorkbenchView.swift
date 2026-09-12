@@ -84,10 +84,10 @@ struct WorkbenchView: View {
                     } else {
                         VStack(alignment:.leading,spacing:12) {
                             Text("空间姿态").font(.headline)
-                            Text("拖动旋转，切换视角。三维姿态为模型估计。")
+                            Text("标准人体模型随动作变化，可旋转和缩放观察。")
                                 .font(.caption).foregroundStyle(.secondary)
                             Skeleton3DView(frame:model.currentDisplayPoseFrame,handedness:model.swing.handedness)
-                                .frame(height:340)
+                                .frame(height:460)
                         }.coachCard()
                     }
                 }

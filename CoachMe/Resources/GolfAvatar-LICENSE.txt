@@ -1,0 +1,7 @@
+Human Base Meshes v1.2.0 — realistic male body and eyes
+Blender Studio and community contributors
+Source: https://www.blender.org/download/demo-files/
+Archive: https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.2.0.zip
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+The source is dedicated to the public domain under CC0. The official source page labels the Human Base Meshes bundle CC0.
+CoachMe modifications: anatomical rigging, fixed-proportion retargeting, subdivision, mobile mesh export and display material.

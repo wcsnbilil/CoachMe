@@ -1,136 +1,228 @@
 import SwiftUI
+import SceneKit
 import CoachMeCore
+import simd
 
-/// Standalone view of the model's 3D estimate, rendered as an orthographic
-/// projection the user can rotate.
-///
-/// The banner is not decoration: MediaPipe world landmarks are a GHUM model
-/// estimate with an undocumented axis convention, hip-centred. Presenting them
-/// without that statement would imply calibrated motion capture.
 @MainActor
 struct Skeleton3DView: View {
     let frame: PoseFrame?
     let handedness: Handedness
-    @State private var yaw: Double = 0
-    @State private var pitch: Double = 0
+    @State private var standardPose = false
+    @State private var showBones = true
+    @State private var angle: Double = 0.35
+    @State private var reset = 0
 
     var body: some View {
-        VStack(spacing: 8) {
-            banner
-
-            GeometryReader { proxy in
-                Canvas { context, size in
-                    guard let points = projectedPoints(in: size) else { return }
-
-                    let estimatedJoints = Set(PoseJoint.allCases.filter { isEstimated($0) })
-                    func stroke(_ bones: [(PoseJoint, PoseJoint)], _ colour: Color, _ width: CGFloat) {
-                        for (a, b) in bones {
-                            guard let pa = points[a], let pb = points[b] else { continue }
-                            var path = Path()
-                            path.move(to: pa); path.addLine(to: pb)
-                            let estimated = estimatedJoints.contains(a) || estimatedJoints.contains(b)
-                            context.stroke(path, with: .color(colour.opacity(estimated ? 0.65 : 1)),
-                                           style: .init(lineWidth: width, lineCap: .round,
-                                                        dash: estimated ? [5, 5] : []))
-                        }
-                    }
-
-                    stroke(SkeletonTopology.torso, .primary.opacity(0.8), 3)
-                    stroke(SkeletonTopology.legs, .primary.opacity(0.55), 3)
-                    stroke(SkeletonTopology.arm(handedness.leadSide), Palette.leadArm, 4)
-                    stroke(SkeletonTopology.arm(handedness.trailSide), Palette.trailArm, 4)
-
-                    for joint in SkeletonTopology.dots {
-                        guard let p = points[joint] else { continue }
-                        let dot = Path(ellipseIn: CGRect(x: p.x - 3, y: p.y - 3, width: 6, height: 6))
-                        if isEstimated(joint) {
-                            context.stroke(dot, with: .color(.secondary), lineWidth: 1.5)
-                        } else {
-                            context.fill(dot, with: .color(.primary))
-                        }
-                    }
-
-                    // Hip-centre origin marker, to make the coordinate origin visible.
-                    if let lh = points[.leftHip], let rh = points[.rightHip] {
-                        let origin = CGPoint(x: (lh.x + rh.x) / 2, y: (lh.y + rh.y) / 2)
-                        context.stroke(Path(ellipseIn: CGRect(x: origin.x - 6, y: origin.y - 6,
-                                                              width: 12, height: 12)),
-                                       with: .color(.secondary), style: .init(lineWidth: 1, dash: [2, 2]))
-                    }
-                }
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture()
-                        .onChanged { drag in
-                            yaw = drag.translation.width / 100
-                            pitch = -drag.translation.height / 100
-                        }
-                )
-                .accessibilityLabel("三维骨架估计，可拖动旋转视角")
-            }
-            .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 12))
-
+        VStack(spacing:10) {
             HStack {
-                Button("正视") { yaw = 0; pitch = 0 }
-                Button("俯视") { yaw = 0; pitch = -1.4 }
-                Button("侧视") { yaw = 1.57; pitch = 0 }
+                Text(standardPose ? "标准人形 · 准备姿势" : "动作映射")
+                    .font(.caption.weight(.medium))
+                Spacer()
+                Toggle("骨骼",isOn:$showBones).toggleStyle(.button).font(.caption)
             }
-            .font(.caption)
-            .buttonStyle(.bordered)
+            AvatarSceneView(frame:standardPose ? nil : frame, angle:angle, reset:reset, showBones:showBones)
+                .clipShape(RoundedRectangle(cornerRadius:18))
+                .accessibilityLabel("半透明三维人体，可拖动旋转、双指缩放")
+            HStack(spacing:12) {
+                Button("正面") { angle=0; reset += 1 }
+                Button("侧面") { angle = .pi/2; reset += 1 }
+                Button("斜侧") { angle=0.65; reset += 1 }
+                Spacer()
+                Toggle("标准姿势",isOn:$standardPose).toggleStyle(.button)
+            }.font(.caption).buttonStyle(.bordered)
+            Text(frame == nil || standardPose ? "标准体型与球杆示意，不代表个人动作。" : "固定体型由动作数据驱动；遮挡与异常姿态使用约束补位，仅供观察。")
+                .font(.caption2).foregroundStyle(.secondary)
         }
     }
+}
 
-    private func isEstimated(_ joint: PoseJoint) -> Bool {
-        (frame?.worldLandmark(joint)?.visibility ?? 1) < 0.5
-            || (frame?.imageLandmark(joint)?.visibility ?? 1) < 0.5
+@MainActor
+struct AvatarSceneView: UIViewRepresentable {
+    let frame: PoseFrame?
+    let angle: Double
+    let reset: Int
+    let showBones: Bool
+
+    func makeCoordinator() -> AvatarSceneCoordinator { AvatarSceneCoordinator() }
+    func makeUIView(context:Context) -> SCNView {
+        let view=SCNView()
+        view.scene=context.coordinator.scene
+        view.pointOfView=context.coordinator.camera
+        view.backgroundColor=UIColor.secondarySystemGroupedBackground
+        view.antialiasingMode = .multisampling4X
+        view.allowsCameraControl=true
+        view.defaultCameraController.target=SCNVector3(0,0.95,0)
+        view.defaultCameraController.interactionMode = .orbitTurntable
+        view.preferredFramesPerSecond=30
+        view.autoenablesDefaultLighting=false
+        return view
+    }
+    func updateUIView(_ view:SCNView,context:Context) {
+        context.coordinator.update(frame:frame,showBones:showBones)
+        if context.coordinator.lastReset != reset {
+            context.coordinator.lastReset=reset
+            context.coordinator.camera.position=SCNVector3(Float(sin(angle)*3.4),1.4,Float(cos(angle)*3.4))
+            context.coordinator.camera.look(at:SCNVector3(0,0.92,0))
+            view.pointOfView=context.coordinator.camera
+        }
+    }
+}
+
+@MainActor
+final class AvatarSceneCoordinator {
+    let scene=SCNScene()
+    let camera=SCNNode()
+    var lastReset = -1
+    private let rig=SCNNode()
+    private var boneNodes:[SCNNode]=[]
+    private var innerBones:[SCNNode]=[]
+    private let internalRoot=SCNNode()
+    private let standardClub=SCNNode()
+    private let rest=GolfAvatarPose.bindPose
+    private var initialized=false
+    private var previousTimestamp:Double?
+    private var hadFrame=false
+
+    init() {
+        scene.background.contents=UIColor.secondarySystemGroupedBackground
+        camera.camera=SCNCamera()
+        camera.camera?.usesOrthographicProjection=true
+        camera.camera?.orthographicScale=1.08
+        camera.camera?.zNear=0.01; camera.camera?.zFar=30
+        scene.rootNode.addChildNode(camera)
+        scene.rootNode.addChildNode(rig)
+        rig.addChildNode(internalRoot)
+        addLight(type:.ambient,position:SCNVector3(0,2,0),intensity:180)
+        addLight(type:.omni,position:SCNVector3(-2,3,4),intensity:450)
+        addLight(type:.omni,position:SCNVector3(2,2,-2),intensity:250)
+        let base=SCNCylinder(radius:0.65,height:0.018)
+        base.firstMaterial=material(UIColor.systemGray5,metal:0,rough:0.85)
+        let baseNode=SCNNode(geometry:base); baseNode.position=SCNVector3(0,-0.025,0)
+        scene.rootNode.addChildNode(baseNode)
+        for bone in rest.bones {
+            let node=SCNNode(); node.name=bone.name; node.simdTransform=Self.transform(bone)
+            rig.addChildNode(node); boneNodes.append(node)
+            let length=(bone.end-bone.start).length
+            let geometry=SCNCapsule(capRadius:bone.name == "spine" ? 0.013 : 0.011,height:CGFloat(length))
+            geometry.radialSegmentCount=10
+            geometry.firstMaterial=material(UIColor(red:0.87,green:0.94,blue:1,alpha:1),metal:0,rough:0.6)
+            let inner=SCNNode(geometry:geometry); inner.simdTransform=Self.transform(bone)
+            let center=SIMD3<Float>(0,Float(length/2),0)
+            let local=SCNNode(geometry:geometry); local.simdPosition=center
+            inner.geometry=nil; inner.addChildNode(local)
+            inner.opacity=0.45
+            internalRoot.addChildNode(inner); innerBones.append(inner)
+        }
+        addRibs()
+        addStandardClub()
+        loadSkin()
+        update(frame:nil,showBones:true)
     }
 
-    private var banner: some View {
-        Label("三维骨架含时序与人体比例补全，虚线为估计，非动作捕捉。原点为模型的髋部中心，坐标轴与球场、地面、目标线无关。",
-              systemImage: "exclamationmark.triangle")
-            .font(.caption2)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(8)
-            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
-            .fixedSize(horizontal: false, vertical: true)
+    private func addStandardClub() {
+        let pose=GolfAvatarPose(frame:nil)
+        let hands=(pose.joints[.leftWrist]!+pose.joints[.rightWrist]!)/2
+        let end=Vector3(0.22,0.05,0.82)
+        let bone=GolfAvatarBone("demonstrationClub",hands,end)
+        standardClub.simdTransform=Self.transform(bone)
+        let length=(end-hands).length
+        let shaft=SCNCylinder(radius:0.007,height:CGFloat(length)); shaft.radialSegmentCount=12
+        shaft.firstMaterial=material(UIColor.systemGray,metal:0.6,rough:0.3)
+        let rod=SCNNode(geometry:shaft); rod.position=SCNVector3(0,Float(length/2),0); standardClub.addChildNode(rod)
+        let grip=SCNCylinder(radius:0.014,height:0.14); grip.firstMaterial=material(UIColor.darkGray,metal:0,rough:0.8)
+        let handle=SCNNode(geometry:grip); handle.position=SCNVector3(0,0.04,0); standardClub.addChildNode(handle)
+        let head=SCNBox(width:0.12,height:0.045,length:0.065,chamferRadius:0.018)
+        head.firstMaterial=material(UIColor.systemGray3,metal:0.5,rough:0.3)
+        let headNode=SCNNode(geometry:head); headNode.position=SCNVector3(0.04,Float(length),0); standardClub.addChildNode(headNode)
+        scene.rootNode.addChildNode(standardClub)
     }
 
-    /// Orthographic projection of the world landmarks, normalised so the figure
-    /// fits the canvas regardless of the model's absolute scale.
-    private func projectedPoints(in size: CGSize) -> [PoseJoint: CGPoint]? {
-        guard let frame, let world = frame.worldLandmarks, !world.isEmpty else { return nil }
-
-        let cosY = cos(yaw), sinY = sin(yaw)
-        let cosP = cos(pitch), sinP = sin(pitch)
-
-        var raw: [PoseJoint: (x: Double, y: Double)] = [:]
-        for joint in PoseJoint.allCases {
-            guard world.indices.contains(joint.rawValue) else { continue }
-            let mark = world[joint.rawValue]
-            guard mark.position.x.isFinite, mark.position.y.isFinite, mark.position.z.isFinite,
-                  (mark.presence ?? 1) >= 0.5 else { continue }
-            let p = mark.position
-            // Yaw about the vertical axis, then pitch about the horizontal one.
-            let x1 = p.x * cosY + p.z * sinY
-            let z1 = -p.x * sinY + p.z * cosY
-            let y1 = p.y * cosP - z1 * sinP
-            raw[joint] = (x1, y1)
+    private func addLight(type:SCNLight.LightType,position:SCNVector3,intensity:CGFloat) {
+        let node=SCNNode(); node.light=SCNLight(); node.light?.type=type; node.light?.intensity=intensity
+        node.position=position; scene.rootNode.addChildNode(node)
+    }
+    private func material(_ color:UIColor,metal:CGFloat,rough:CGFloat) -> SCNMaterial {
+        let m=SCNMaterial(); m.lightingModel = .physicallyBased; m.diffuse.contents=color
+        m.metalness.contents=metal; m.roughness.contents=rough; return m
+    }
+    private func addRibs() {
+        // Stylized inner structure, not a medical anatomical model.
+        guard innerBones.count>2 else{return}
+        for i in 0..<7 {
+            let radius=CGFloat(0.12+0.04*sin(Double(i)/6 * .pi))
+            let shape=SCNTorus(ringRadius:radius,pipeRadius:0.0045)
+            shape.ringSegmentCount=32; shape.pipeSegmentCount=6
+            shape.firstMaterial=material(UIColor(red:0.79,green:0.89,blue:1,alpha:1),metal:0,rough:0.65)
+            let node=SCNNode(geometry:shape); node.position=SCNVector3(0,0.17+Float(i)*0.04,0)
+            node.scale=SCNVector3(1,1,0.57); innerBones[1].addChildNode(node)
         }
-        guard !raw.isEmpty else { return nil }
 
-        let xs = raw.values.map(\.x), ys = raw.values.map(\.y)
-        let minX = xs.min()!, maxX = xs.max()!, minY = ys.min()!, maxY = ys.max()!
-        let spanX = max(maxX - minX, 1e-6), spanY = max(maxY - minY, 1e-6)
-        let scale = min(size.width / spanX, size.height / spanY) * 0.8
-        let offsetX = (size.width - spanX * scale) / 2
-        let offsetY = (size.height - spanY * scale) / 2
+    }
 
-        return raw.mapValues { point in
-            CGPoint(x: offsetX + (point.x - minX) * scale,
-                    // World-landmark Y grows downward in image-like fashion; the
-                    // figure is drawn directly without flipping so it matches the
-                    // 2D overlay's orientation.
-                    y: offsetY + (point.y - minY) * scale)
+    private struct Mesh:Decodable {
+        let boneNames:[String]
+        let positions:[Float]
+        let normals:[Float]
+        let triangles:[UInt32]
+        let weights:[Float]
+        let boneIndices:[UInt16]
+    }
+    private func loadSkin() {
+        guard let url=Bundle.main.url(forResource:"GolfAvatar.mesh",withExtension:"json"),
+              let data=try? Data(contentsOf:url),let mesh=try? JSONDecoder().decode(Mesh.self,from:data),
+              mesh.boneNames == rest.bones.map(\.name),mesh.positions.count % 3 == 0,
+              mesh.normals.count == mesh.positions.count,mesh.weights.count == mesh.positions.count/3*4,
+              mesh.boneIndices.count == mesh.weights.count else { return }
+        let count=mesh.positions.count/3
+        let vertices=(0..<count).map { i in SCNVector3(mesh.positions[i*3],mesh.positions[i*3+1],mesh.positions[i*3+2]) }
+        let normals=(0..<count).map { i in SCNVector3(mesh.normals[i*3],mesh.normals[i*3+1],mesh.normals[i*3+2]) }
+        let geometry=SCNGeometry(sources:[SCNGeometrySource(vertices:vertices),SCNGeometrySource(normals:normals)],
+            elements:[SCNGeometryElement(indices:mesh.triangles,primitiveType:.triangles)])
+        let skin=material(UIColor(red:0.18,green:0.45,blue:0.92,alpha:1),metal:0.12,rough:0.28)
+        skin.lightingModel = .blinn
+        skin.specular.contents=UIColor(white:0.3,alpha:1); skin.shininess=24
+        skin.transparency=0.86; skin.transparencyMode = .dualLayer; skin.isDoubleSided=false
+        skin.writesToDepthBuffer=true
+        geometry.firstMaterial=skin
+        let weights=SCNGeometrySource(data:mesh.weights.withUnsafeBytes { Data($0) },semantic:.boneWeights,
+            vectorCount:count,usesFloatComponents:true,componentsPerVector:4,bytesPerComponent:4,dataOffset:0,dataStride:16)
+        let indices=SCNGeometrySource(data:mesh.boneIndices.withUnsafeBytes { Data($0) },semantic:.boneIndices,
+            vectorCount:count,usesFloatComponents:false,componentsPerVector:4,bytesPerComponent:2,dataOffset:0,dataStride:8)
+        let node=SCNNode(geometry:geometry)
+        node.skinner=SCNSkinner(baseGeometry:geometry,bones:boneNodes,
+            boneInverseBindTransforms:rest.bones.map { NSValue(scnMatrix4:SCNMatrix4(simd_inverse(Self.transform($0)))) },
+            boneWeights:weights,boneIndices:indices)
+        node.skinner?.skeleton=rig
+        node.renderingOrder=10
+        rig.addChildNode(node)
+    }
+    func update(frame:PoseFrame?,showBones:Bool) {
+        internalRoot.isHidden = !showBones
+        standardClub.isHidden = frame != nil
+        guard !initialized || frame?.timestampSeconds != previousTimestamp || hadFrame != (frame != nil) else{return}
+        initialized=true
+        previousTimestamp=frame?.timestampSeconds; hadFrame=frame != nil
+        let pose=GolfAvatarPose(frame:frame)
+        SCNTransaction.begin(); SCNTransaction.animationDuration=0
+        for (index,bone) in pose.bones.enumerated() {
+            boneNodes[index].simdTransform=Self.transform(bone)
+            innerBones[index].simdTransform=Self.transform(bone)
         }
+        SCNTransaction.commit()
+    }
+    static func transform(_ bone:GolfAvatarBone) -> simd_float4x4 {
+        let start=SIMD3<Float>(Float(bone.start.x),Float(bone.start.y),Float(bone.start.z))
+        let end=SIMD3<Float>(Float(bone.end.x),Float(bone.end.y),Float(bone.end.z))
+        if let across=bone.across {
+            let y=simd_normalize(end-start)
+            let rawX=SIMD3<Float>(Float(across.x),Float(across.y),Float(across.z))
+            let projected=rawX-y*simd_dot(rawX,y)
+            if simd_length(projected)>0.0001 {
+                let x=simd_normalize(projected),z=simd_cross(x,y)
+                return simd_float4x4(columns:(SIMD4<Float>(x,0),SIMD4<Float>(y,0),SIMD4<Float>(z,0),SIMD4<Float>(start,1)))
+            }
+        }
+        let q=simd_quatf(from:SIMD3<Float>(0,1,0),to:simd_normalize(end-start))
+        var matrix=simd_float4x4(q); matrix.columns.3=SIMD4<Float>(start,1); return matrix
     }
 }

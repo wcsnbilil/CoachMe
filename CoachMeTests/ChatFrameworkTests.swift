@@ -41,7 +41,7 @@ final class ChatFrameworkTests: XCTestCase {
         let store = makeStore()
         let swing = makeSwing()
         let model = ChatModel(swing: swing, phase: .address, timestamp: 0.5,
-                              context: makeContext(swing: swing), store: store)
+                              context: makeContext(swing: swing), service: UnconfiguredChatService(), store: store)
 
         await model.send("我的引导臂在哪个阶段弯曲？")
 
@@ -49,7 +49,7 @@ final class ChatFrameworkTests: XCTestCase {
 
         // A fresh model must restore the same history from disk.
         let reopened = ChatModel(swing: swing, phase: nil, timestamp: 0,
-                                 context: makeContext(swing: swing), store: store)
+                                 context: makeContext(swing: swing), service: UnconfiguredChatService(), store: store)
         XCTAssertEqual(reopened.conversation.messages.count, model.conversation.messages.count)
         XCTAssertEqual(reopened.conversation.messages.first?.content,
                        "我的引导臂在哪个阶段弯曲？")
@@ -60,7 +60,7 @@ final class ChatFrameworkTests: XCTestCase {
         let store = makeStore()
         let swing = makeSwing()
         let model = ChatModel(swing: swing, phase: nil, timestamp: 0,
-                              context: makeContext(swing: swing), store: store)
+                              context: makeContext(swing: swing), service: UnconfiguredChatService(), store: store)
 
         await model.send("帮我解读这次挥杆。")
 

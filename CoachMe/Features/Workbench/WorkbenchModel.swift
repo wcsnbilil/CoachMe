@@ -113,8 +113,8 @@ final class WorkbenchModel {
 
     func confirmKeyframes(library: SwingLibrary) {
         let times = swing.keyframes.sorted { $0.phase.order < $1.phase.order }.map(\.timestampSeconds)
-        guard times.count == 6, zip(times,times.dropFirst()).allSatisfy({ $0 < $1 }) else {
-            phaseDetectionMessage = "请先补齐六个阶段，并检查时间顺序。"
+        guard times.count == SwingPhase.allCases.count, zip(times,times.dropFirst()).allSatisfy({ $0 < $1 }) else {
+            phaseDetectionMessage = "请先补齐七个阶段，并检查时间顺序。"
             return
         }
         for i in swing.keyframes.indices where !swing.keyframes[i].markedByCoach {
@@ -129,7 +129,7 @@ final class WorkbenchModel {
         let single = poseFrames.filter { $0.detectedPersonCount == 1 }.count
         let missing = poseFrames.filter { $0.detectedPersonCount == 0 }.count
         let unconfirmed = swing.keyframes.filter { !$0.markedByCoach }.count
-        return "共 \(poseFrames.count) 帧，单人检出 \(Int(Double(single)/Double(poseFrames.count)*100))%，未检出 \(missing) 帧。关键帧 \(swing.keyframes.count)/6，\(unconfirmed) 个待复核。"
+        return "共 \(poseFrames.count) 帧，单人检出 \(Int(Double(single)/Double(poseFrames.count)*100))%，未检出 \(missing) 帧。关键帧 \(swing.keyframes.count)/7，\(unconfirmed) 个待复核。"
     }
 
     func clearKeyframe(_ phase: SwingPhase, library: SwingLibrary) {

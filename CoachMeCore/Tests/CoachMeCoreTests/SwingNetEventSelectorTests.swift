@@ -13,8 +13,8 @@ final class SwingNetEventSelectorTests: XCTestCase {
             try selector.append(probabilities: probabilities, timestamp: times[event])
         }
         let marks = selector.keyframes()
-        XCTAssertEqual(marks.map(\.phase), [.address, .midBackswing, .top, .midDownswing, .impact, .finish])
-        XCTAssertEqual(marks.map(\.timestampSeconds), [4.02, 4.38, 4.56, 4.72, 4.79, 5.13])
+        XCTAssertEqual(marks.map(\.phase), [.address, .takeaway, .midBackswing, .top, .midDownswing, .impact, .finish])
+        XCTAssertEqual(marks.map(\.timestampSeconds), [4.02, 4.17, 4.38, 4.56, 4.72, 4.79, 5.13])
         XCTAssertTrue(marks.allSatisfy { !$0.markedByCoach && $0.note.contains("SwingNet") })
     }
 
@@ -35,7 +35,7 @@ final class SwingNetEventSelectorTests: XCTestCase {
             p[8] = 1 - p.reduce(0, +)
             try selector.append(probabilities: p, timestamp: Double(i))
         }
-        XCTAssertEqual(selector.keyframes().map(\.timestampSeconds), [0, 2, 3, 4, 5, 7])
+        XCTAssertEqual(selector.keyframes().map(\.timestampSeconds), [0, 1, 2, 3, 4, 5, 7])
     }
 
     func testEarlierFinishDoesNotDiscardOrderedSwing() throws {
@@ -48,7 +48,7 @@ final class SwingNetEventSelectorTests: XCTestCase {
             p[i] = 0.5; p[8] = 0.5
             try selector.append(probabilities: p, timestamp: Double(i + 1))
         }
-        XCTAssertEqual(selector.keyframes().map(\.timestampSeconds), [1, 3, 4, 5, 6, 8])
+        XCTAssertEqual(selector.keyframes().map(\.timestampSeconds), [1, 2, 3, 4, 5, 6, 8])
     }
 
     func testMissingSetupEvidenceDoesNotInventBoundary() throws {

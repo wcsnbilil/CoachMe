@@ -3,6 +3,7 @@ import Foundation
 /// Swing positions detected automatically or marked by the coach.
 public enum SwingPhase: String, Sendable, Codable, CaseIterable, Identifiable {
     case address        // 准备姿势
+    case takeaway       // 上杆下段（杆身接近水平）
     case midBackswing   // 上杆中段
     case top            // 上杆顶点
     case midDownswing   // 下杆中段
@@ -14,6 +15,7 @@ public enum SwingPhase: String, Sendable, Codable, CaseIterable, Identifiable {
     public var nameZH: String {
         switch self {
         case .address:      return "准备姿势"
+        case .takeaway:     return "上杆下段"
         case .midBackswing: return "上杆中段"
         case .top:          return "上杆顶点"
         case .midDownswing: return "下杆中段"

@@ -33,7 +33,7 @@
 
 ## Latest functionality
 
-- MediaPipe Heavy by default; local SwingNet detects six phases, with retry for saved records and manual correction.
+- MediaPipe Heavy by default; local SwingNet detects seven phases, with retry for saved records and manual correction.
 - Display-only temporal/body-proportion skeleton completion in 2D and 3D. Estimated segments are dashed and excluded from measurements. A central spine avoids crossed torso diagonals in the 2D projection.
 - OpenAI, Claude, Gemini, DeepSeek, and OpenAI-compatible APIs for coaching from original keyframe images, supported by metrics, and follow-up questions. User API keys are stored in the device Keychain.
 - 64 core regression tests passed, followed by added authentication/timeout checks; six simulator chat integration tests passed. Real-provider calls require a user API key for verification.

@@ -123,6 +123,21 @@ final class LLMChatServiceTests: XCTestCase {
         }
     }
 
+    func testThirteenImagesAreIncludedAndFourteenAreRejected() throws {
+        for count in [13,14] {
+            let images = (0..<count).map { LLMFrameImage(jpegData:Data([0xff,0xd8,0xff,0xd9]),label:"frame \($0)") }
+            let service = LLMChatService(configuration:config(.deepSeek),apiKey:"test",images:images)
+            if count == 14 {
+                XCTAssertThrowsError(try service.makeRequest(message:.init(role:.user,content:"看图"),conversation:.init(swingID:UUID()),context:context(),options:.init(contextTokenLimit:128000)))
+            } else {
+                let req = try service.makeRequest(message:.init(role:.user,content:"看图"),conversation:.init(swingID:UUID()),context:context(),options:.init(contextTokenLimit:128000))
+                let body = try JSONSerialization.jsonObject(with:req.httpBody!) as! [String:Any]
+                let parts = (body["messages"] as! [[String:Any]]).last!["content"] as! [[String:Any]]
+                XCTAssertEqual(parts.filter { $0["type"] as? String == "image_url" }.count,13)
+            }
+        }
+    }
+
     func testActualURLSessionUsesMockTransport() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [ChatMockProtocol.self]

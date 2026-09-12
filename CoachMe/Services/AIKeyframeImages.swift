@@ -12,17 +12,12 @@ enum AIKeyframeImages {
         generator.requestedTimeToleranceBefore = .zero
         generator.requestedTimeToleranceAfter = .zero
         defer { generator.cancelAllCGImageGeneration() }
-        var targets = swing.keyframes.sorted { $0.timestampSeconds < $1.timestampSeconds }.prefix(6).map {
-            ($0.timestampSeconds, ($0.markedByCoach ? $0.phase.nameZH + "（已复核）" : "自动选取画面，请根据球杆和身体位置自行判断阶段，可能并非挥杆动作"))
-        }
-        if targets.isEmpty {
-            // Uniform samples are explicitly not phase predictions.
-            targets = (0..<6).map { i in
-                (swing.clipStartSeconds + max(0, swing.durationSeconds - 0.05) * Double(i) / 5, "选段取样，阶段未知")
-            }
-        }
+        let targets = AIFramePlan(keyframes: swing.keyframes, start: swing.clipStartSeconds,
+                                  end: swing.clipEndSeconds).samples
+        guard !targets.isEmpty else { throw ChatServiceError.transport("没有可用的动作截图，请检查选段。") }
         var result: [LLMFrameImage] = []
-        for (time, label) in targets {
+        for target in targets {
+            let time = target.timestamp, label = target.label
             try Task.checkCancellation()
             let frame = try await generator.image(at: CMTime(seconds: time, preferredTimescale: 60000))
             guard let jpeg = UIImage(cgImage: frame.image).jpegData(compressionQuality: 0.8) else {

@@ -94,8 +94,8 @@ public struct LLMChatService: ChatService {
         guard estimate <= options.contextTokenLimit else {
             throw ChatServiceError.contextTooLarge(tokenEstimate: estimate, limit: options.contextTokenLimit)
         }
-        guard images.count <= 8, images.allSatisfy({ !$0.jpegData.isEmpty }),
-              images.reduce(0, { $0 + $1.jpegData.count }) <= 8_000_000 else {
+        guard images.count <= 13, images.allSatisfy({ !$0.jpegData.isEmpty }),
+              images.reduce(0, { $0 + $1.jpegData.count }) <= 16_000_000 else {
             throw ChatServiceError.transport("动作截图过大，请缩短选段后重试。")
         }
         let requestModel = !images.isEmpty && configuration.provider == .deepSeek ? "deepseek-flash" : configuration.model.trimmingCharacters(in: .whitespacesAndNewlines)

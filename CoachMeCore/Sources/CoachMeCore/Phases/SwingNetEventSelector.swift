@@ -5,7 +5,7 @@ import Foundation
 public struct SwingNetEventSelector {
     private var scores = Array(repeating: -Double.infinity, count: 8)
     private var times = Array<Double?>(repeating: nil, count: 8)
-    private var boundaries: [(time: Double, address: Double, finish: Double)] = []
+    private var boundaries: [(time: Double, address: Double, finish: Double, takeaway: Double)] = []
     private var lastTimestamp: Double?
     public init() {}
 
@@ -16,7 +16,7 @@ public struct SwingNetEventSelector {
             throw InputError.invalidPrediction
         }
         lastTimestamp = timestamp
-        boundaries.append((timestamp, probabilities[0], probabilities[7]))
+        boundaries.append((timestamp, probabilities[0], probabilities[7], probabilities[1]))
         for event in 0..<8 where probabilities[event] > scores[event] {
             scores[event] = probabilities[event]
             times[event] = timestamp
@@ -50,7 +50,15 @@ public struct SwingNetEventSelector {
         let selected = mapping.compactMap { times[$0.0] }
         guard selected.count == mapping.count,
               zip(selected, selected.dropFirst()).allSatisfy({ $0 < $1 }) else { return [] }
-        return mapping.map { event, phase in
+        var extendedMapping = mapping
+        if let address = times[0], let mid = times[2],
+           let candidate = boundaries.filter({ $0.time > address && $0.time < mid && $0.takeaway > 0 })
+            .max(by: { $0.takeaway < $1.takeaway }) {
+            times[1] = candidate.time
+            scores[1] = candidate.takeaway
+            extendedMapping.insert((1, .takeaway), at: 1)
+        }
+        return extendedMapping.map { event, phase in
             Keyframe(phase: phase, timestampSeconds: times[event]!, markedByCoach: false,
                      note: String(format: "SwingNet 1800 · 自动标记 · 模型分数 %.4f", scores[event]))
         }

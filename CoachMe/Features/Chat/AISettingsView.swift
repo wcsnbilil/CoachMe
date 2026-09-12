@@ -101,7 +101,7 @@ struct AISettingsView: View {
                     }.disabled(testing)
                     if !status.isEmpty { Text(status).font(.footnote).textSelection(.enabled) }
                 } footer: {
-                    Text("密钥仅存于本机钥匙串。发送问题时会将当前挥杆分析数据及最近聊天记录发送到上方地址，由该服务商处理；开启看图时会发送最多六张原视频截图，不上传完整视频。测试连接只发送一句测试消息，可能产生少量 API 费用。")
+                    Text("密钥仅存于本机钥匙串。发送问题时会将当前挥杆分析数据及最近聊天记录发送到上方地址，由该服务商处理；开启看图时会发送最多 13 张原视频截图，不上传完整视频。测试连接只发送一句测试消息，可能产生少量 API 费用。")
                 }
             }
             .navigationTitle("AI 接口设置")

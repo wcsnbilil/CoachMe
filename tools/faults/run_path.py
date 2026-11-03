@@ -6,6 +6,9 @@ GolfDB (uses its labelled address/top/impact frames, down-the-line clips only):
 Your own down-the-line video (phases from the app's SwingNet):
   python tools/faults/run_path.py --video my_swing.mov
 
+Pose landmarks are cached in <out>/landmarks/, so a second run with new
+thresholds (--calibration calibration.json) takes seconds, not an hour.
+
 Needs: mediapipe, opencv-python-headless, numpy, pandas, coremltools, and
 CoachMe/Resources/pose_landmarker_heavy.task (tools/download-model.sh).
 Output: <out>/index.html with one image per swing (blue = backswing hands,
@@ -27,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / "tools" / "benchmark"))
-from path_fault import analyze  # noqa: E402
+from path_fault import MAX_LINE_WIDTH, analyze  # noqa: E402
 
 
 def read_video(path: Path):
@@ -96,12 +99,18 @@ def main():
     p.add_argument("--model", type=Path, default=ROOT / "CoachMe" / "Resources" / "pose_landmarker_heavy.task")
     p.add_argument("--out", type=Path, default=Path("path_fault_report"))
     p.add_argument("--phases", help="manual address,top,impact frame numbers for a single --video")
+    p.add_argument("--calibration", type=Path, help="calibration.json from calibrate.py")
+    p.add_argument("--max-line-width", type=float, default=MAX_LINE_WIDTH,
+                   help="refuse clips whose shoulder/hip line at address is wider than this (torso lengths)")
     a = p.parse_args()
     if not a.model.exists():
         sys.exit(f"missing {a.model}; run tools/download-model.sh")
     a.out.mkdir(parents=True, exist_ok=True)
+    cache = a.out / "landmarks"
+    cache.mkdir(exist_ok=True)
+    cal = json.loads(a.calibration.read_text()) if a.calibration else None
 
-    jobs = []  # (name, video path, phases or None)
+    jobs = []  # (name, video path, phases or None, extra fields for results.json)
     if a.golfdb:
         import pandas as pd
         df = pd.read_pickle(a.golfdb / "golfDB.pkl")
@@ -109,13 +118,15 @@ def main():
         for row in df.itertuples():
             ev = np.asarray(row.events) - row.events[0]
             jobs.append((f"golfdb_{row.id}", a.golfdb / "videos_160" / f"{row.id}.mp4",
-                         (int(ev[1]), int(ev[4]), int(ev[6]))))  # address, top, impact
+                         (int(ev[1]), int(ev[4]), int(ev[6])),  # address, top, impact
+                         {"id": int(row.id), "player": row.player, "slow": int(row.slow),
+                          "youtube_id": row.youtube_id, "club": row.club}))
     manual = tuple(int(x) for x in a.phases.split(",")) if a.phases else None
     for v in a.video:
-        jobs.append((v.stem, v, manual))
+        jobs.append((v.stem, v, manual, {}))
 
     results = []
-    for n, (name, path, phases) in enumerate(jobs, 1):
+    for n, (name, path, phases, extra) in enumerate(jobs, 1):
         if not path.exists():
             continue
         frames, fps = read_video(path)
@@ -123,10 +134,15 @@ def main():
         if phases is None:
             r = {"verdict": "无法判断", "reason": "没有识别出挥杆阶段"}
         else:
-            lms = pose_landmarks(frames, fps, a.model)
-            r = analyze(lms, *phases)
+            npy = cache / f"{name}.npy"
+            if npy.exists():
+                lms = np.load(npy)
+            else:
+                lms = pose_landmarks(frames, fps, a.model)
+                np.save(npy, lms)
+            r = analyze(lms, *phases, calibration=cal, max_line_width=a.max_line_width)
             cv2.imwrite(str(a.out / f"{name}.jpg"), draw(frames, r, *phases, name))
-        r.update(name=name, phases=phases)
+        r.update(name=name, phases=phases, **extra)
         results.append(r)
         print(f"{n}/{len(jobs)} {name}: {r['verdict']} {r.get('offset', '')} {r.get('reason', '')}", flush=True)
 
@@ -134,13 +150,14 @@ def main():
         [{k: v for k, v in r.items() if k != "hands"} for r in results], ensure_ascii=False, indent=1))
     cards = "".join(
         f"<figure><img src='{html.escape(r['name'])}.jpg'><figcaption><b>{html.escape(r['verdict'])}</b> "
-        f"offset={r.get('offset', '—')}<br>{html.escape(r['name'])} {html.escape(r.get('reason', ''))}</figcaption></figure>"
+        f"offset={r.get('offset', '—')}<br>{html.escape(r['name'])} {html.escape(str(r.get('player', '')))}{' 慢动作' if r.get('slow') else ''} {html.escape(r.get('reason', ''))}</figcaption></figure>"
         for r in sorted(results, key=lambda r: -(r.get("offset") or -9)))
     (a.out / "index.html").write_text(
         "<meta charset=utf-8><title>外下/内下 目测检查</title><style>body{font:14px sans-serif;margin:16px}"
         "figure{display:inline-block;margin:6px;width:240px;vertical-align:top}img{width:240px}</style>"
         "<h1>外下 / 内下 目测检查</h1><p>蓝线=上杆双手轨迹，红线=下杆双手轨迹，画在上杆顶点那一帧上。"
-        "红线在蓝线靠球一侧=外下；在身体一侧=内下。按 offset 从大到小排序。阈值 ±0.10 为临时值。</p>" + cards)
+        "红线在蓝线靠球一侧=外下；在身体一侧=内下。按 offset 从大到小排序。"
+        f"阈值：{html.escape(json.dumps(cal or '临时 ±0.10', ensure_ascii=False))}</p>" + cards)
     verdicts = {}
     for r in results:
         verdicts[r["verdict"]] = verdicts.get(r["verdict"], 0) + 1

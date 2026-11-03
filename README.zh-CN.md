@@ -139,6 +139,7 @@ swift build --package-path CoachMeCore
 tools/no-xcode-testrunner/run.sh
 node tools/reference/verify_geometry.mjs
 node tools/reference/verify_rules.mjs
+python3 tools/reference/verify_comparison.py
 ```
 
 Node 脚本复刻 Swift 中的公式和判定顺序，用于独立核对数学逻辑；它们不能替代 App

@@ -20,6 +20,7 @@ struct ReportView: View {
     @State private var expanded: Set<String> = []
     @State private var showingChat = false
     @State private var discussion: ReportRow?
+    @State private var showingComparison = false
 
     var body: some View {
         ScrollView {
@@ -45,6 +46,18 @@ struct ReportView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
         .toolbarBackground(CoachStyle.background, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingComparison = true } label: {
+                    Label("对比", systemImage: "arrow.left.arrow.right")
+                }
+                .accessibilityLabel("与另一次挥杆对比")
+            }
+        }
+        .sheet(isPresented: $showingComparison) {
+            ComparisonView(swing: swing)
+                .presentationDragIndicator(.visible)
+        }
         .safeAreaInset(edge: .bottom) {
             Button { discussion = nil; showingChat = true } label: {
                 Label("与 AI 教练讨论这份报告", systemImage: "sparkles")

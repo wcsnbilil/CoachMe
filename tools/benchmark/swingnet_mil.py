@@ -2,8 +2,10 @@
 
 The two .mlpackage files in CoachMe/Resources are ML Programs whose op set is
 small (conv, clip, add, reduce_mean, transpose, lstm, linear). This module
-reads their weights with coremltools (which can parse packages on any OS but
-can only *execute* them on macOS) and evaluates the graph in NumPy.
+reads the graph protobuf (model.mlmodel) and the weight blob (weight.bin)
+directly, using only coremltools' generated protobuf classes, so it works on
+Linux, macOS and Windows (coremltools' native package loader is missing from
+its Windows wheels). The graph is then evaluated in NumPy.
 
 Use it where CoreML is unavailable (Linux, CI). On a Mac, prefer
 `--backend coreml` in golfdb_eval.py, which runs the real CoreML runtime, and
@@ -12,6 +14,7 @@ use `parity` below to check the two agree.
 
 from __future__ import annotations
 
+import struct
 from pathlib import Path
 
 import numpy as np
@@ -19,14 +22,86 @@ import numpy as np
 RESOURCES = Path(__file__).resolve().parents[2] / "CoachMe" / "Resources"
 
 
-def _load_program(package: Path):
-    import coremltools as ct
-    from coremltools.converters.mil.frontend.milproto.load import load
+class _Var:
+    def __init__(self, name, val=None):
+        self.name, self.val = name, val
 
-    model = ct.models.MLModel(str(package), skip_model_load=True)
-    spec = model.get_spec()
-    return load(spec, specification_version=spec.specificationVersion,
-                file_weights_dir=model.weights_dir)
+
+class _Op:
+    def __init__(self, op_type, inputs, outputs):
+        self.op_type, self.inputs, self.outputs = op_type, inputs, outputs
+
+
+class _Function:
+    def __init__(self, inputs, outputs, operations):
+        self.inputs, self.outputs, self.operations = inputs, outputs, operations
+
+
+_BLOB_DTYPES = {"FLOAT32": np.float32, "FLOAT16": np.float16, "INT32": np.int32,
+                "INT8": np.int8, "UINT8": np.uint8}
+
+
+def _shape(tensor_type):
+    return tuple(d.constant.size for d in tensor_type.dimensions)
+
+
+def _const_value(value, weights: bytes):
+    from coremltools.proto import MIL_pb2
+
+    tensor_type = value.type.tensorType
+    dtype_name = MIL_pb2.DataType.Name(tensor_type.dataType)
+    shape = _shape(tensor_type)
+    if value.HasField("blobFileValue"):
+        # MIL blob storage: a 64-byte metadata record at `offset`
+        # (sentinel 0xDEADBEEF, dtype, size in bytes, data offset), then the data.
+        sentinel, _, size, data_offset = struct.unpack_from("<IIQQ", weights, value.blobFileValue.offset)
+        if sentinel != 0xDEADBEEF:
+            raise ValueError("unexpected weight.bin layout")
+        arr = np.frombuffer(weights, dtype=_BLOB_DTYPES[dtype_name], count=size // np.dtype(_BLOB_DTYPES[dtype_name]).itemsize,
+                            offset=data_offset)
+        return arr.reshape(shape).astype(np.float32 if dtype_name.startswith("FLOAT") else arr.dtype)
+    t = value.immediateValue.tensor
+    kind = t.WhichOneof("value")
+    if kind == "strings":
+        vals = list(t.strings.values)
+        return vals[0] if not shape else np.array(vals)
+    if kind == "bools":
+        arr = np.array(list(t.bools.values), dtype=bool)
+    elif kind == "ints":
+        arr = np.array(list(t.ints.values), dtype=np.int32)
+    elif kind == "floats":
+        arr = np.array(list(t.floats.values), dtype=np.float32)
+    elif kind == "bytes":
+        arr = np.frombuffer(t.bytes.values, dtype=_BLOB_DTYPES[dtype_name])
+    else:
+        raise NotImplementedError(f"immediate value kind {kind}")
+    return arr.reshape(shape) if shape else arr[0]
+
+
+def _load_program(package: Path) -> _Function:
+    from coremltools.proto import Model_pb2
+
+    data = package / "Data" / "com.apple.CoreML"
+    spec = Model_pb2.Model()
+    spec.ParseFromString((data / "model.mlmodel").read_bytes())
+    weights_file = data / "weights" / "weight.bin"
+    weights = weights_file.read_bytes() if weights_file.exists() else b""
+    fn = spec.mlProgram.functions["main"]
+    block = fn.block_specializations[fn.opset]
+    consts, ops = {}, []
+    for op in block.operations:
+        if op.type == "const":
+            consts[op.outputs[0].name] = _const_value(op.attributes["val"], weights)
+            continue
+        inputs = {}
+        for key, arg in op.inputs.items():
+            a = arg.arguments[0]
+            if a.HasField("value"):
+                inputs[key] = _Var(key, _const_value(a.value, weights))
+            else:
+                inputs[key] = _Var(a.name, consts.get(a.name))
+        ops.append(_Op(op.type, inputs, [_Var(o.name) for o in op.outputs]))
+    return _Function([i.name for i in fn.inputs], [_Var(n) for n in block.outputs], ops)
 
 
 def _sigmoid(x):
@@ -77,8 +152,8 @@ def _lstm_direction(x, w_ih, w_hh, bias, reverse):
 
 class _Graph:
     def __init__(self, package: Path):
-        fn = _load_program(package).functions["main"]
-        self.input = next(iter(fn.inputs))
+        fn = _load_program(package)
+        self.input = fn.inputs[0]
         self.output = fn.outputs[0].name
         self.ops = [op for op in fn.operations if op.op_type != "const"]
 

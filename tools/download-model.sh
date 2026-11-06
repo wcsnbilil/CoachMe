@@ -25,7 +25,8 @@ curl -sSL --fail -o "$OUT" "$URL"
 
 # The .task bundle is a zip holding the two tflite models. Verify rather than
 # trusting a 200 that returned an error page.
-if ! unzip -l "$OUT" 2>/dev/null | grep -q "\.tflite"; then
+# grep -q would exit early and SIGPIPE unzip, which pipefail turns into a failure
+if ! unzip -l "$OUT" 2>/dev/null | grep -c "\.tflite" >/dev/null; then
   echo "ERROR: $OUT is not a valid .task bundle (no .tflite inside)." >&2
   rm -f "$OUT"
   exit 1

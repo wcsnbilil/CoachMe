@@ -45,14 +45,16 @@ import numpy as np
 # MediaPipe pose indices
 NOSE, L_SH, R_SH, L_HIP, R_HIP, L_WR, R_WR = 0, 11, 12, 23, 24, 15, 16
 
-# Used only when no calibration file is passed. Replace with calibrate.py output.
-DEFAULT_CALIBRATION = {"center": 0.0, "outside": 0.10, "inside": -0.10, "source": "provisional"}
+# Used when no calibration file is passed: calibrate.py on the first 200 GolfDB
+# down-the-line swings (82 golfers, 197 offsets), 80% of golfers inside the band.
+DEFAULT_CALIBRATION = {"center": 0.065, "outside": 0.246, "inside": -0.117, "source": "golfdb_dtl_first200"}
 
 # Wrists further apart than this (in torso lengths) are not both on the grip.
 MAX_WRIST_GAP = 0.6
 # Shoulder or hip line wider than this at address (in torso lengths) = off-axis camera.
-# Provisional: calibrate.py prints the distribution so it can be set by eye.
-MAX_LINE_WIDTH = 0.6
+# GolfDB DTL: median 0.08, 90th percentile 0.18, widest 0.33 (golfdb_50, the clip
+# judged "camera too close" by eye). Catches clearly off-axis clips only.
+MAX_LINE_WIDTH = 0.3
 
 
 def _odd(n: float, lo: int = 3) -> int:

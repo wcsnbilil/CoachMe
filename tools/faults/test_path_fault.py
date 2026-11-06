@@ -93,7 +93,8 @@ def test_off_axis_camera_is_refused():
 def test_calibration_moves_the_centre():
     cal = {"center": 0.2, "outside": 0.35, "inside": 0.05, "source": "test"}
     assert pf.analyze(*make_swing(loop=0.2), calibration=cal)["verdict"] == "路径基本正常"
-    assert pf.analyze(*make_swing(loop=0.2))["verdict"] == "外下倾向"
+    sym = {"center": 0.0, "outside": 0.10, "inside": -0.10, "source": "test"}
+    assert pf.analyze(*make_swing(loop=0.2), calibration=sym)["verdict"] == "外下倾向"
 
 
 if __name__ == "__main__":

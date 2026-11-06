@@ -30,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / "tools" / "benchmark"))
-from path_fault import MAX_LINE_WIDTH, analyze  # noqa: E402
+from path_fault import DEFAULT_CALIBRATION, MAX_LINE_WIDTH, analyze  # noqa: E402
 
 
 def read_video(path: Path):
@@ -157,7 +157,7 @@ def main():
         "figure{display:inline-block;margin:6px;width:240px;vertical-align:top}img{width:240px}</style>"
         "<h1>外下 / 内下 目测检查</h1><p>蓝线=上杆双手轨迹，红线=下杆双手轨迹，画在上杆顶点那一帧上。"
         "红线在蓝线靠球一侧=外下；在身体一侧=内下。按 offset 从大到小排序。"
-        f"阈值：{html.escape(json.dumps(cal or '临时 ±0.10', ensure_ascii=False))}</p>" + cards)
+        f"阈值：{html.escape(json.dumps(cal or DEFAULT_CALIBRATION, ensure_ascii=False))}</p>" + cards)
     verdicts = {}
     for r in results:
         verdicts[r["verdict"]] = verdicts.get(r["verdict"], 0) + 1

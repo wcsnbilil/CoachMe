@@ -106,6 +106,8 @@ def main():
     p.add_argument("--calibration", type=Path, help="calibration.json from calibrate.py")
     p.add_argument("--max-line-width", type=float, default=MAX_LINE_WIDTH,
                    help="refuse clips whose shoulder/hip line at address is wider than this (torso lengths)")
+    p.add_argument("--min-ref-angle", type=float, default=0.0,
+                   help="refuse clips whose address hands->shoulders line is closer to vertical than this (degrees)")
     a = p.parse_args()
     if not a.model.exists():
         sys.exit(f"missing {a.model}; run tools/download-model.sh")
@@ -144,7 +146,8 @@ def main():
             else:
                 lms = pose_landmarks(frames, fps, a.model)
                 np.save(npy, lms)
-            r = analyze(lms, *phases, calibration=cal, max_line_width=a.max_line_width)
+            r = analyze(lms, *phases, calibration=cal, max_line_width=a.max_line_width,
+                         min_ref_angle=a.min_ref_angle)
             cv2.imwrite(str(a.out / f"{name}.jpg"), draw(frames, r, *phases, name))
         r.update(name=name, phases=phases, **extra)
         results.append(r)

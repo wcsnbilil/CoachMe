@@ -54,9 +54,10 @@ NOSE, L_SH, R_SH, L_HIP, R_HIP, L_WR, R_WR = 0, 11, 12, 23, 24, 15, 16
 
 # Used when no calibration file is passed: calibrate.py on the first 200 GolfDB
 # down-the-line swings (82 golfers, 197 offsets), 80% of golfers inside the band.
-# v3 measures the downswing against the address line, so earlier numbers do not
-# carry over. PROVISIONAL until calibrate.py is rerun on the cached GolfDB landmarks.
-DEFAULT_CALIBRATION = {"center": 0.0, "outside": 0.30, "inside": -0.30, "source": "provisional_v3"}
+# calibrate.py on the first 200 GolfDB down-the-line swings (78 golfers, 186
+# swings, coverage 0.98). All 400 give almost the same: 0.152 / -0.497.
+# Pros come down on the body side of the address line (centre -0.15).
+DEFAULT_CALIBRATION = {"center": -0.151, "outside": 0.144, "inside": -0.501, "source": "golfdb_dtl_first200_v3"}
 
 # Wrists further apart than this (in torso lengths) are not both on the grip.
 MAX_WRIST_GAP = 0.6
@@ -179,7 +180,7 @@ def classify(offset: float, cal: dict) -> str:
 
 def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
             min_visibility: float = 0.5, calibration: dict | None = None,
-            max_line_width: float = MAX_LINE_WIDTH) -> dict:
+            max_line_width: float = MAX_LINE_WIDTH, min_ref_angle: float = 0.0) -> dict:
     """landmarks: [frames, 33, 3] as (x_px, y_px, visibility). Returns the path verdict."""
     cal = calibration or DEFAULT_CALIBRATION
     if not (0 <= address < top < impact < len(landmarks)):
@@ -224,6 +225,10 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     if not np.isfinite(sh_mid).all() or sh_mid[1] >= h0[1]:
         return {"verdict": "无法判断", "reason": "准备姿势肩膀不在双手上方", "camera": cam}
     slope = (sh_mid[0] - h0[0]) / (sh_mid[1] - h0[1])
+    ref_angle = float(np.degrees(np.arctan(abs(slope))))  # 0 = vertical line
+    if ref_angle < min_ref_angle:
+        return {"verdict": "无法判断", "reason": "参考线接近竖直，机位可能偏或俯拍", "camera": cam,
+                "ref_angle": round(ref_angle, 1)}
 
     def ref_x(level: float) -> float:
         return float(h0[0] + (level - h0[1]) * slope)
@@ -245,12 +250,18 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
         return {"verdict": "无法判断", "reason": "下杆轨迹在参考高度上取不到足够的点", "camera": cam}
 
     offset = float(np.median([d[1] for d in down]))
+    back = float(np.median(up)) if up else None
+    caution = []
+    if back is not None and abs(back) > 0.4 and np.sign(back) == np.sign(offset):
+        caution.append("上下杆整条轨迹都在参考线同一侧，可能是机位或俯拍让参考线偏了")
     return {
         "verdict": classify(offset, cal),
         "offset": round(offset, 3),  # downswing hands vs the address line: + = outside (over the top)
-        "backswing_offset": round(float(np.median(up)), 3) if up else None,  # + = takeaway outside, - = inside
+        "backswing_offset": round(back, 3) if back is not None else None,  # + = takeaway outside, - = inside
         "loop": round(float(np.median(loop)), 3) if loop else None,  # v2 measure: downswing minus backswing
         "offset_by_height": [(round(f, 2), round(o, 3)) for f, o in down],
+        "ref_angle": round(ref_angle, 1),
+        "caution": caution,
         "ref_line": [[round(float(v), 1) for v in h0], [round(float(v), 1) for v in sh_mid]],
         "torso_px": round(torso, 1),
         "side": int(side),

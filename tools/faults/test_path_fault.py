@@ -97,8 +97,16 @@ def test_off_axis_camera_is_refused():
 def test_calibration_moves_the_centre():
     wide = {"center": 0.0, "outside": 0.6, "inside": -0.6, "source": "test"}
     tight = {"center": 0.0, "outside": 0.1, "inside": -0.6, "source": "test"}
+    assert pf.analyze(*make_swing(loop=0.0))["verdict"] == "路径在职业范围内"
     assert pf.analyze(*make_swing(loop=0.4), calibration=wide)["verdict"] == "路径在职业范围内"
     assert pf.analyze(*make_swing(loop=0.4), calibration=tight)["verdict"] == "外下过度"
+
+
+def test_vertical_reference_line_is_refused():
+    lm, a, t, i = make_swing()
+    r = pf.analyze(lm, a, t, i)
+    assert 5 < r["ref_angle"] < 30
+    assert pf.analyze(lm, a, t, i, min_ref_angle=r["ref_angle"] + 1)["verdict"] == "无法判断"
 
 
 def test_inside_takeaway_is_not_over_the_top():

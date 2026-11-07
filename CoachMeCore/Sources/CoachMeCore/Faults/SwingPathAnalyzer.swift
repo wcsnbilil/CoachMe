@@ -78,6 +78,8 @@ public struct SwingPathAnalyzer: Sendable {
         case shouldersNotAboveHands  // 准备姿势肩膀不在双手上方
         case referenceNearVertical   // 参考线接近竖直
         case tooFewDownswingSamples  // 下杆轨迹取不到足够的点
+        case trackingJumps           // 关键点跳动太多
+        case downswingGap            // 下杆有一段双手追踪丢失或乱跳
 
         public var messageZH: String {
             switch self {
@@ -90,6 +92,8 @@ public struct SwingPathAnalyzer: Sendable {
             case .shouldersNotAboveHands: return "准备姿势肩膀不在双手上方"
             case .referenceNearVertical:  return "参考线接近竖直，机位可能偏或俯拍"
             case .tooFewDownswingSamples: return "下杆轨迹在参考高度上取不到足够的点"
+            case .trackingJumps:          return "关键点跳动太多，无法可靠判断，请换一段光线好、人物完整的视频"
+            case .downswingGap:           return "下杆有一段双手追踪丢失或乱跳，无法可靠判断"
             }
         }
     }
@@ -115,6 +119,10 @@ public struct SwingPathAnalyzer: Sendable {
         public var referenceLine: [PathPoint]
         /// Frame index actually used as address (after refineAddress).
         public var addressFrame: Int?
+        /// Frames between address and impact whose hands were seen but dropped
+        /// as a tracking jump (whole pose moved, beyond arm's reach, or a
+        /// jump-and-return in the hand path).
+        public var jumpFrames: Int = 0
 
         static func refused(_ r: Refusal) -> Result {
             Result(verdict: .cannotJudge, refusal: r, offset: nil, backswingOffset: nil, loop: nil, side: nil,
@@ -148,6 +156,13 @@ public struct SwingPathAnalyzer: Sendable {
     public var minReferenceAngleDegrees: Double
     /// Wrists further apart than this (torso lengths) are not both on the grip.
     public var maxWristGap: Double
+
+    // Tracking-jump guards, same values as path_fault.py (see there for why).
+    static let maxHipShift = 0.5
+    static let maxReach = 1.8
+    static let despikeFloor = 0.25
+    static let maxJumpFrames = 4
+    static let maxDownswingGap = 0.25
 
     public init(calibration: Calibration = .golfDB,
                 minVisibility: Double = 0.5,
@@ -196,38 +211,58 @@ public struct SwingPathAnalyzer: Sendable {
             guard lm[f].indices.contains(j) else { return (.nan, .nan) }
             return (lm[f][j].x, lm[f][j].y)
         }
+        let k = Self.oddWindow(Double(impact - address) / 20)
+        let h = max(2, k / 2)
 
-        var shMid = Self.nanMean2(xy(address, J.lSh), xy(address, J.rSh))
-        var hipMid = Self.nanMean2(xy(address, J.lHip), xy(address, J.rHip))
-        var torso = hypot(shMid.0 - hipMid.0, shMid.1 - hipMid.1)
+        // Address pose = per-joint median of a few frames, so one jumped frame
+        // cannot move the reference line, the torso length or the camera check.
+        func anchors(_ f: Int) -> (body: [(Double, Double)], sh: (Double, Double), hip: (Double, Double), torso: Double) {
+            let body = Self.bodyAt(lm, frame: f, lo: 0, hi: top - 1, half: h)
+            let sh = Self.nanMean2(body[J.lSh], body[J.rSh])
+            let hip = Self.nanMean2(body[J.lHip], body[J.rHip])
+            return (body, sh, hip, hypot(sh.0 - hip.0, sh.1 - hip.1))
+        }
+        var (body, shMid, hipMid, torso) = anchors(address)
         guard torso.isFinite, torso >= 1 else { return .refused(.torsoNotVisible) }
 
         // Wrist midpoint per frame. A clean left/right label swap does not move it;
         // a wrist landing elsewhere (often the elbow) shows up as a wide gap.
-        let raw: [(Double, Double)] = lm.indices.map { f in
+        var raw: [(Double, Double)] = lm.indices.map { f in
             let l = xy(f, J.lWr), r = xy(f, J.rWr)
             let mid = Self.nanMean2(l, r)
             let gap = hypot(l.0 - r.0, l.1 - r.1)
             return gap > maxWristGap * torso ? (.nan, .nan) : mid
         }
-        let span = Array(raw[address...impact])
-        let visible = Double(span.filter { $0.0.isFinite && $0.1.isFinite }.count) / Double(span.count)
+        func known(_ p: (Double, Double)) -> Bool { p.0.isFinite && p.1.isFinite }
+        let span = address...impact
+        let visible = Double(raw[span].filter(known).count) / Double(span.count)
         guard visible >= 0.7 else { return .refused(.wristsNotVisible) }
 
-        let k = Self.oddWindow(Double(impact - address) / 20)
+        let seen = raw.map(known)
+        for f in Self.poseGlitches(lm, hands: raw, address: address, impact: impact, torso: torso) { raw[f] = (.nan, .nan) }
+        raw = Self.despike(raw, torso: torso)
+        let ok = raw.map(known)
+        let jumped = span.filter { seen[$0] && !ok[$0] }.count
+        if Double(span.filter { ok[$0] }.count) / Double(span.count) < 0.7 {
+            var r = Result.refused(.trackingJumps); r.jumpFrames = jumped; return r
+        }
+        if Double(Self.longestGap(Array(ok[top...impact]))) > max(2, Self.maxDownswingGap * Double(impact - top)) {
+            var r = Result.refused(.downswingGap); r.jumpFrames = jumped; return r
+        }
+
         let xs = Self.smooth(raw.map(\.0), k: k)
         let ys = Self.smooth(raw.map(\.1), k: k)
 
         if refineAddress {
             let still = Self.stillAddress(xs, ys, address: address, top: top)
-            let sh2 = Self.nanMean2(xy(still, J.lSh), xy(still, J.rSh))
-            let hip2 = Self.nanMean2(xy(still, J.lHip), xy(still, J.rHip))
-            let t2 = hypot(sh2.0 - hip2.0, sh2.1 - hip2.1)
-            if t2.isFinite, t2 >= 1 { address = still; shMid = sh2; hipMid = hip2; torso = t2 }
+            let a2 = anchors(still)
+            if a2.torso.isFinite, a2.torso >= 1 {
+                address = still; body = a2.body; shMid = a2.sh; hipMid = a2.hip; torso = a2.torso
+            }
         }
 
-        let shoulderWidth = abs(xy(address, J.lSh).0 - xy(address, J.rSh).0) / torso
-        let hipWidth = abs(xy(address, J.lHip).0 - xy(address, J.rHip).0) / torso
+        let shoulderWidth = abs(body[J.lSh].0 - body[J.rSh].0) / torso
+        let hipWidth = abs(body[J.lHip].0 - body[J.rHip].0) / torso
         let widest = [shoulderWidth, hipWidth].filter(\.isFinite).max() ?? .nan
         if widest > maxLineWidth {
             var r = Result.refused(.cameraOffAxis)
@@ -239,7 +274,7 @@ public struct SwingPathAnalyzer: Sendable {
         // hands move back toward the body at the top).
         let votes = [
             Self.sign(xs[address] - hipMid.0),
-            Self.sign(xy(address, J.nose).0 - hipMid.0),
+            Self.sign(body[J.nose].0 - hipMid.0),
             Self.sign(shMid.0 - hipMid.0),
             Self.sign(xs[address] - xs[top]),
         ]
@@ -286,7 +321,7 @@ public struct SwingPathAnalyzer: Sendable {
                       cautionZH: caution,
                       hands: zip(xs, ys).map { PathPoint(x: $0, y: $1) },
                       referenceLine: [PathPoint(x: h0.0, y: h0.1), PathPoint(x: shMid.0, y: shMid.1)],
-                      addressFrame: address)
+                      addressFrame: address, jumpFrames: jumped)
     }
 
     // MARK: - Helpers (each mirrors a function in path_fault.py)
@@ -318,6 +353,73 @@ public struct SwingPathAnalyzer: Sendable {
             return f
         }
         return address
+    }
+
+    /// body_at: per-joint nanmedian of frames f-half...f+half, kept inside lo...hi.
+    static func bodyAt(_ lm: [[PathPoint]], frame f: Int, lo: Int, hi: Int, half: Int) -> [(Double, Double)] {
+        let frames = max(lo, f - half)...max(max(lo, f - half), min(hi, f + half))
+        return (0..<33).map { j in
+            let pts = frames.compactMap { lm[$0].indices.contains(j) ? lm[$0][j] : nil }
+            return (median(pts.map(\.x).filter(\.isFinite)), median(pts.map(\.y).filter(\.isFinite)))
+        }
+    }
+
+    /// pose_glitches: frames whose hips are far from their usual place, or whose
+    /// hands are beyond arm's reach of the shoulders.
+    static func poseGlitches(_ lm: [[PathPoint]], hands: [(Double, Double)], address: Int, impact: Int,
+                             torso: Double) -> [Int] {
+        func mid(_ f: Int, _ a: Int, _ b: Int) -> (Double, Double) {
+            func p(_ j: Int) -> (Double, Double) { lm[f].indices.contains(j) ? (lm[f][j].x, lm[f][j].y) : (.nan, .nan) }
+            return nanMean2(p(a), p(b))
+        }
+        let hips = lm.indices.map { mid($0, J.lHip, J.rHip) }
+        let span = hips[address...impact]
+        let home = (median(span.map(\.0).filter(\.isFinite)), median(span.map(\.1).filter(\.isFinite)))
+        return lm.indices.filter { f in
+            let sh = mid(f, J.lSh, J.rSh)
+            let shift = hypot(hips[f].0 - home.0, hips[f].1 - home.1) / torso
+            let reach = hypot(hands[f].0 - sh.0, hands[f].1 - sh.1) / torso
+            return shift > maxHipShift || reach > maxReach
+        }
+    }
+
+    /// despike: drop the frames of a jump-and-return in the hand path. A step far
+    /// from the median of the five steps around it starts a jump; a roughly
+    /// opposite one within maxJumpFrames ends it.
+    static func despike(_ track: [(Double, Double)], torso: Double) -> [(Double, Double)] {
+        var out = track
+        let n = track.count
+        guard n > 1 else { return out }
+        var steps = [(Double, Double)](repeating: (.nan, .nan), count: n)
+        for i in 1..<n { steps[i] = (track[i].0 - track[i - 1].0, track[i].1 - track[i - 1].1) }
+        var dev = [(Double, Double)](repeating: (.nan, .nan), count: n)
+        for i in 1..<n where steps[i].0.isFinite && steps[i].1.isFinite {
+            let win = steps[max(1, i - 2)...min(n - 1, i + 2)].filter { $0.0.isFinite && $0.1.isFinite }
+            if win.count >= 3 {
+                dev[i] = (steps[i].0 - median(win.map(\.0)), steps[i].1 - median(win.map(\.1)))
+            }
+        }
+        let size = dev.map { hypot($0.0, $0.1) }
+        let finite = size.filter(\.isFinite)
+        guard finite.count >= 3 else { return out }
+        let limit = max(3 * 1.4826 * median(finite), despikeFloor * torso)
+        var i = 1
+        while i < n {
+            guard size[i] > limit else { i += 1; continue }
+            let back = (i + 1..<min(n, i + maxJumpFrames + 1)).first { j in
+                size[j] > 0.5 * limit && hypot(dev[i].0 + dev[j].0, dev[i].1 + dev[j].1) < 0.5 * size[i]
+            }
+            guard let back else { i += 1; continue }
+            for f in i..<back { out[f] = (.nan, .nan) }
+            i = back + 1
+        }
+        return out
+    }
+
+    static func longestGap(_ ok: [Bool]) -> Int {
+        var run = 0, best = 0
+        for v in ok { run = v ? 0 : run + 1; best = max(best, run) }
+        return best
     }
 
     static func sign(_ v: Double) -> Int { !v.isFinite || v == 0 ? 0 : (v > 0 ? 1 : -1) }

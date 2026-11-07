@@ -21,3 +21,7 @@ DerivedData/
 *.task
 
 node_modules/
+
+# Python
+__pycache__/
+*.pyc

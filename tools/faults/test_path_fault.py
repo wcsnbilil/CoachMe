@@ -44,9 +44,9 @@ def make_swing(loop: float = 0.0, frames: int = 60, lefty: bool = False, wrist_g
 
 
 def test_over_the_top_and_inside():
-    assert pf.analyze(*make_swing(loop=0.4))["verdict"] == "外下倾向"
-    assert pf.analyze(*make_swing(loop=-0.4))["verdict"] == "内下倾向"
-    assert pf.analyze(*make_swing(loop=0.0))["verdict"] == "路径基本正常"
+    assert pf.analyze(*make_swing(loop=0.4))["verdict"] == "外下过度"
+    assert pf.analyze(*make_swing(loop=-0.4))["verdict"] == "内下过度"
+    assert pf.analyze(*make_swing(loop=0.0))["verdict"] == "路径在职业范围内"
 
 
 def test_lefty_mirror_gives_same_offset():
@@ -75,7 +75,7 @@ def test_single_frame_spike_is_removed():
     lm, a, t, i = make_swing(loop=0.0, frames=120)
     lm[t + 10, pf.R_WR, 2] = 0.0          # one wrist hidden ...
     lm[t + 10, pf.L_WR, 0] += 40          # ... and the other mislocated
-    assert pf.analyze(lm, a, t, i)["verdict"] == "路径基本正常"
+    assert pf.analyze(lm, a, t, i)["verdict"] == "路径在职业范围内"
 
 
 def test_slow_motion_copy_agrees():
@@ -92,9 +92,9 @@ def test_off_axis_camera_is_refused():
 
 def test_calibration_moves_the_centre():
     cal = {"center": 0.2, "outside": 0.35, "inside": 0.05, "source": "test"}
-    assert pf.analyze(*make_swing(loop=0.2), calibration=cal)["verdict"] == "路径基本正常"
+    assert pf.analyze(*make_swing(loop=0.2), calibration=cal)["verdict"] == "路径在职业范围内"
     sym = {"center": 0.0, "outside": 0.10, "inside": -0.10, "source": "test"}
-    assert pf.analyze(*make_swing(loop=0.2), calibration=sym)["verdict"] == "外下倾向"
+    assert pf.analyze(*make_swing(loop=0.2), calibration=sym)["verdict"] == "外下过度"
 
 
 if __name__ == "__main__":

@@ -33,7 +33,8 @@ v2 (after the first GolfDB run):
   end-on at address. A wide shoulder/hip line means the camera is off the
   target line, and the clip is refused.
 - thresholds: centre and band come from a calibration file built from pro
-  swings (calibrate.py), so a typical tour swing reads 路径基本正常.
+  swings (calibrate.py): the range the pros cover is accepted (some fade on
+  purpose with a slightly out-to-in path); only beyond it is flagged.
 """
 
 from __future__ import annotations
@@ -158,11 +159,13 @@ def camera_check(lm: np.ndarray, address: int, torso: float) -> dict:
 
 
 def classify(offset: float, cal: dict) -> str:
+    """Inside the pro range is fine, whatever shape it suggests (a slight
+    out-to-in path is how many pros hit a fade). Only beyond it is a fault."""
     if offset > cal["outside"]:
-        return "外下倾向"
+        return "外下过度"   # further out-to-in than any pro: slice / pull risk
     if offset < cal["inside"]:
-        return "内下倾向"
-    return "路径基本正常"
+        return "内下过度"   # further in-to-out than any pro: big hook / push risk
+    return "路径在职业范围内"
 
 
 def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,

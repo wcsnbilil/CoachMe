@@ -87,6 +87,10 @@ def draw(frames, result, a, t, i, title) -> np.ndarray:
             seg = seg[np.isfinite(seg).all(axis=1)].astype(int)
             if len(seg) > 1:
                 cv2.polylines(img, [seg.reshape(-1, 1, 2)], False, color, 2)
+    if "ref_line" in result:  # address line hands -> shoulders, extended past the top (green)
+        (x0, y0), (x1, y1) = result["ref_line"]
+        far = (x0 + (x1 - x0) * 2.5, y0 + (y1 - y0) * 2.5)
+        cv2.line(img, (int(x0 * scale), int(y0 * scale)), (int(far[0] * scale), int(far[1] * scale)), (0, 200, 0), 1)
     return img
 
 
@@ -155,8 +159,8 @@ def main():
     (a.out / "index.html").write_text(
         "<meta charset=utf-8><title>外下/内下 目测检查</title><style>body{font:14px sans-serif;margin:16px}"
         "figure{display:inline-block;margin:6px;width:240px;vertical-align:top}img{width:240px}</style>"
-        "<h1>外下 / 内下 目测检查</h1><p>蓝线=上杆双手轨迹，红线=下杆双手轨迹，画在上杆顶点那一帧上。"
-        "红线在蓝线靠球一侧=外下；在身体一侧=内下。按 offset 从大到小排序。"
+        "<h1>外下 / 内下 目测检查</h1><p>蓝线=上杆双手轨迹，红线=下杆双手轨迹，绿线=准备姿势时双手到肩膀的参考线，画在上杆顶点那一帧上。"
+        "红线在绿线靠球一侧=外下；在身体一侧=内下（蓝线只作参考，上杆很内不算外下）。按 offset 从大到小排序。"
         f"阈值：{html.escape(json.dumps(cal or DEFAULT_CALIBRATION, ensure_ascii=False))}</p>" + cards)
     verdicts = {}
     for r in results:

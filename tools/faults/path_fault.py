@@ -3,14 +3,20 @@
 Python first, Swift later. Uses only 2D MediaPipe landmarks plus three phase
 frames (address, top, impact).
 
-Signal (down-the-line camera): at the same hand height, compare where the hands
-are on the way down with where they were on the way up.
+Signal (down-the-line camera, v3): draw a line at address from the hands up
+through the shoulders. At several hand heights, measure how far the downswing
+hands are from that line, in torso lengths:
 
-    offset = (x_down - x_up) * side / torso_length
+    offset = (x_down - x_line) * side / torso_length
 
-offset > 0: hands come down outside (toward the ball) of the backswing path,
-            the classic over-the-top loop
-offset < 0: hands come down inside / behind the backswing path (too inside)
+offset > 0: hands come down outside (toward the ball) of the address line,
+            over the top
+offset < 0: hands come down inside / behind it (too inside)
+
+v2 compared the downswing with the backswing instead. That mixed up two
+different swings: a very flat, inside takeaway with a normal downswing read as
+over the top (Tim Clark, Mike Weir, Ted Potter Jr on GolfDB). The old number is
+still reported as `loop`, and the takeaway alone as `backswing_offset`.
 
 `side` is +1 when the ball is at larger image x than the golfer's hips, so a
 left-handed golfer (mirror image) gets the same sign convention.
@@ -48,14 +54,17 @@ NOSE, L_SH, R_SH, L_HIP, R_HIP, L_WR, R_WR = 0, 11, 12, 23, 24, 15, 16
 
 # Used when no calibration file is passed: calibrate.py on the first 200 GolfDB
 # down-the-line swings (82 golfers, 197 offsets), 80% of golfers inside the band.
-DEFAULT_CALIBRATION = {"center": 0.065, "outside": 0.246, "inside": -0.117, "source": "golfdb_dtl_first200"}
+# v3 measures the downswing against the address line, so earlier numbers do not
+# carry over. PROVISIONAL until calibrate.py is rerun on the cached GolfDB landmarks.
+DEFAULT_CALIBRATION = {"center": 0.0, "outside": 0.30, "inside": -0.30, "source": "provisional_v3"}
 
 # Wrists further apart than this (in torso lengths) are not both on the grip.
 MAX_WRIST_GAP = 0.6
 # Shoulder or hip line wider than this at address (in torso lengths) = off-axis camera.
 # GolfDB DTL: median 0.08, 90th percentile 0.18, widest 0.33 (golfdb_50, the clip
-# judged "camera too close" by eye). Catches clearly off-axis clips only.
-MAX_LINE_WIDTH = 0.3
+# judged "camera too close" by eye). 0.3 missed golfdb_33 (0.23) and golfdb_361
+# (0.226), both clearly off the target line by eye, so the cut is 0.2.
+MAX_LINE_WIDTH = 0.2
 
 
 def _odd(n: float, lo: int = 3) -> int:
@@ -207,23 +216,42 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     if rise < 0.5 * torso:
         return {"verdict": "无法判断", "reason": "上杆幅度太小，可能不是沿目标线机位或阶段不准", "camera": cam}
 
+    # Reference line fixed at address: from the hands up through the shoulders
+    # (a stand-in for the swing plane). The downswing is measured against it,
+    # not against the backswing, so a very inside / flat takeaway (Tim Clark,
+    # Mike Weir) no longer reads as over the top when the hands come down normally.
+    h0 = hands[address]
+    if not np.isfinite(sh_mid).all() or sh_mid[1] >= h0[1]:
+        return {"verdict": "无法判断", "reason": "准备姿势肩膀不在双手上方", "camera": cam}
+    slope = (sh_mid[0] - h0[0]) / (sh_mid[1] - h0[1])
+
+    def ref_x(level: float) -> float:
+        return float(h0[0] + (level - h0[1]) * slope)
+
     up_x, up_y = hands[address:top + 1, 0], hands[address:top + 1, 1]
     dn_x, dn_y = hands[top:impact + 1, 0], hands[top:impact + 1, 1]
-    samples = []
+    down, up, loop = [], [], []
     for frac in np.linspace(0.2, 0.8, 13):
         level = y_addr - frac * rise
         xu = _crossings_x(up_x, up_y, level, rising=True)
         xd = _crossings_x(dn_x, dn_y, level, rising=False)
+        if xd:
+            down.append((float(frac), (np.median(xd) - ref_x(level)) * side / torso))
+        if xu:
+            up.append((np.median(xu) - ref_x(level)) * side / torso)
         if xu and xd:
-            samples.append((float(frac), (np.median(xd) - np.median(xu)) * side / torso))
-    if len(samples) < 5:
-        return {"verdict": "无法判断", "reason": "上下杆轨迹在同一高度上对不齐", "camera": cam}
+            loop.append((np.median(xd) - np.median(xu)) * side / torso)
+    if len(down) < 5:
+        return {"verdict": "无法判断", "reason": "下杆轨迹在参考高度上取不到足够的点", "camera": cam}
 
-    offset = float(np.median([s[1] for s in samples]))
+    offset = float(np.median([d[1] for d in down]))
     return {
         "verdict": classify(offset, cal),
-        "offset": round(offset, 3),
-        "offset_by_height": [(round(f, 2), round(o, 3)) for f, o in samples],
+        "offset": round(offset, 3),  # downswing hands vs the address line: + = outside (over the top)
+        "backswing_offset": round(float(np.median(up)), 3) if up else None,  # + = takeaway outside, - = inside
+        "loop": round(float(np.median(loop)), 3) if loop else None,  # v2 measure: downswing minus backswing
+        "offset_by_height": [(round(f, 2), round(o, 3)) for f, o in down],
+        "ref_line": [[round(float(v), 1) for v in h0], [round(float(v), 1) for v in sh_mid]],
         "torso_px": round(torso, 1),
         "side": int(side),
         "side_votes": votes,

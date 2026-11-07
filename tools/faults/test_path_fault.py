@@ -8,11 +8,13 @@ import path_fault as pf
 
 
 def make_swing(loop: float = 0.0, frames: int = 60, lefty: bool = False, wrist_gap: float = 0.1,
-               shoulder_width: float = 0.2, seed: int | None = None, noise: float = 0.0) -> tuple[np.ndarray, int, int, int]:
+               shoulder_width: float = 0.15, seed: int | None = None, noise: float = 0.0,
+               takeaway: float = 0.0) -> tuple[np.ndarray, int, int, int]:
     """A right-handed DTL swing in pixels: torso 100 px, ball at larger x.
 
     The hands go up along one line and come down along another, `loop` torso
-    lengths further toward the ball (positive = over the top).
+    lengths further toward the ball (positive = over the top). `takeaway`
+    bends the backswing the same way (negative = flat, inside takeaway).
     """
     rng = np.random.default_rng(seed)
     address, top, impact = int(frames * 0.1), int(frames * 0.6), int(frames * 0.85)
@@ -30,7 +32,9 @@ def make_swing(loop: float = 0.0, frames: int = 60, lefty: bool = False, wrist_g
         if f <= address:
             hands[f] = addr_hand
         elif f <= top:
-            hands[f] = addr_hand + (top_hand - addr_hand) * (f - address) / (top - address)
+            t = (f - address) / (top - address)
+            hands[f] = addr_hand + (top_hand - addr_hand) * t
+            hands[f, 0] += takeaway * torso * np.sin(np.pi * t)
         else:
             t = min(1.0, (f - top) / (impact - top))
             hands[f] = top_hand + (addr_hand - top_hand) * t
@@ -44,7 +48,7 @@ def make_swing(loop: float = 0.0, frames: int = 60, lefty: bool = False, wrist_g
 
 
 def test_over_the_top_and_inside():
-    assert pf.analyze(*make_swing(loop=0.4))["verdict"] == "外下过度"
+    assert pf.analyze(*make_swing(loop=0.6))["verdict"] == "外下过度"
     assert pf.analyze(*make_swing(loop=-0.4))["verdict"] == "内下过度"
     assert pf.analyze(*make_swing(loop=0.0))["verdict"] == "路径在职业范围内"
 
@@ -91,10 +95,20 @@ def test_off_axis_camera_is_refused():
 
 
 def test_calibration_moves_the_centre():
-    cal = {"center": 0.2, "outside": 0.35, "inside": 0.05, "source": "test"}
-    assert pf.analyze(*make_swing(loop=0.2), calibration=cal)["verdict"] == "路径在职业范围内"
-    sym = {"center": 0.0, "outside": 0.10, "inside": -0.10, "source": "test"}
-    assert pf.analyze(*make_swing(loop=0.2), calibration=sym)["verdict"] == "外下过度"
+    wide = {"center": 0.0, "outside": 0.6, "inside": -0.6, "source": "test"}
+    tight = {"center": 0.0, "outside": 0.1, "inside": -0.6, "source": "test"}
+    assert pf.analyze(*make_swing(loop=0.4), calibration=wide)["verdict"] == "路径在职业范围内"
+    assert pf.analyze(*make_swing(loop=0.4), calibration=tight)["verdict"] == "外下过度"
+
+
+def test_inside_takeaway_is_not_over_the_top():
+    """Flat, inside takeaway + normal downswing (Tim Clark style): v2's loop was
+    big, v3's downswing offset must not move."""
+    normal = pf.analyze(*make_swing(loop=0.0))
+    flat = pf.analyze(*make_swing(loop=0.0, takeaway=-0.5))
+    assert flat["loop"] > 0.3 and flat["backswing_offset"] < normal["backswing_offset"] - 0.3
+    assert abs(flat["offset"] - normal["offset"]) < 0.02
+    assert flat["verdict"] == "路径在职业范围内"
 
 
 if __name__ == "__main__":

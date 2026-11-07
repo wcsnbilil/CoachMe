@@ -6,10 +6,11 @@ define "neutral", they define the acceptable range. A swing is only flagged
 when it goes further out-to-in than the pros do (slice / pull risk), or
 further in-to-out (big hook / push risk).
 
-Each golfer counts once (median of their clips), so a golfer with eight clips
-does not set the range alone. --coverage picks how much of the pro spread is
-accepted: 1.0 = from the most in-to-out golfer to the most out-to-in one;
-0.95 trims the extreme 2.5% on each side in case one golfer is a tracking error.
+The range is taken over single swings (a golfer's own swing-to-swing spread
+is part of what is normal), with each golfer's clips weighted so every golfer
+counts once in total. --coverage picks how much of that spread is accepted:
+0.98 (default) trims the extreme 1% on each side, which is where tracking
+errors end up.
 
   python tools/faults/calibrate.py path_fault_report/results.json --out calibration.json
 
@@ -30,8 +31,8 @@ import numpy as np
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("results", type=Path)
-    p.add_argument("--coverage", type=float, default=1.0,
-                   help="share of the pro golfers' spread that counts as acceptable (1.0 = all of it)")
+    p.add_argument("--coverage", type=float, default=0.98,
+                   help="share of the pro swings (each golfer weighted once) that counts as acceptable")
     p.add_argument("--out", type=Path, default=Path("calibration.json"))
     p.add_argument("--first", type=int, help="calibrate on the first N swings only, keep the rest for checking")
     a = p.parse_args()
@@ -45,7 +46,11 @@ def main():
     if len(golfer) < 10:
         raise SystemExit(f"only {len(golfer)} golfers with an offset; need at least 10")
     tail = (1 - a.coverage) / 2
-    lo, hi = (float(v) for v in np.quantile(golfer, [tail, 1 - tail]))
+    vals = np.array([o for v in by_golfer.values() for o in v])
+    wts = np.array([1 / len(v) for v in by_golfer.values() for _ in v])
+    idx = np.argsort(vals)
+    cdf = (np.cumsum(wts[idx]) - wts[idx] / 2) / wts.sum()
+    lo, hi = (float(np.interp(q, cdf, vals[idx])) for q in (tail, 1 - tail))
     order = sorted(by_golfer, key=lambda g: np.median(by_golfer[g]))
     cal = {"center": round(float(np.median(golfer)), 3), "outside": round(hi, 3), "inside": round(lo, 3),
            "coverage": a.coverage, "most_in_to_out": order[0], "most_out_to_in": order[-1], "golfers": len(golfer), "swings": int(sum(map(len, by_golfer.values()))),

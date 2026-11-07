@@ -127,6 +127,52 @@ def test_inside_takeaway_is_not_over_the_top():
     assert flat["verdict"] == "路径在职业范围内"
 
 
+def test_clean_swings_have_no_jump_frames():
+    for frames in (30, 60, 160):
+        for loop in (-0.4, 0.0, 0.6):
+            r = pf.analyze(*make_swing(loop=loop, frames=frames, noise=1.0, seed=frames))
+            assert r["jump_frames"] == 0, (frames, loop, r["jump_frames"])
+
+
+def test_whole_pose_jump_is_dropped():
+    """golfdb_478 style: for a few downswing frames the whole skeleton lands
+    somewhere else."""
+    lm, a, t, i = make_swing(loop=0.0, frames=60)
+    base = pf.analyze(lm, a, t, i)
+    lm[t + 3:t + 6, :, 0] += 120
+    lm[t + 3:t + 6, :, 1] -= 40
+    r = pf.analyze(lm, a, t, i)
+    assert r["jump_frames"] == 3, r["jump_frames"]
+    assert abs(r["offset"] - base["offset"]) < 0.03, (r["offset"], base["offset"])
+
+
+def test_both_wrists_jumping_together_is_dropped():
+    """Both wrists move together (their gap stays small), two frames in a row,
+    in a real-time clip where the old 3-frame Hampel window let it through."""
+    lm, a, t, i = make_swing(loop=0.0, frames=40)
+    base = pf.analyze(lm, a, t, i)
+    lm[t + 2:t + 4, [pf.L_WR, pf.R_WR], 0] += 70
+    r = pf.analyze(lm, a, t, i)
+    assert r["jump_frames"] >= 2
+    assert r["verdict"] == base["verdict"] and abs(r["offset"] - base["offset"]) < 0.03, (r["offset"], base["offset"])
+
+
+def test_jump_at_address_does_not_move_the_reference_line():
+    lm, a, t, i = make_swing(loop=0.0, frames=60)
+    base = pf.analyze(lm, a, t, i)
+    lm[a, [pf.L_SH, pf.R_SH, pf.NOSE], 0] += 60  # shoulders and head jump on the address frame only
+    r = pf.analyze(lm, a, t, i)
+    assert abs(r["offset"] - base["offset"]) < 0.01, (r["offset"], base["offset"])
+    assert r["camera"] == base["camera"]
+
+
+def test_lost_downswing_is_refused():
+    lm, a, t, i = make_swing(loop=0.0, frames=120)
+    lm[t + 5:t + 15, [pf.L_WR, pf.R_WR], 2] = 0.0  # a third of the downswing unseen
+    r = pf.analyze(lm, a, t, i)
+    assert r["verdict"] == "无法判断" and "下杆" in r["reason"], r
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

@@ -279,14 +279,14 @@ struct ReportView: View {
                     .font(.caption).foregroundStyle(CoachStyle.textSecondary)
             } else if let path {
                 Text(path.verdict.nameZH).font(.headline)
-                if let risk = path.verdict.riskZH {
+                if let risk = path.verdict.riskZH(side: path.side) {
                     Text(risk).font(.callout)
                 }
                 if let refusal = path.refusal {
                     Text(refusal.messageZH).font(.caption).foregroundStyle(CoachStyle.textSecondary)
                 }
                 if let offset = path.offset {
-                    Text(String(format: "下杆偏离准备线 %+.2f 个躯干长（职业范围 %.2f 至 %+.2f，正数 = 偏外）",
+                    Text(String(format: "下杆偏离准备线 %+.3f 个躯干长（职业范围 %.3f 至 %+.3f，正数 = 偏外）",
                                 offset, SwingPathAnalyzer.Calibration.golfDB.inside, SwingPathAnalyzer.Calibration.golfDB.outside))
                         .font(.caption).foregroundStyle(CoachStyle.textSecondary)
                 }

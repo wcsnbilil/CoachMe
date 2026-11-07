@@ -169,21 +169,25 @@ def camera_check(lm: np.ndarray, address: int, torso: float) -> dict:
 
 
 def still_address(hands: np.ndarray, address: int, top: int) -> int:
-    """The stillest frame (slowest hands) at or before the given address.
+    """Walk a late address back to the most recent still frame.
 
     SwingNet's address is the weakest of its phases (PCE 0.21 on GolfDB) and
     in the app it is often a few frames into the takeaway. Both the camera
     check and the reference line are taken at address, so a late address
     widens the shoulder line (golfdb_669: 0.02 at the real address, 0.20 at
-    the app's) and tilts the line. Look back as far as the takeaway is long.
+    the app's) and tilts the line.
+
+    "Still" = hands slower than 10% of their mean takeaway speed. If the given
+    address is already still it is kept; otherwise step back, at most as far
+    as the takeaway is long, to the first still frame.
     """
+    speed = np.hypot(*(hands[1:top + 1] - hands[:top]).T)  # speed[f] = |hands[f+1] - hands[f]|
+    still = 0.1 * float(np.mean(speed[address:top]))
     lo = max(0, address - (top - address))
-    best, best_speed = address, np.inf
-    for f in range(lo, address + 1):
-        v = float(np.hypot(*(hands[f + 1] - hands[f])))
-        if v < best_speed:
-            best, best_speed = f, v
-    return best
+    for f in range(address, lo - 1, -1):
+        if speed[f] <= still:
+            return f
+    return address
 
 
 def classify(offset: float, cal: dict) -> str:

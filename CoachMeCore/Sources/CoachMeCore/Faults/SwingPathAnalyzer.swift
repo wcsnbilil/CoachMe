@@ -52,11 +52,18 @@ public struct SwingPathAnalyzer: Sendable {
 
         /// The usual ball-flight consequence, phrased as a risk, not a fact:
         /// the face decides the start line, so a path alone never proves a slice.
-        public var riskZH: String? {
+        /// `side` is Result.side: +1 right-handed, -1 left-handed (mirror image).
+        public func riskZH(side: Int?) -> String? {
+            let lefty = side == -1
             switch self {
-            case .overTheTop: return "下杆从外侧下来，容易出现 slice 或拉左"
-            case .tooInside:  return "下杆过于从内侧下来，容易出现大左曲或推右"
-            default:          return nil
+            case .overTheTop:
+                return lefty ? "下杆从外侧下来，容易出现右曲（slice）或拉右"
+                             : "下杆从外侧下来，容易出现右曲（slice）或拉左"
+            case .tooInside:
+                return lefty ? "下杆过于从内侧下来，容易出现大右曲或推左"
+                             : "下杆过于从内侧下来，容易出现大左曲或推右"
+            default:
+                return nil
             }
         }
     }
@@ -300,16 +307,17 @@ public struct SwingPathAnalyzer: Sendable {
         return (m(a.0, b.0), m(a.1, b.1))
     }
 
-    /// still_address: the slowest-hands frame at or before address, looking back
-    /// as far as the takeaway is long. SwingNet's address is often a few frames
-    /// into the takeaway, which widens the shoulder line and tilts the reference.
+    /// still_address: walk a late address back to the most recent still frame
+    /// (hands slower than 10% of their mean takeaway speed), at most as far back
+    /// as the takeaway is long. An address that is already still is kept.
     static func stillAddress(_ xs: [Double], _ ys: [Double], address: Int, top: Int) -> Int {
-        var best = address, bestSpeed = Double.infinity
-        for f in max(0, address - (top - address))...address {
-            let v = hypot(xs[f + 1] - xs[f], ys[f + 1] - ys[f])
-            if v < bestSpeed { best = f; bestSpeed = v }
+        func speed(_ f: Int) -> Double { hypot(xs[f + 1] - xs[f], ys[f + 1] - ys[f]) }
+        let takeaway = (address..<top).map(speed)
+        let still = 0.1 * takeaway.reduce(0, +) / Double(takeaway.count)
+        for f in stride(from: address, through: max(0, address - (top - address)), by: -1) where speed(f) <= still {
+            return f
         }
-        return best
+        return address
     }
 
     static func sign(_ v: Double) -> Int { !v.isFinite || v == 0 ? 0 : (v > 0 ? 1 : -1) }

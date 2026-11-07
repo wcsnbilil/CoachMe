@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 import CoachMeCore
 
 /// 当前值 → 动作阶段 → 教练参考范围 → 偏差 → 解释与建议。
@@ -20,6 +21,7 @@ struct ReportView: View {
     @State private var expanded: Set<String> = []
     @State private var showingChat = false
     @State private var discussion: ReportRow?
+    @State private var path: SwingPathAnalyzer.Result?
 
     var body: some View {
         ScrollView {
@@ -29,6 +31,8 @@ struct ReportView: View {
                 if !swing.keyframes.isEmpty {
                     overview.padding(.top, 24)
                 }
+
+                pathCard.padding(.top, 22)
 
                 ForEach(sections) { section in
                     sectionView(section).padding(.top, 22)
@@ -57,7 +61,7 @@ struct ReportView: View {
                 Rectangle().fill(CoachStyle.line).frame(height: 1)
             })
         }
-        .task { rebuild() }
+        .task { rebuild(); await rebuildPath() }
         .sheet(item: $detail, onDismiss: { if discussion != nil { showingChat = true } }) { row in
             MetricDetailSheet(row: row, swing: swing,
                               onJump: onJump.map { jump in { detail = nil; jump(row.time) } },
@@ -262,6 +266,62 @@ struct ReportView: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Downswing path (外下 / 内下)
+
+    @ViewBuilder
+    private var pathCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("下杆路径（外下 / 内下）").font(.subheadline.weight(.semibold))
+            if swing.cameraView != .downTheLine {
+                Text("需要沿目标线（球手正后方）机位的视频才能判断。")
+                    .font(.caption).foregroundStyle(CoachStyle.textSecondary)
+            } else if let path {
+                Text(path.verdict.nameZH).font(.headline)
+                if let risk = path.verdict.riskZH {
+                    Text(risk).font(.callout)
+                }
+                if let refusal = path.refusal {
+                    Text(refusal.messageZH).font(.caption).foregroundStyle(CoachStyle.textSecondary)
+                }
+                if let offset = path.offset {
+                    Text(String(format: "下杆偏离准备线 %+.2f 个躯干长（职业范围 %.2f 至 %+.2f，正数 = 偏外）",
+                                offset, SwingPathAnalyzer.Calibration.golfDB.inside, SwingPathAnalyzer.Calibration.golfDB.outside))
+                        .font(.caption).foregroundStyle(CoachStyle.textSecondary)
+                }
+                if let back = path.backswingOffset, back < -0.4 {
+                    Text("上杆明显偏内（\(String(format: "%+.2f", back))），不计入外下判断。")
+                        .font(.caption).foregroundStyle(CoachStyle.textSecondary)
+                }
+                ForEach(path.cautionZH, id: \.self) { line in
+                    Text("注意：" + line).font(.caption).foregroundStyle(CoachStyle.textSecondary)
+                }
+                Text("只看双手轨迹，不追踪球杆；范围来自 GolfDB 职业球员。")
+                    .font(.caption2).foregroundStyle(CoachStyle.textTertiary)
+            } else {
+                Text("需要准备姿势、上杆顶点和击球三个关键帧。")
+                    .font(.caption).foregroundStyle(CoachStyle.textSecondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .coachCard()
+    }
+
+    private func rebuildPath() async {
+        guard swing.cameraView == .downTheLine,
+              let cache = library.analysis(for: swing),
+              let address = swing.keyframes.keyframe(for: .address)?.timestampSeconds,
+              let top = swing.keyframes.keyframe(for: .top)?.timestampSeconds,
+              let impact = swing.keyframes.keyframe(for: .impact)?.timestampSeconds else { path = nil; return }
+        let asset = AVURLAsset(url: library.videoURL(for: swing))
+        guard let track = try? await asset.loadTracks(withMediaType: .video).first,
+              let size = try? await track.load(.naturalSize),
+              let transform = try? await track.load(.preferredTransform) else { path = nil; return }
+        let presented = size.applying(transform)
+        // Raw landmarks, as in tools/faults/path_fault.py: the analyzer does its own smoothing.
+        path = SwingPathAnalyzer().analyze(frames: cache.frames, address: address, top: top, impact: impact,
+                                           imageWidth: abs(presented.width), imageHeight: abs(presented.height))
     }
 
     private var limitations: some View {

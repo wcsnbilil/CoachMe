@@ -57,7 +57,7 @@ public struct SwingPathAnalyzer: Sendable {
             let lefty = side == -1
             switch self {
             case .overTheTop:
-                return lefty ? "下杆从外侧下来，容易出现右曲（slice）或拉右"
+                return lefty ? "下杆从外侧下来，容易出现左曲（slice）或拉右"
                              : "下杆从外侧下来，容易出现右曲（slice）或拉左"
             case .tooInside:
                 return lefty ? "下杆过于从内侧下来，容易出现大右曲或推左"

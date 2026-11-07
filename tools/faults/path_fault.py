@@ -181,6 +181,8 @@ def classify(offset: float, cal: dict) -> str:
 def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
             min_visibility: float = 0.5, calibration: dict | None = None,
             max_line_width: float = MAX_LINE_WIDTH, min_ref_angle: float = 0.0) -> dict:
+    # min_ref_angle stays 0: on GolfDB the line's angle is 11.5 deg median and the
+    # near-vertical ones are normal address postures, so it does not find bad cameras.
     """landmarks: [frames, 33, 3] as (x_px, y_px, visibility). Returns the path verdict."""
     cal = calibration or DEFAULT_CALIBRATION
     if not (0 <= address < top < impact < len(landmarks)):
@@ -251,11 +253,15 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
 
     offset = float(np.median([d[1] for d in down]))
     back = float(np.median(up)) if up else None
+    verdict = classify(offset, cal)
     caution = []
-    if back is not None and abs(back) > 0.4 and np.sign(back) == np.sign(offset):
+    # Only worth saying when it changes the answer: on GolfDB 12% of pro swings
+    # sit wholly on one side, mostly a style, not a camera problem.
+    if (verdict != "路径在职业范围内" and back is not None and abs(back) > 0.4
+            and np.sign(back) == np.sign(offset)):
         caution.append("上下杆整条轨迹都在参考线同一侧，可能是机位或俯拍让参考线偏了")
     return {
-        "verdict": classify(offset, cal),
+        "verdict": verdict,
         "offset": round(offset, 3),  # downswing hands vs the address line: + = outside (over the top)
         "backswing_offset": round(back, 3) if back is not None else None,  # + = takeaway outside, - = inside
         "loop": round(float(np.median(loop)), 3) if loop else None,  # v2 measure: downswing minus backswing

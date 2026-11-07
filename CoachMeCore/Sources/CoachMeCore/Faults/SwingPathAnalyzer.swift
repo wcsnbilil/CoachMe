@@ -30,9 +30,9 @@ public struct SwingPathAnalyzer: Sendable {
         }
 
         /// calibrate.py on the first 200 GolfDB down-the-line swings (78 golfers,
-        /// coverage 0.98). All 400 give 0.152 / -0.497. Centre is -0.151: pros come
+        /// coverage 0.98). All 400 give 0.148 / -0.505. Centre is -0.154: pros come
         /// down on the body side of the address line.
-        public static let golfDB = Calibration(outside: 0.144, inside: -0.501, source: "golfdb_dtl_first200_v3")
+        public static let golfDB = Calibration(outside: 0.142, inside: -0.516, source: "golfdb_dtl_first200_v3d")
     }
 
     public enum Verdict: String, Sendable, Codable {

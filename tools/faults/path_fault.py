@@ -54,10 +54,10 @@ NOSE, L_SH, R_SH, L_HIP, R_HIP, L_WR, R_WR = 0, 11, 12, 23, 24, 15, 16
 
 # Used when no calibration file is passed: calibrate.py on the first 200 GolfDB
 # down-the-line swings (82 golfers, 197 offsets), 80% of golfers inside the band.
-# calibrate.py on the first 200 GolfDB down-the-line swings (78 golfers, 186
-# swings, coverage 0.98). All 400 give almost the same: 0.152 / -0.497.
+# calibrate.py on the first 200 GolfDB down-the-line swings (78 golfers, 187
+# swings, coverage 0.98). All 400 give almost the same: 0.148 / -0.505.
 # Pros come down on the body side of the address line (centre -0.15).
-DEFAULT_CALIBRATION = {"center": -0.151, "outside": 0.144, "inside": -0.501, "source": "golfdb_dtl_first200_v3"}
+DEFAULT_CALIBRATION = {"center": -0.154, "outside": 0.142, "inside": -0.516, "source": "golfdb_dtl_first200_v3d"}
 
 # Wrists further apart than this (in torso lengths) are not both on the grip.
 MAX_WRIST_GAP = 0.6

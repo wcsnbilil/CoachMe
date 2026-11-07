@@ -168,6 +168,24 @@ def camera_check(lm: np.ndarray, address: int, torso: float) -> dict:
     }
 
 
+def still_address(hands: np.ndarray, address: int, top: int) -> int:
+    """The stillest frame (slowest hands) at or before the given address.
+
+    SwingNet's address is the weakest of its phases (PCE 0.21 on GolfDB) and
+    in the app it is often a few frames into the takeaway. Both the camera
+    check and the reference line are taken at address, so a late address
+    widens the shoulder line (golfdb_669: 0.02 at the real address, 0.20 at
+    the app's) and tilts the line. Look back as far as the takeaway is long.
+    """
+    lo = max(0, address - (top - address))
+    best, best_speed = address, np.inf
+    for f in range(lo, address + 1):
+        v = float(np.hypot(*(hands[f + 1] - hands[f])))
+        if v < best_speed:
+            best, best_speed = f, v
+    return best
+
+
 def classify(offset: float, cal: dict) -> str:
     """Inside the pro range is fine, whatever shape it suggests (a slight
     out-to-in path is how many pros hit a fade). Only beyond it is a fault."""
@@ -180,7 +198,8 @@ def classify(offset: float, cal: dict) -> str:
 
 def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
             min_visibility: float = 0.5, calibration: dict | None = None,
-            max_line_width: float = MAX_LINE_WIDTH, min_ref_angle: float = 0.0) -> dict:
+            max_line_width: float = MAX_LINE_WIDTH, min_ref_angle: float = 0.0,
+            refine_address: bool = True) -> dict:
     # min_ref_angle stays 0: on GolfDB the line's angle is 11.5 deg median and the
     # near-vertical ones are normal address postures, so it does not find bad cameras.
     """landmarks: [frames, 33, 3] as (x_px, y_px, visibility). Returns the path verdict."""
@@ -198,17 +217,30 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     if not np.isfinite(torso) or torso < 1:
         return {"verdict": "无法判断", "reason": "准备姿势躯干不可见"}
 
+    raw = hand_track(lm, torso)
+    if np.isfinite(raw[address:impact + 1]).all(axis=1).mean() < 0.7:
+        return {"verdict": "无法判断", "reason": "手腕可见帧太少"}
+    k = _odd((impact - address) / 20)
+    hands = _smooth(raw, k)
+
+    given_address = address
+    if refine_address:
+        address = still_address(hands, address, top)
+        a = lm[address]
+        sh2 = np.nanmean(a[[L_SH, R_SH], 0:2], axis=0)
+        hip2 = np.nanmean(a[[L_HIP, R_HIP], 0:2], axis=0)
+        t2 = float(np.linalg.norm(sh2 - hip2))
+        if np.isfinite(t2) and t2 >= 1:
+            sh_mid, hip_mid, torso = sh2, hip2, t2
+        else:
+            address = given_address
+            a = lm[address]
+
     cam = camera_check(lm, address, torso)
     widest = max((v for v in cam.values() if np.isfinite(v)), default=np.nan)
     if widest > max_line_width:
         return {"verdict": "无法判断", "reason": "机位偏离目标线（肩/髋线太宽）", "camera": cam,
-                "torso_px": round(torso, 1)}
-
-    raw = hand_track(lm, torso)
-    if np.isfinite(raw[address:impact + 1]).all(axis=1).mean() < 0.7:
-        return {"verdict": "无法判断", "reason": "手腕可见帧太少", "camera": cam}
-    k = _odd((impact - address) / 20)
-    hands = _smooth(raw, k)
+                "torso_px": round(torso, 1), "address_used": int(address)}
 
     side, votes = detect_side(lm, hands, address, top)
     if side == 0:
@@ -267,6 +299,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
         "loop": round(float(np.median(loop)), 3) if loop else None,  # v2 measure: downswing minus backswing
         "offset_by_height": [(round(f, 2), round(o, 3)) for f, o in down],
         "ref_angle": round(ref_angle, 1),
+        "address_used": int(address),
         "caution": caution,
         "ref_line": [[round(float(v), 1) for v in h0], [round(float(v), 1) for v in sh_mid]],
         "torso_px": round(torso, 1),

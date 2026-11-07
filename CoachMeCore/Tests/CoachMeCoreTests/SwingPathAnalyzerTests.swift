@@ -103,6 +103,14 @@ final class SwingPathAnalyzerTests: XCTestCase {
         XCTAssertEqual(r.refusal, .cameraOffAxis)
     }
 
+    func testLateAddressIsMovedBackToTheStillFrame() {
+        let s = Self.makeSwing(loop: 0.6, frames: 120)
+        let base = run(s)
+        let late = analyzer.analyze(landmarks: s.0, address: s.1 + 8, top: s.2, impact: s.3)
+        XCTAssertLessThanOrEqual(late.addressFrame!, s.1)
+        XCTAssertEqual(late.offset!, base.offset!, accuracy: 0.01)
+    }
+
     func testInsideTakeawayIsNotOverTheTop() {
         let normal = run(Self.makeSwing(loop: 0)), flat = run(Self.makeSwing(loop: 0, takeaway: -0.5))
         XCTAssertGreaterThan(flat.loop!, 0.3)

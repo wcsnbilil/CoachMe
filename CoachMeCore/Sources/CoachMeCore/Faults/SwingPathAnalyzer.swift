@@ -106,11 +106,13 @@ public struct SwingPathAnalyzer: Sendable {
         public var hands: [PathPoint]
         /// Address line, hands -> shoulders, in pixels.
         public var referenceLine: [PathPoint]
+        /// Frame index actually used as address (after refineAddress).
+        public var addressFrame: Int?
 
         static func refused(_ r: Refusal) -> Result {
             Result(verdict: .cannotJudge, refusal: r, offset: nil, backswingOffset: nil, loop: nil, side: nil,
                    shoulderWidth: nil, hipWidth: nil, referenceAngleDegrees: nil, cautionZH: [], hands: [],
-                   referenceLine: [])
+                   referenceLine: [], addressFrame: nil)
         }
     }
 
@@ -133,6 +135,8 @@ public struct SwingPathAnalyzer: Sendable {
     public var minVisibility: Double
     /// Shoulder or hip line wider than this at address (torso lengths) = off-axis camera.
     public var maxLineWidth: Double
+    /// Move a late address back to the stillest frame before it (see stillAddress).
+    public var refineAddress: Bool
     /// Off by default: on GolfDB near-vertical lines are normal address postures.
     public var minReferenceAngleDegrees: Double
     /// Wrists further apart than this (torso lengths) are not both on the grip.
@@ -142,7 +146,9 @@ public struct SwingPathAnalyzer: Sendable {
                 minVisibility: Double = 0.5,
                 maxLineWidth: Double = 0.2,
                 minReferenceAngleDegrees: Double = 0,
-                maxWristGap: Double = 0.6) {
+                maxWristGap: Double = 0.6,
+                refineAddress: Bool = true) {
+        self.refineAddress = refineAddress
         self.calibration = calibration
         self.minVisibility = minVisibility
         self.maxLineWidth = maxLineWidth
@@ -173,7 +179,8 @@ public struct SwingPathAnalyzer: Sendable {
     }
 
     /// landmarks: [frames][33] in pixels, the same input as path_fault.analyze.
-    public func analyze(landmarks input: [[PathPoint]], address: Int, top: Int, impact: Int) -> Result {
+    public func analyze(landmarks input: [[PathPoint]], address givenAddress: Int, top: Int, impact: Int) -> Result {
+        var address = givenAddress
         guard 0 <= address, address < top, top < impact, impact < input.count else { return .refused(.phaseOrder) }
         let lm: [[PathPoint]] = input.map { frame in
             frame.map { p in (p.visibility >= minVisibility) ? p : .missing }
@@ -183,19 +190,10 @@ public struct SwingPathAnalyzer: Sendable {
             return (lm[f][j].x, lm[f][j].y)
         }
 
-        let shMid = Self.nanMean2(xy(address, J.lSh), xy(address, J.rSh))
-        let hipMid = Self.nanMean2(xy(address, J.lHip), xy(address, J.rHip))
-        let torso = hypot(shMid.0 - hipMid.0, shMid.1 - hipMid.1)
+        var shMid = Self.nanMean2(xy(address, J.lSh), xy(address, J.rSh))
+        var hipMid = Self.nanMean2(xy(address, J.lHip), xy(address, J.rHip))
+        var torso = hypot(shMid.0 - hipMid.0, shMid.1 - hipMid.1)
         guard torso.isFinite, torso >= 1 else { return .refused(.torsoNotVisible) }
-
-        let shoulderWidth = abs(xy(address, J.lSh).0 - xy(address, J.rSh).0) / torso
-        let hipWidth = abs(xy(address, J.lHip).0 - xy(address, J.rHip).0) / torso
-        let widest = [shoulderWidth, hipWidth].filter(\.isFinite).max() ?? .nan
-        if widest > maxLineWidth {
-            var r = Result.refused(.cameraOffAxis)
-            r.shoulderWidth = shoulderWidth; r.hipWidth = hipWidth
-            return r
-        }
 
         // Wrist midpoint per frame. A clean left/right label swap does not move it;
         // a wrist landing elsewhere (often the elbow) shows up as a wide gap.
@@ -212,6 +210,23 @@ public struct SwingPathAnalyzer: Sendable {
         let k = Self.oddWindow(Double(impact - address) / 20)
         let xs = Self.smooth(raw.map(\.0), k: k)
         let ys = Self.smooth(raw.map(\.1), k: k)
+
+        if refineAddress {
+            let still = Self.stillAddress(xs, ys, address: address, top: top)
+            let sh2 = Self.nanMean2(xy(still, J.lSh), xy(still, J.rSh))
+            let hip2 = Self.nanMean2(xy(still, J.lHip), xy(still, J.rHip))
+            let t2 = hypot(sh2.0 - hip2.0, sh2.1 - hip2.1)
+            if t2.isFinite, t2 >= 1 { address = still; shMid = sh2; hipMid = hip2; torso = t2 }
+        }
+
+        let shoulderWidth = abs(xy(address, J.lSh).0 - xy(address, J.rSh).0) / torso
+        let hipWidth = abs(xy(address, J.lHip).0 - xy(address, J.rHip).0) / torso
+        let widest = [shoulderWidth, hipWidth].filter(\.isFinite).max() ?? .nan
+        if widest > maxLineWidth {
+            var r = Result.refused(.cameraOffAxis)
+            r.shoulderWidth = shoulderWidth; r.hipWidth = hipWidth; r.addressFrame = address
+            return r
+        }
 
         // Side: majority of four cues (hands, nose, shoulders vs hips at address;
         // hands move back toward the body at the top).
@@ -263,7 +278,8 @@ public struct SwingPathAnalyzer: Sendable {
                       shoulderWidth: shoulderWidth, hipWidth: hipWidth, referenceAngleDegrees: refAngle,
                       cautionZH: caution,
                       hands: zip(xs, ys).map { PathPoint(x: $0, y: $1) },
-                      referenceLine: [PathPoint(x: h0.0, y: h0.1), PathPoint(x: shMid.0, y: shMid.1)])
+                      referenceLine: [PathPoint(x: h0.0, y: h0.1), PathPoint(x: shMid.0, y: shMid.1)],
+                      addressFrame: address)
     }
 
     // MARK: - Helpers (each mirrors a function in path_fault.py)
@@ -282,6 +298,18 @@ public struct SwingPathAnalyzer: Sendable {
             }
         }
         return (m(a.0, b.0), m(a.1, b.1))
+    }
+
+    /// still_address: the slowest-hands frame at or before address, looking back
+    /// as far as the takeaway is long. SwingNet's address is often a few frames
+    /// into the takeaway, which widens the shoulder line and tilts the reference.
+    static func stillAddress(_ xs: [Double], _ ys: [Double], address: Int, top: Int) -> Int {
+        var best = address, bestSpeed = Double.infinity
+        for f in max(0, address - (top - address))...address {
+            let v = hypot(xs[f + 1] - xs[f], ys[f + 1] - ys[f])
+            if v < bestSpeed { best = f; bestSpeed = v }
+        }
+        return best
     }
 
     static func sign(_ v: Double) -> Int { !v.isFinite || v == 0 ? 0 : (v > 0 ? 1 : -1) }

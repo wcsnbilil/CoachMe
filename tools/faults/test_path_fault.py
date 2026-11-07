@@ -109,6 +109,14 @@ def test_vertical_reference_line_is_refused():
     assert pf.analyze(lm, a, t, i, min_ref_angle=r["ref_angle"] + 1)["verdict"] == "无法判断"
 
 
+def test_late_address_is_moved_back_to_the_still_frame():
+    lm, a, t, i = make_swing(loop=0.6, frames=120)
+    base = pf.analyze(lm, a, t, i)
+    late = pf.analyze(lm, a + 8, t, i)  # address picked 8 frames into the takeaway
+    assert late["address_used"] <= a
+    assert abs(late["offset"] - base["offset"]) < 0.01
+
+
 def test_inside_takeaway_is_not_over_the_top():
     """Flat, inside takeaway + normal downswing (Tim Clark style): v2's loop was
     big, v3's downswing offset must not move."""

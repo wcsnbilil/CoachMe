@@ -96,6 +96,16 @@ final class BetaModeAppTests: XCTestCase {
                                                        imageWidth: size.width, imageHeight: size.height)
         XCTAssertGreaterThan(frames.count, 10)
         _ = evidence
+        // Test-log fields come from the same asset.
+        let info = try await BetaAnalysisRunner.videoInfo(asset)
+        XCTAssertGreaterThan(info.durationSeconds, 1)
+        XCTAssertGreaterThan(info.width, 0)
+        XCTAssertGreaterThan(info.height, 0)
+        XCTAssertGreaterThan(info.frameRate, 1)
+        XCTAssertFalse(info.codec.isEmpty)
+        XCTAssertNotEqual(info.codec, "unknown")
+        XCTAssertFalse(BetaMode.deviceModel.isEmpty)
+        print("FIXTURE_VIDEO \(info) device=\(BetaMode.deviceModel)")
         XCTAssertEqual(CountingProtocol.count, 0, "本机分析不应发出网络请求")
     }
 

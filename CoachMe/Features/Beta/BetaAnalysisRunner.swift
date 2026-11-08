@@ -12,6 +12,7 @@ enum BetaAnalysisRunner {
 
     static func analyse(videoURL: URL, library: SwingLibrary,
                         onProgress: @escaping @MainActor (Double) -> Void) async throws -> BetaRecord {
+        let started = Date()
         let duration = try await AVURLAsset(url: videoURL).load(.duration).seconds
         guard duration.isFinite, duration >= 0.1 else { throw AnalysisError.noFramesProduced }
 
@@ -49,9 +50,12 @@ enum BetaAnalysisRunner {
         let size = try await presentedSize(asset)
         let evidence = pathEvidence(frames: frames, keyframes: record.keyframes,
                                     imageWidth: size.width, imageHeight: size.height)
+        let info = try? await videoInfo(asset)
         let beta = BetaRecord(appVersion: BetaMode.appVersion, build: BetaMode.build, verdict: evidence.verdict,
                               refusal: evidence.refusal, swingNotFound: !evidence.isJudged && evidence.refusal == nil,
-                              offset: evidence.offset, swingID: swingID, evidence: evidence)
+                              offset: evidence.offset, swingID: swingID, evidence: evidence,
+                              video: info, analysisMilliseconds: Int(Date().timeIntervalSince(started) * 1000),
+                              deviceModel: BetaMode.deviceModel)
         try recordStore.append(beta)
         return beta
     }
@@ -62,6 +66,18 @@ enum BetaAnalysisRunner {
         let transform = try await track.load(.preferredTransform)
         let presented = size.applying(transform)
         return (abs(Double(presented.width)), abs(Double(presented.height)))
+    }
+
+    /// Duration, displayed size, frame rate and codec, for the test log.
+    static func videoInfo(_ asset: AVAsset) async throws -> VideoInfo {
+        guard let track = try await asset.loadTracks(withMediaType: .video).first else { throw AnalysisError.noFramesProduced }
+        let duration = try await asset.load(.duration).seconds
+        let size = try await track.load(.naturalSize).applying(try await track.load(.preferredTransform))
+        let fps = try await track.load(.nominalFrameRate)
+        let formats = try await track.load(.formatDescriptions)
+        let codec = formats.first.map { VideoInfo.codecName(fourCC: CMFormatDescriptionGetMediaSubType($0)) } ?? "unknown"
+        return VideoInfo(durationSeconds: duration, width: Int(abs(size.width).rounded()),
+                         height: Int(abs(size.height).rounded()), frameRate: Double(fps), codec: codec)
     }
 
     /// Same call as the full report's path card, kept as one function so tests can drive it.

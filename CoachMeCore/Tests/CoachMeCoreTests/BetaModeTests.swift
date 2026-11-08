@@ -90,7 +90,7 @@ final class BetaModeTests: XCTestCase {
         ]
         let data = try BetaExport(records: records, appVersion: "0.1.0", build: "8", now: t0).jsonData()
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        for key in ["schema", "exportedAt", "appVersion", "build", "recordCount", "records"] {
+        for key in BetaExport.requiredRootKeys {
             XCTAssertNotNil(root[key], "缺少 \(key)")
         }
         XCTAssertEqual(root["recordCount"] as? Int, 3)
@@ -107,7 +107,7 @@ final class BetaModeTests: XCTestCase {
         XCTAssertNotNil(ISO8601DateFormatter().date(from: try XCTUnwrap(entries[0]["time"] as? String)))
         // Nothing about the video or landmarks leaks into the export.
         let text = String(decoding: data, as: UTF8.self)
-        for banned in ["swingID", "evidence", "landmark", "video", "downswing"] {
+        for banned in ["swingID", "evidence", "landmark", "videoFilename", "downswing", ".mov", ".mp4"] {
             XCTAssertFalse(text.contains(banned), "导出不应包含 \(banned)")
         }
     }
@@ -204,5 +204,81 @@ final class BetaModeTests: XCTestCase {
             XCTAssertLessThan(band.inside[0].x, x)
         }
         XCTAssertNil(PathEvidence.swingNotFound(imageWidth: 1, imageHeight: 1).rangeBand())
+    }
+
+    // MARK: Log schema 2
+
+    func testExportCarriesVideoTimingRefusalAndDevice() throws {
+        let t0 = Date(timeIntervalSince1970: 1_800_000_000)
+        let video = VideoInfo(durationSeconds: 3.2104, width: 1080, height: 1920, frameRate: 239.87, codec: "HEVC")
+        let rec = BetaRecord(createdAt: t0, appVersion: "0.1.0", build: "9", verdict: .cannotJudge,
+                             refusal: .downswingGap, offset: nil, swingID: UUID(), evidence: nil,
+                             video: video, analysisMilliseconds: 8421, deviceModel: "iPhone15,2")
+        let data = try BetaExport(records: [rec], appVersion: "0.1.0", build: "9", deviceModel: "iPhone15,2", now: t0).jsonData()
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(Set(root.keys), Set(BetaExport.requiredRootKeys))
+        XCTAssertEqual(root["schema"] as? Int, 2)
+        XCTAssertEqual(root["deviceModel"] as? String, "iPhone15,2")
+        let e = try XCTUnwrap((root["records"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(e.keys), Set(BetaExport.requiredEntryKeys))
+        XCTAssertEqual(e["videoDurationSeconds"] as? Double, 3.21)
+        XCTAssertEqual(e["videoWidth"] as? Int, 1080)
+        XCTAssertEqual(e["videoHeight"] as? Int, 1920)
+        XCTAssertEqual(e["videoFrameRate"] as? Double, 239.87)
+        XCTAssertEqual(e["videoCodec"] as? String, "HEVC")
+        XCTAssertEqual(e["videoOrientation"] as? String, "portrait")
+        XCTAssertEqual(e["analysisMs"] as? Int, 8421)
+        XCTAssertEqual(e["refusalReason"] as? String, "downswingGap")
+        XCTAssertEqual(e["refusalCategory"] as? String, "trackingLost")
+        XCTAssertEqual(e["deviceModel"] as? String, "iPhone15,2")
+        XCTAssertEqual(e["appVersion"] as? String, "0.1.0")
+        XCTAssertEqual(e["build"] as? String, "9")
+    }
+
+    func testJudgedRecordHasNoRefusalCategory() {
+        let r = BetaRecord(appVersion: "0.1.0", build: "1", verdict: .overTheTop, refusal: nil, offset: 0.3,
+                           swingID: nil, evidence: nil)
+        XCTAssertNil(r.refusalCategory)
+        let n = BetaRecord(appVersion: "0.1.0", build: "1", verdict: .cannotJudge, refusal: nil, swingNotFound: true,
+                           offset: nil, swingID: nil, evidence: nil)
+        XCTAssertEqual(n.refusalCategory, "swingNotFound")
+        XCTAssertEqual(n.refusalCode, "swingNotFound")
+    }
+
+    /// A records file written by build 0.1.0 (schema 1, before these fields) still loads and exports.
+    func testOldRecordsFileStillLoadsAndExports() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let legacy = """
+        [{"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","createdAt":784111777.5,"appVersion":"0.1.0","build":"1",
+          "verdict":"withinProRange","swingNotFound":false,"offset":-0.12},
+         {"id":"7F9619FF-8B86-D011-B42D-00C04FC964FF","createdAt":784111800.25,"appVersion":"0.1.0","build":"1",
+          "verdict":"cannotJudge","refusal":"cameraOffAxis","swingNotFound":false}]
+        """
+        try Data(legacy.utf8).write(to: dir.appendingPathComponent("beta_records.json"))
+        let loaded = BetaRecordStore(directory: dir).load()
+        XCTAssertEqual(loaded.count, 2)
+        XCTAssertNil(loaded[0].video)
+        XCTAssertNil(loaded[0].analysisMilliseconds)
+        let data = try BetaExport(records: loaded, appVersion: "0.2.0", build: "2").jsonData()
+        let entries = try XCTUnwrap((try JSONSerialization.jsonObject(with: data) as? [String: Any])?["records"] as? [[String: Any]])
+        XCTAssertEqual(entries.count, 2)
+        for e in entries {
+            XCTAssertEqual(Set(e.keys), Set(BetaExport.requiredEntryKeys))
+            XCTAssertTrue(e["videoCodec"] is NSNull)
+            XCTAssertTrue(e["analysisMs"] is NSNull)
+            XCTAssertTrue(e["deviceModel"] is NSNull)
+        }
+        XCTAssertEqual(entries[1]["refusalCategory"] as? String, "cameraOffLine")
+    }
+
+    func testCodecNamesAndOrientation() {
+        func fourCC(_ s: String) -> UInt32 { s.utf8.reduce(0) { ($0 << 8) | UInt32($1) } }
+        XCTAssertEqual(VideoInfo.codecName(fourCC: fourCC("hvc1")), "HEVC")
+        XCTAssertEqual(VideoInfo.codecName(fourCC: fourCC("avc1")), "H.264")
+        XCTAssertEqual(VideoInfo.codecName(fourCC: fourCC("mp4v")), "mp4v")
+        XCTAssertEqual(VideoInfo(durationSeconds: 1, width: 1920, height: 1080, frameRate: 30, codec: "H.264").orientation, "landscape")
+        XCTAssertEqual(VideoInfo(durationSeconds: 1, width: 720, height: 720, frameRate: 30, codec: "H.264").orientation, "square")
     }
 }

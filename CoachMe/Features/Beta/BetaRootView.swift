@@ -72,7 +72,8 @@ struct BetaRootView: View {
 
     static func writeExport(_ records: [BetaRecord]) -> URL? {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("coachme-test-log.json")
-        guard let data = try? BetaExport(records: records, appVersion: BetaMode.appVersion, build: BetaMode.build).jsonData(),
+        guard let data = try? BetaExport(records: records, appVersion: BetaMode.appVersion, build: BetaMode.build,
+                                          deviceModel: BetaMode.deviceModel).jsonData(),
               (try? data.write(to: url, options: .atomic)) != nil else { return nil }
         return url
     }

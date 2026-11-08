@@ -92,11 +92,13 @@ struct BetaReportView: View {
             HStack {
                 Text(s.practiceTitle).font(.subheadline.weight(.semibold))
                 Spacer()
+                if !PracticeTips.isCoachApproved {
                 Text(s.pendingCoach)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(CoachStyle.pending)
                     .padding(.horizontal, 8).padding(.vertical, 3)
                     .background(CoachStyle.pendingFill, in: Capsule())
+                }
             }
             Text(s.practicePlaceholder(evidence.verdict))
                 .font(.callout).foregroundStyle(CoachStyle.textSecondary)

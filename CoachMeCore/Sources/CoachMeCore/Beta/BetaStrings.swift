@@ -28,8 +28,8 @@ public struct BetaStrings: Sendable {
                                          "No analyses yet. Tap below to import a swing filmed from directly behind the golfer.") }
     public var newAnalysis: String { t("开始新的分析", "New analysis") }
     public var exportRecords: String { t("导出测试记录", "Export test log") }
-    public var exportHint: String { t("导出 JSON：时间、App 版本、结论、拒判原因。不含视频。",
-                                       "Exports JSON: time, app version, result, refusal reason. No video.") }
+    public var exportHint: String { t("导出测试记录，发给研究团队。只包含时间、版本和结论，不含视频。",
+                                       "Export your test log and send it to the research team. It only has times, app version and results, no video.") }
 
     // MARK: Shooting guide
     public var guideTitle: String { t("拍摄引导", "How to film") }
@@ -80,16 +80,16 @@ public struct BetaStrings: Sendable {
                      "Your hands come down inside the range pro golfers use.")
         case .overTheTop:
             return leftHanded
-                ? t("下杆时双手从外侧下来，容易打出左曲（slice）或拉右。",
-                    "Your hands come down from the outside. This often leads to a slice (curving left) or a pull right.")
-                : t("下杆时双手从外侧下来，容易打出右曲（slice）或拉左。",
-                    "Your hands come down from the outside. This often leads to a slice or a pull left.")
+                ? t("下杆时双手从外侧下来，这常和左曲或拉右球有关；球怎么飞还取决于杆面。",
+                    "Your hands come down from the outside. This is often linked to a slice (curving left) or a pull right; the clubface also decides how the ball flies.")
+                : t("下杆时双手从外侧下来，这常和右曲或拉左球有关；球怎么飞还取决于杆面。",
+                    "Your hands come down from the outside. This is often linked to a slice or a pull left; the clubface also decides how the ball flies.")
         case .tooInside:
             return leftHanded
-                ? t("下杆时双手过于从内侧下来，容易出现大右曲或推左。",
-                    "Your hands come down too far from the inside. This often leads to a big hook or a push left.")
-                : t("下杆时双手过于从内侧下来，容易出现大左曲或推右。",
-                    "Your hands come down too far from the inside. This often leads to a big hook or a push right.")
+                ? t("下杆时双手过于从内侧下来，这常和右曲或推左有关；球怎么飞还取决于杆面。",
+                    "Your hands come down too far from the inside. This is often linked to a hook (curving right) or a push left; the clubface also decides how the ball flies.")
+                : t("下杆时双手过于从内侧下来，这常和左曲或推右有关；球怎么飞还取决于杆面。",
+                    "Your hands come down too far from the inside. This is often linked to a hook or a push right; the clubface also decides how the ball flies.")
         case .cannotJudge:
             return t("这段视频无法可靠判断。", "This video can't be judged reliably.")
         }
@@ -103,16 +103,9 @@ public struct BetaStrings: Sendable {
     public var uncertainty: String { t("参照职业球员的路径范围，对业余球手的准确度正在测试中。",
                                         "Compared with the range pro golfers use. Accuracy for amateur golfers is still being tested.") }
     public var practiceTitle: String { t("练习建议", "Practice tip") }
+    /// Text lives in PracticeTips (one place to replace once the coach signs off).
     public func practicePlaceholder(_ v: SwingPathAnalyzer.Verdict) -> String {
-        switch v {
-        case .withinProRange: return t("（占位）保持现在的下杆路线，可以多拍几次确认稳定。",
-                                       "(Placeholder) Keep this path; film a few more swings to check it holds.")
-        case .overTheTop:     return t("（占位）下杆开始时让双手先往下落，而不是往前推。",
-                                       "(Placeholder) Start the downswing by letting the hands drop, not push out.")
-        case .tooInside:      return t("（占位）下杆时让双手更贴近准备时的参考线下来。",
-                                       "(Placeholder) Bring the hands down closer to the address line.")
-        case .cannotJudge:    return t("（占位）先按下面的方法重拍。", "(Placeholder) Re-film using the steps below first.")
-        }
+        PracticeTips.text(for: v, language: language)
     }
     public var pendingCoach: String { t("待教练确认", "Awaiting coach review") }
     public var done: String { t("完成", "Done") }

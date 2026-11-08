@@ -168,6 +168,12 @@ final class BetaModeTests: XCTestCase {
         XCTAssertNotEqual(zh.uncertainty, en.uncertainty)
         XCTAssertEqual(zh.uncertainty, "参照职业球员的路径范围，对业余球手的准确度正在测试中。")
         XCTAssertEqual(zh.pendingCoach, "待教练确认")
+        XCTAssertTrue(zh.verdictSummary(.overTheTop, leftHanded: false).contains("还取决于杆面"))
+        XCTAssertTrue(zh.verdictSummary(.tooInside, leftHanded: false).contains("常和左曲或推右"))
+        for v in [SwingPathAnalyzer.Verdict.withinProRange, .overTheTop, .tooInside, .cannotJudge] {
+            XCTAssertEqual(zh.practicePlaceholder(v), PracticeTips.zh[v])
+            XCTAssertEqual(en.practicePlaceholder(v), PracticeTips.en[v])
+        }
         for v in [SwingPathAnalyzer.Verdict.withinProRange, .overTheTop, .tooInside, .cannotJudge] {
             for s in [zh, en] {
                 XCTAssertFalse(s.verdictTitle(v).isEmpty)

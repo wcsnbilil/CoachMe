@@ -53,6 +53,8 @@ jobs:
   app:
     name: App 编译 + 模拟器测试（不签名）
     runs-on: macos-15
+    permissions:
+      contents: write   # 只用来把截图推到 ci-screenshots 分支
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -93,7 +95,34 @@ jobs:
             grep -E "Executed [0-9]+ tests" xcodebuild.log | tail -1
             grep -E "Test Case .*failed" xcodebuild.log | head -20
           } | tee -a "$GITHUB_STEP_SUMMARY" || true
-      - name: 内测版界面截图（中英）
+      - name: 截图推到 ci-screenshots 分支（不用下载 zip，手机上就能看）
+        if: always() && hashFiles('screenshots/*.png') != ''
+        env:
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -e
+          DIR="${REF_NAME//\//-}"
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf "$RUNNER_TEMP/shots" && mkdir -p "$RUNNER_TEMP/shots" && cd "$RUNNER_TEMP/shots"
+          git init -q
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth 1 origin ci-screenshots; then git checkout -q -b ci-screenshots FETCH_HEAD; else git checkout -q --orphan ci-screenshots; fi
+          rm -rf "$DIR" && mkdir -p "$DIR"
+          cp "$GITHUB_WORKSPACE"/screenshots/*.png "$DIR/"
+          {
+            echo "# $REF_NAME @ ${SHA:0:7}"
+            for f in "$DIR"/*.png; do n=$(basename "$f"); echo; echo "## $n"; echo "<img src=\"$n\" width=\"300\">"; done
+          } > "$DIR/README.md"
+          git add -A "$DIR"
+          git commit -q -m "screenshots: $REF_NAME ${SHA:0:7}" || true
+          git push -q origin ci-screenshots
+          URL="https://github.com/${{ github.repository }}/tree/ci-screenshots/$DIR"
+          echo "### 内测版截图" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "截图：$URL"
+      - name: 内测版界面截图（中英，zip）
         if: always()
         uses: actions/upload-artifact@v4
         with:

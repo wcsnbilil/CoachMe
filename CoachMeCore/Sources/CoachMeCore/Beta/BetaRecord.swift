@@ -90,8 +90,8 @@ public final class BetaRecordStore: @unchecked Sendable {
     public func load() -> [BetaRecord] {
         lock.lock(); defer { lock.unlock() }
         guard let data = try? Data(contentsOf: fileURL) else { return [] }
+        // Default date coding keeps sub-second precision, so order survives a reload.
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
         return ((try? decoder.decode([BetaRecord].self, from: data)) ?? []).sorted { $0.createdAt > $1.createdAt }
     }
 
@@ -100,8 +100,6 @@ public final class BetaRecordStore: @unchecked Sendable {
         all.append(record)
         lock.lock(); defer { lock.unlock() }
         try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        try encoder.encode(all).write(to: fileURL, options: .atomic)
+        try JSONEncoder().encode(all).write(to: fileURL, options: .atomic)
     }
 }

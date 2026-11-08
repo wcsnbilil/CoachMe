@@ -125,6 +125,7 @@ final class BetaModeTests: XCTestCase {
                                     offset: nil, swingID: nil, evidence: nil))
         let loaded = store.load()
         XCTAssertEqual(loaded.count, 2)
+        XCTAssertEqual(loaded.first?.refusal, .downswingGap, "最新的在前")
         XCTAssertEqual(loaded.last?.evidence, ev)
     }
 

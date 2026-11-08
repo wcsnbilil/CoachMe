@@ -163,6 +163,8 @@ public struct SwingPathAnalyzer: Sendable {
     static let despikeFloor = 0.25
     static let maxJumpFrames = 4
     static let maxDownswingGap = 0.25
+    /// A gap this short is always filled, however short the downswing (path_fault.MIN_FILLED_GAP).
+    static let minFilledGap = 3.0
 
     public init(calibration: Calibration = .golfDB,
                 minVisibility: Double = 0.5,
@@ -246,7 +248,7 @@ public struct SwingPathAnalyzer: Sendable {
         if Double(span.filter { ok[$0] }.count) / Double(span.count) < 0.7 {
             var r = Result.refused(.trackingJumps); r.jumpFrames = jumped; return r
         }
-        if Double(Self.longestGap(Array(ok[top...impact]))) > max(2, Self.maxDownswingGap * Double(impact - top)) {
+        if Double(Self.longestGap(Array(ok[top...impact]))) > max(Self.minFilledGap, Self.maxDownswingGap * Double(impact - top)) {
             var r = Result.refused(.downswingGap); r.jumpFrames = jumped; return r
         }
 

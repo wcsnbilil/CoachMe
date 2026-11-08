@@ -85,6 +85,11 @@ MAX_JUMP_FRAMES = 4
 # Refuse when the hands are unknown for longer than this share of the downswing:
 # filling it would draw a straight chord, not the path.
 MAX_DOWNSWING_GAP = 0.25
+# A gap this short is always filled (interpolated), however short the downswing.
+# Was 2: on real-time GolfDB clips (downswing 6-9 frames) a single 3-frame dropout
+# refused 13 clips that read in range once filled; none of the 348 clips that
+# already had a verdict changed (GolfDB 400, 2026-11-08).
+MIN_FILLED_GAP = 3
 
 
 def _odd(n: float, lo: int = 3) -> int:
@@ -341,7 +346,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     jumped = int((seen & ~ok)[span].sum())
     if ok[span].mean() < 0.7:
         return {"verdict": "无法判断", "reason": "关键点跳动太多", "jump_frames": jumped}
-    if longest_gap(ok[top:impact + 1]) > max(2, MAX_DOWNSWING_GAP * (impact - top)):
+    if longest_gap(ok[top:impact + 1]) > max(MIN_FILLED_GAP, MAX_DOWNSWING_GAP * (impact - top)):
         return {"verdict": "无法判断", "reason": "下杆有一段双手追踪丢失或乱跳", "jump_frames": jumped}
     hands = _smooth(raw, k)
 

@@ -93,6 +93,8 @@ jobs:
         run: |
           pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
           bash tools/download-model.sh heavy
+      - name: 竖拍旋转元数据（Python 读出来要和 App 一样是正的）
+        run: python tools/e2e/test_rotation.py
       - name: Python 整条链路（保留每一层：解码、关键点、SwingNet、判定）
         run: |
           shopt -s nullglob

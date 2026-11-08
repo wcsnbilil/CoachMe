@@ -23,8 +23,9 @@ $FF -vf "$PORTRAIT" $X264 -r 30 "$OUT/${P}__h264_portrait_30.mp4"
 $FF -vf "$PORTRAIT" $X265 -r 60 "$OUT/${P}__hevc_portrait_60fps-dup.mp4"
 $FF -vf "$PORTRAIT" $X264 -r 240 "$OUT/${P}__h264_portrait_240fps-dup.mp4"
 # iPhone-style: pixels stored landscape, displayed portrait through rotation metadata.
+# (transpose=2 turns the pixels 90° anticlockwise; display_rotation is anticlockwise too, so -90 undoes it.)
 ffmpeg -v error -y -i "$SRC" -vf "$PORTRAIT,transpose=2" $X264 -r 30 "$OUT/.rot_tmp.mp4"
-ffmpeg -v error -y -display_rotation 90 -i "$OUT/.rot_tmp.mp4" -c copy "$OUT/${P}__h264_portrait_rotated-metadata.mov"
+ffmpeg -v error -y -display_rotation -90 -i "$OUT/.rot_tmp.mp4" -c copy "$OUT/${P}__h264_portrait_rotated-metadata.mov"
 rm -f "$OUT/.rot_tmp.mp4"
 # ~60 s with 4 swings: hold the first frame 12 s, play the clip; repeat 4x (PR-3 multi-swing input).
 ffmpeg -v error -y -i "$SRC" -vf "tpad=start_duration=12:start_mode=clone,fps=30" $X264 "$OUT/.seg.mp4"

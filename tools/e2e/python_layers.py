@@ -29,6 +29,7 @@ def r4(v: float) -> float:
 
 def decode(path: Path):
     cap = cv2.VideoCapture(str(path))
+    cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 1)  # iPhone portrait clips carry rotation metadata; OpenCV ignores it by default
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     frames, stamps = [], []
     while True:

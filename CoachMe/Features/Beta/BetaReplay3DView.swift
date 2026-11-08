@@ -34,6 +34,9 @@ struct BetaReplay3DView: View {
                 Self.scene(frame: frames[min(index, frames.count - 1)])
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .accessibilityLabel(s.replay3D)
+                Text(s.replay3DEstimate)
+                    .font(.caption)
+                    .foregroundStyle(CoachStyle.textSecondary)
                 HStack(spacing: 12) {
                     Button { playing.toggle() } label: {
                         Image(systemName: playing ? "pause.fill" : "play.fill")
@@ -53,7 +56,10 @@ struct BetaReplay3DView: View {
         .background(CoachStyle.background)
         .navigationTitle(s.replay3D)
         .navigationBarTitleDisplayMode(.inline)
-        .task { load() }
+        .task {
+            load()
+            try? BetaAnalysisRunner.recordStore.logReplayOpen(swingID: swingID)
+        }
         .task(id: playing) { await play() }
     }
 

@@ -115,6 +115,8 @@ public struct BetaStrings: Sendable {
     public var replay3D: String { t("原机位 3D 回放", "3D replay (filming angle)") }
     public var replay3DNote: String { t("按拍摄角度回放的三维估计。只用一台手机看不准前后深度，所以不能转视角，也不显示角度数字。",
                                         "A 3D estimate replayed from the filming angle. One phone can't measure depth well, so you can't turn the view and no angles are shown.") }
+    public var replay3DEstimate: String { t("根据单机位画面估算的示意动作，不是测量结果。",
+                                            "An illustration estimated from a single camera view, not a measurement.") }
     public var replay3DUnavailable: String { t("这段视频没有可用的三维数据。", "No 3D data for this video.") }
     public var play: String { t("播放", "Play") }
     public var pause: String { t("暂停", "Pause") }

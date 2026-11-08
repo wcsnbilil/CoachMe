@@ -113,6 +113,30 @@ final class BetaModeTests: XCTestCase {
         }
     }
 
+    func testReplayOpensAreLoggedAndExported() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = BetaRecordStore(directory: dir)
+        let swing = UUID(), t0 = Date(timeIntervalSince1970: 1_800_000_000)
+        try store.append(BetaRecord(createdAt: t0, appVersion: "0.1.0", build: "9", verdict: .withinProRange, refusal: nil,
+                                    offset: 0, swingID: swing, evidence: nil))
+        try store.append(BetaRecord(createdAt: t0.addingTimeInterval(5), appVersion: "0.1.0", build: "9", verdict: .overTheTop,
+                                    refusal: nil, offset: 0.3, swingID: UUID(), evidence: nil))
+        try store.logReplayOpen(swingID: swing, at: t0.addingTimeInterval(30))
+        try store.logReplayOpen(swingID: swing, at: t0.addingTimeInterval(90))
+        try store.logReplayOpen(swingID: UUID(), at: t0)  // unknown swing: ignored
+        let records = store.load()
+        XCTAssertEqual(records.first { $0.swingID == swing }?.replayOpens?.count, 2)
+        let data = try BetaExport(records: records, appVersion: "0.1.0", build: "9", now: t0).jsonData()
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let entries = try XCTUnwrap(root["records"] as? [[String: Any]])
+        XCTAssertEqual((entries[0]["replay3DOpens"] as? [String])?.count, 2)
+        XCTAssertEqual((entries[1]["replay3DOpens"] as? [String])?.count, 0)
+        // Records saved before the field existed still load.
+        let old = #"[{"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","createdAt":0,"appVersion":"0.1.0","build":"1","verdict":"withinProRange","swingNotFound":false}]"#
+        XCTAssertNoThrow(try JSONDecoder().decode([BetaRecord].self, from: Data(old.utf8)))
+    }
+
     func testRecordStoreRoundTrip() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: dir) }

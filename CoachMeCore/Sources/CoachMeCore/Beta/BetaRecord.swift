@@ -15,6 +15,9 @@ public struct BetaRecord: Sendable, Codable, Identifiable, Equatable {
     public var swingID: UUID?
     /// What the report draws; never exported.
     public var evidence: PathEvidence?
+    /// Each time the tester opened the 3D replay for this analysis (exported, to see whether it gets used).
+    /// Optional so records saved before it existed still decode.
+    public var replayOpens: [Date]?
 
     public init(id: UUID = UUID(), createdAt: Date = Date(), appVersion: String, build: String,
                 verdict: SwingPathAnalyzer.Verdict, refusal: SwingPathAnalyzer.Refusal?, swingNotFound: Bool = false,
@@ -40,6 +43,8 @@ public struct BetaExport: Codable, Equatable, Sendable {
         public var build: String
         public var verdict: String
         public var refusalReason: String?
+        /// When the tester opened the 3D replay of this analysis.
+        public var replay3DOpens: [String]
     }
     public var schema: Int
     public var exportedAt: String
@@ -48,7 +53,7 @@ public struct BetaExport: Codable, Equatable, Sendable {
     public var recordCount: Int
     public var records: [Entry]
 
-    public static let requiredEntryKeys = ["time", "appVersion", "build", "verdict", "refusalReason"]
+    public static let requiredEntryKeys = ["time", "appVersion", "build", "verdict", "refusalReason", "replay3DOpens"]
 
     public init(records: [BetaRecord], appVersion: String, build: String, now: Date = Date()) {
         let f = ISO8601DateFormatter()
@@ -60,7 +65,8 @@ public struct BetaExport: Codable, Equatable, Sendable {
         recordCount = records.count
         self.records = records.sorted { $0.createdAt < $1.createdAt }.map {
             Entry(time: f.string(from: $0.createdAt), appVersion: $0.appVersion, build: $0.build,
-                  verdict: $0.verdict.rawValue, refusalReason: $0.refusalCode)
+                  verdict: $0.verdict.rawValue, refusalReason: $0.refusalCode,
+                  replay3DOpens: ($0.replayOpens ?? []).sorted().map { f.string(from: $0) })
         }
     }
 
@@ -72,7 +78,7 @@ public struct BetaExport: Codable, Equatable, Sendable {
         ]
         root["records"] = records.map { e -> [String: Any] in
             ["time": e.time, "appVersion": e.appVersion, "build": e.build, "verdict": e.verdict,
-             "refusalReason": e.refusalReason.map { $0 as Any } ?? NSNull()]
+             "refusalReason": e.refusalReason.map { $0 as Any } ?? NSNull(), "replay3DOpens": e.replay3DOpens]
         }
         return try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
     }
@@ -100,6 +106,15 @@ public final class BetaRecordStore: @unchecked Sendable {
         all.append(record)
         lock.lock(); defer { lock.unlock() }
         try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try JSONEncoder().encode(all).write(to: fileURL, options: .atomic)
+    }
+
+    /// Notes that the tester opened the 3D replay of the analysis made from this swing.
+    public func logReplayOpen(swingID: UUID, at date: Date = Date()) throws {
+        var all = load()
+        guard let i = all.firstIndex(where: { $0.swingID == swingID }) else { return }
+        all[i].replayOpens = (all[i].replayOpens ?? []) + [date]
+        lock.lock(); defer { lock.unlock() }
         try JSONEncoder().encode(all).write(to: fileURL, options: .atomic)
     }
 }

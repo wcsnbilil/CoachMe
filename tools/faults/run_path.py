@@ -95,6 +95,8 @@ def draw(frames, result, a, t, i, title) -> np.ndarray:
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # Windows console defaults to GBK/cp1252
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--golfdb", type=Path)
     p.add_argument("--video", type=Path, action="append", default=[])
@@ -114,7 +116,7 @@ def main():
     a.out.mkdir(parents=True, exist_ok=True)
     cache = a.out / "landmarks"
     cache.mkdir(exist_ok=True)
-    cal = json.loads(a.calibration.read_text()) if a.calibration else None
+    cal = json.loads(a.calibration.read_text(encoding="utf-8")) if a.calibration else None
 
     jobs = []  # (name, video path, phases or None, extra fields for results.json)
     if a.golfdb:
@@ -154,7 +156,7 @@ def main():
         print(f"{n}/{len(jobs)} {name}: {r['verdict']} {r.get('offset', '')} {r.get('reason', '')}", flush=True)
 
     (a.out / "results.json").write_text(json.dumps(
-        [{k: v for k, v in r.items() if k != "hands"} for r in results], ensure_ascii=False, indent=1))
+        [{k: v for k, v in r.items() if k != "hands"} for r in results], ensure_ascii=False, indent=1), encoding="utf-8")
     cards = "".join(
         f"<figure><img src='{html.escape(r['name'])}.jpg'><figcaption><b>{html.escape(r['verdict'])}</b> "
         f"offset={r.get('offset', '—')}<br>{html.escape(r['name'])} {html.escape(str(r.get('player', '')))}{' 慢动作' if r.get('slow') else ''} {html.escape(r.get('reason', ''))}</figcaption></figure>"
@@ -164,7 +166,7 @@ def main():
         "figure{display:inline-block;margin:6px;width:240px;vertical-align:top}img{width:240px}</style>"
         "<h1>外下 / 内下 目测检查</h1><p>蓝线=上杆双手轨迹，红线=下杆双手轨迹，绿线=准备姿势时双手到肩膀的参考线，画在上杆顶点那一帧上。"
         "红线在绿线靠球一侧=外下；在身体一侧=内下（蓝线只作参考，上杆很内不算外下）。按 offset 从大到小排序。"
-        f"阈值：{html.escape(json.dumps(cal or DEFAULT_CALIBRATION, ensure_ascii=False))}</p>" + cards)
+        f"阈值：{html.escape(json.dumps(cal or DEFAULT_CALIBRATION, ensure_ascii=False))}</p>" + cards, encoding="utf-8")
     verdicts = {}
     for r in results:
         verdicts[r["verdict"]] = verdicts.get(r["verdict"], 0) + 1

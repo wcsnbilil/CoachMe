@@ -33,7 +33,7 @@ def main():
     p.add_argument("--out", type=Path, default=Path("path_parity.json"))
     p.add_argument("--limit", type=int, default=400)
     a = p.parse_args()
-    rows = json.loads((a.report / "results.json").read_text())
+    rows = json.loads((a.report / "results.json").read_text(encoding="utf-8"))
     out = []
     for r in rows[: a.limit]:
         npy = a.report / "landmarks" / f"{r['name']}.npy"
@@ -51,7 +51,7 @@ def main():
             "loop": res.get("loop"),
             "jump_frames": res.get("jump_frames"),
         })
-    a.out.write_text(json.dumps(out))
+    a.out.write_text(json.dumps(out), encoding="utf-8")
     print(f"{len(out)} swings -> {a.out}")
 
 

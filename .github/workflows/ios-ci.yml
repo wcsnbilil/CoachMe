@@ -142,6 +142,7 @@ jobs:
           TEST_RUNNER_COACHME_SCREENSHOT_DIR="$PWD/screenshots" \
           TEST_RUNNER_COACHME_E2E_DIR="$PWD/e2e-videos" \
           TEST_RUNNER_COACHME_E2E_OUT="$PWD/e2e-app" \
+          TEST_RUNNER_COACHME_E2E_DUMP_FRAMES="h264_portrait_30" \
           xcodebuild test \
             -workspace CoachMe.xcworkspace -scheme CoachMe \
             -destination "id=$SIM" \
@@ -226,8 +227,28 @@ jobs:
         run: |
           set -o pipefail
           python3 tools/e2e/compare.py e2e-app e2e-python/results.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-python@v5
+        if: always()
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        if: always()
+        with:
+          name: e2e-videos
+          path: e2e-videos
+      - name: 交叉实验：Python MediaPipe 跑 App 解码出来的像素
+        if: always()
+        continue-on-error: true
+        run: |
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy
+          bash tools/download-model.sh heavy
+          for d in e2e-app/frames/*/; do
+            n=$(basename "$d")
+            v=$(ls e2e-videos/"$n".* | head -1)
+            python tools/e2e/pose_on_frames.py "$d" "$v" --out e2e-cross
+          done
       - name: 逐层对比（解码 → 关键点 → SwingNet → 判定）
         if: always()
         run: |
           pip install --quiet numpy
-          python3 tools/e2e/layers.py e2e-app e2e-python | tee -a "$GITHUB_STEP_SUMMARY"
+          python tools/e2e/layers.py e2e-app e2e-python --cross e2e-cross | tee -a "$GITHUB_STEP_SUMMARY"

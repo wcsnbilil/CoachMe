@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 import AVFoundation
 import Darwin
 import CoachMeCore
@@ -64,6 +65,10 @@ final class EndToEndVideoTests: XCTestCase {
                 r.refusalOnePose = one.refusal
                 r.offsetOnePose = one.offset
             }
+            if let pattern = env["COACHME_E2E_DUMP_FRAMES"], !pattern.isEmpty,
+               url.lastPathComponent.contains(pattern) {
+                try await Self.dumpFrames(url, to: out.appendingPathComponent("frames/" + url.deletingPathExtension().lastPathComponent))
+            }
             let data = try JSONEncoder().encode(r)
             try data.write(to: out.appendingPathComponent(url.deletingPathExtension().lastPathComponent + ".json"))
             print("E2E \(r.name) frames=\(r.frames) verdict=\(r.verdict) refusal=\(r.refusal ?? "-") "
@@ -121,6 +126,32 @@ final class EndToEndVideoTests: XCTestCase {
 }
 
 extension EndToEndVideoTests {
+    /// Every frame exactly as the App's pose detector receives it (same reader settings), as
+    /// lossless PNG, so tools/e2e/pose_on_frames.py can run Python MediaPipe on App pixels.
+    static func dumpFrames(_ url: URL, to dir: URL) async throws {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let reader = VideoAssetReader(asset: AVURLAsset(url: url))
+        try await reader.start(timeRange: nil, maxDimension: 4096)
+        defer { reader.cancel() }
+        var i = 0
+        while let frame = try reader.nextFrame() {
+            let b = frame.pixelBuffer
+            CVPixelBufferLockBaseAddress(b, .readOnly)
+            let w = CVPixelBufferGetWidth(b), h = CVPixelBufferGetHeight(b)
+            let ctx = CGContext(data: CVPixelBufferGetBaseAddress(b), width: w, height: h, bitsPerComponent: 8,
+                                bytesPerRow: CVPixelBufferGetBytesPerRow(b),
+                                space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue
+                                    | CGImageAlphaInfo.noneSkipFirst.rawValue)
+            let image = ctx?.makeImage()
+            CVPixelBufferUnlockBaseAddress(b, .readOnly)
+            if let image, let png = UIImage(cgImage: image).pngData() {
+                try png.write(to: dir.appendingPathComponent(String(format: "%05d.png", i)))
+            }
+            i += 1
+        }
+    }
+
     nonisolated static func r4(_ v: Double) -> Double { (v * 10000).rounded() / 10000 }
 }
 

@@ -49,7 +49,16 @@ def verdict(lm: np.ndarray, phases) -> str:
     return v + (f"（{r['reason']}）" if r.get("reason") else f" {r.get('offset', 0):+.3f}")
 
 
-def table(app: dict, py: dict) -> list[str]:
+def joint_diff(a: np.ndarray, b: np.ndarray, joints) -> str:
+    n = min(len(a), len(b))
+    ok = np.isfinite(a[:n, 0, 0]) & np.isfinite(b[:n, 0, 0])
+    if not ok.any():
+        return "—"
+    d = np.linalg.norm(a[:n][ok][:, joints, :2] - b[:n][ok][:, joints, :2], axis=2)
+    return f"平均 {np.nanmean(d):.1f}px，最大 {np.nanmax(d):.0f}px"
+
+
+def table(app: dict, py: dict, cross: dict | None = None) -> list[str]:
     rows = []
     add = lambda layer, item, a, p, note="": rows.append(f"| {layer} | {item} | {a} | {p} | {note} |")
     na, np_ = len(app["timestamps"]), len(py["timestamps"])
@@ -89,6 +98,12 @@ def table(app: dict, py: dict) -> list[str]:
     add("", "阶段来自人物裁剪重跑", "是" if app.get("usedPersonCrop") else "否", "是" if py.get("personCrop") else "否")
     combos = [("App 关键点 + App 阶段", own, app.get("phases")), ("App 关键点 + Py 阶段", own, py.get("phases")),
               ("Py 关键点 + App 阶段", lp, app.get("phases")), ("Py 关键点 + Py 阶段", lp, py.get("phases"))]
+    if cross is not None:  # Python MediaPipe on the App's own decoded pixels
+        lc = pixels(cross)
+        add("2b 交叉", "App 解码像素 vs OpenCV 解码", "", "", f"平均差 {cross.get('pixelDiff') or float('nan'):.2f}/255")
+        add("", "Python MediaPipe(App 像素) vs App 关键点", "", "", "手腕 " + joint_diff(lc, own, [15, 16]))
+        add("", "Python MediaPipe(App 像素) vs Python 关键点", "", "", "手腕 " + joint_diff(lc, lp, [15, 16]))
+        combos.append(("Python MediaPipe(App 像素) + App 阶段", lc, app.get("phases")))
     for i, (label, lm, ph) in enumerate(combos):
         add("4 判定" if i == 0 else "", label, "", "", verdict(lm, ph))
     return rows
@@ -98,6 +113,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("app_dir", type=Path)
     ap.add_argument("py_dir", type=Path)
+    ap.add_argument("--cross", type=Path, help="pose_on_frames.py output (Python MediaPipe on App pixels)")
     a = ap.parse_args()
     out = ["## 逐层对比（App 模拟器 vs Python）", "",
            "第 4 层都用 Python 判定算法，只换输入：看是关键点还是阶段帧让结论分叉。", ""]
@@ -110,7 +126,9 @@ def main():
             out += ["App 没有这一段的逐层数据。", ""]
             continue
         out += ["| 层 | 项目 | App | Python | 差异 |", "|---|---|---|---|---|"]
-        out += table(json.loads(g.read_text()), json.loads(f.read_text(encoding="utf-8")))
+        c = a.cross / f.name if a.cross else None
+        out += table(json.loads(g.read_text()), json.loads(f.read_text(encoding="utf-8")),
+                     json.loads(c.read_text(encoding="utf-8")) if c and c.exists() else None)
         out.append("")
     print("\n".join(out))
 

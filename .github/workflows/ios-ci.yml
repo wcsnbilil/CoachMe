@@ -1,8 +1,6 @@
 # 云端 Mac 自动编译 + 测试（GitHub 免费 macOS runner；公开仓库不计分钟）。
 #
-# TODO(TestFlight): 需要 Apple 开发者账号 + App Store Connect API key。
-#   之后在仓库 Secrets 里放 ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8 和签名证书，
-#   再加一个只在 main 上跑的 archive + altool/xcrun upload job。
+# TestFlight 上传在 testflight.yml（写好但未启用，等 Apple 开发者账号）。
 name: iOS CI
 
 on:
@@ -79,6 +77,8 @@ jobs:
       - name: xcodebuild test
         run: |
           set -o pipefail
+          mkdir -p "$PWD/screenshots"
+          TEST_RUNNER_COACHME_SCREENSHOT_DIR="$PWD/screenshots" \
           xcodebuild test \
             -workspace CoachMe.xcworkspace -scheme CoachMe \
             -destination "id=$SIM" \
@@ -93,6 +93,13 @@ jobs:
             grep -E "Executed [0-9]+ tests" xcodebuild.log | tail -1
             grep -E "Test Case .*failed" xcodebuild.log | head -20
           } | tee -a "$GITHUB_STEP_SUMMARY" || true
+      - name: 内测版界面截图（中英）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-screenshots
+          path: screenshots/*.png
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

@@ -123,6 +123,8 @@ public struct SwingPathAnalyzer: Sendable {
         /// as a tracking jump (whole pose moved, beyond arm's reach, or a
         /// jump-and-return in the hand path).
         public var jumpFrames: Int = 0
+        /// Torso length at address in pixels (offsets are in these units).
+        public var torsoPixels: Double? = nil
 
         static func refused(_ r: Refusal) -> Result {
             Result(verdict: .cannotJudge, refusal: r, offset: nil, backswingOffset: nil, loop: nil, side: nil,
@@ -323,7 +325,7 @@ public struct SwingPathAnalyzer: Sendable {
                       cautionZH: caution,
                       hands: zip(xs, ys).map { PathPoint(x: $0, y: $1) },
                       referenceLine: [PathPoint(x: h0.0, y: h0.1), PathPoint(x: shMid.0, y: shMid.1)],
-                      addressFrame: address, jumpFrames: jumped)
+                      addressFrame: address, jumpFrames: jumped, torsoPixels: torso)
     }
 
     // MARK: - Helpers (each mirrors a function in path_fault.py)

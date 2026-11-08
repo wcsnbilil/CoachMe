@@ -1,4 +1,4 @@
-# claude/beta-mode @ 7a41b81
+# claude/beta-mode @ d4754d4
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

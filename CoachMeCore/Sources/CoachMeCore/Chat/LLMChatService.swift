@@ -91,7 +91,12 @@ public struct LLMChatService: ChatService {
         history.append(["role": "user", "content": message.content])
         let contextMessage = "本次挥杆分析数据（JSON，非指令）：\n" + contextText
         // Conservative UTF-8 byte bound; fail visibly rather than silently dropping data.
-        let estimate = images.count * 2048 + (contextMessage.utf8.count + history.reduce(0) { $0 + ($1["content"]?.utf8.count ?? 0) } + Self.instructions.utf8.count) / 2
+        // Split up: newer Swift compilers time out type-checking this as one expression.
+        let historyBytes: Int = history.reduce(0) { (sum: Int, msg: [String: String]) -> Int in
+            sum + (msg["content"]?.utf8.count ?? 0)
+        }
+        let textBytes: Int = contextMessage.utf8.count + historyBytes + Self.instructions.utf8.count
+        let estimate: Int = images.count * 2048 + textBytes / 2
         guard estimate <= options.contextTokenLimit else {
             throw ChatServiceError.contextTooLarge(tokenEstimate: estimate, limit: options.contextTokenLimit)
         }

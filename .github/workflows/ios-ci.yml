@@ -91,7 +91,7 @@ jobs:
           path: e2e-videos
       - name: 依赖和模型
         run: |
-          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
           bash tools/download-model.sh heavy
       - name: Python 整条链路
         run: |

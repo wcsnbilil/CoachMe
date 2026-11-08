@@ -1,4 +1,4 @@
-# claude/e2e-parity @ 48cf680
+# claude/e2e-parity @ cf0e85c
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

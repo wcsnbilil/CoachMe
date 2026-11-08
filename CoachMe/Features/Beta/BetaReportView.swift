@@ -10,6 +10,7 @@ struct BetaReportView: View {
     let evidence: PathEvidence
     let frameImage: UIImage?
     var onAgain: () -> Void
+    var onReplay: (() -> Void)? = nil
 
     var body: some View {
         ScrollView {
@@ -30,8 +31,14 @@ struct BetaReportView: View {
         .navigationTitle(s.reportTitle)
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
-            Button(action: onAgain) { Label(s.analyseAnother, systemImage: "arrow.counterclockwise") }
-                .buttonStyle(CoachSecondaryButton())
+            VStack(spacing: 8) {
+                if let onReplay {
+                    Button(action: onReplay) { Label(s.replay3D, systemImage: "figure.golf") }
+                        .buttonStyle(CoachSecondaryButton())
+                }
+                Button(action: onAgain) { Label(s.analyseAnother, systemImage: "arrow.counterclockwise") }
+                    .buttonStyle(CoachSecondaryButton())
+            }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 8)
                 .background(CoachStyle.background)

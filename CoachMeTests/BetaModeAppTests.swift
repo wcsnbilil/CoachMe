@@ -22,7 +22,7 @@ final class BetaModeAppTests: XCTestCase {
     }
 
     func testEveryBetaScreenIsABetaSurface() {
-        let routes: [BetaRoute] = [.guide, .result(UUID())]
+        let routes: [BetaRoute] = [.guide, .result(UUID()), .replay3D(UUID())]
         let features = routes.map(\.feature) + BetaRoute.rootFeatures + BetaRoute.resultFeatures
         for f in features {
             XCTAssertTrue(f.isBetaSurface, "\(f) 不应出现在内测版")
@@ -31,6 +31,15 @@ final class BetaModeAppTests: XCTestCase {
         let blocked: [AppFeature] = [.aiCoachChat, .aiSettings, .jointAngleMetrics, .angleCurve, .coachRules, .keyframeWorkbench,
                                      .avatar3D, .skeletonPlayback]
         XCTAssertTrue(Set(features).isDisjoint(with: blocked))
+    }
+
+    /// The beta has a 3D replay, but only from the filming camera: no rotation, no view presets.
+    @MainActor
+    func testBeta3DReplayCannotChangeTheView() {
+        XCTAssertEqual(BetaRoute.replay3D(UUID()).feature, .avatarReplay)
+        let scene = BetaReplay3DView.scene(frame: nil)
+        XCTAssertFalse(scene.orbit, "内测版 3D 回放不能拖动换视角")
+        XCTAssertEqual(scene.angle, 0, "内测版 3D 回放只用原机位")
     }
 
     // MARK: Zero network requests (URLProtocol interception)

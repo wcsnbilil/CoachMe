@@ -382,9 +382,10 @@ struct StageVideo: View {
                                     angle: angleMark)
                 }
             } else {
-                AvatarSceneView(frame: model.currentDisplayPoseFrame, angle: 0.35, reset: 0,
+                // Original camera only: single-camera depth is not good enough to turn the body.
+                AvatarSceneView(frame: model.currentDisplayPoseFrame, angle: 0, reset: 0,
                                 showBones: model.showSkeleton, darkStage: true)
-                    .accessibilityLabel("三维人体估计，可拖动旋转、双指缩放")
+                    .accessibilityLabel("三维人体估计，原机位回放")
             }
         }
         .overlay(alignment: .topLeading) { PhaseChip(model: model).padding(10) }

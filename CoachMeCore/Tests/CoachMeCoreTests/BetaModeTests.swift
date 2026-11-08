@@ -7,7 +7,8 @@ final class BetaModeTests: XCTestCase {
 
     func testBetaModeOnlyExposesBetaSurfaces() {
         let reachable = AppFeature.allCases.filter { $0.isAvailable(betaMode: true) }
-        XCTAssertEqual(Set(reachable), [.shootingGuide, .pathReport, .refusalHelp, .recordList, .exportRecords, .settingsVersion])
+        XCTAssertEqual(Set(reachable), [.shootingGuide, .pathReport, .refusalHelp, .recordList, .exportRecords, .settingsVersion,
+                                        .avatarReplay])
         for f in [AppFeature.aiCoachChat, .aiSettings, .jointAngleMetrics, .angleCurve, .coachRules, .keyframeWorkbench,
                   .avatar3D, .skeletonPlayback] {
             XCTAssertFalse(f.isAvailable(betaMode: true), "\(f) 在内测模式下不应可达")
@@ -112,6 +113,30 @@ final class BetaModeTests: XCTestCase {
         }
     }
 
+    func testReplayOpensAreLoggedAndExported() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = BetaRecordStore(directory: dir)
+        let swing = UUID(), t0 = Date(timeIntervalSince1970: 1_800_000_000)
+        try store.append(BetaRecord(createdAt: t0, appVersion: "0.1.0", build: "9", verdict: .withinProRange, refusal: nil,
+                                    offset: 0, swingID: swing, evidence: nil))
+        try store.append(BetaRecord(createdAt: t0.addingTimeInterval(5), appVersion: "0.1.0", build: "9", verdict: .overTheTop,
+                                    refusal: nil, offset: 0.3, swingID: UUID(), evidence: nil))
+        try store.logReplayOpen(swingID: swing, at: t0.addingTimeInterval(30))
+        try store.logReplayOpen(swingID: swing, at: t0.addingTimeInterval(90))
+        try store.logReplayOpen(swingID: UUID(), at: t0)  // unknown swing: ignored
+        let records = store.load()
+        XCTAssertEqual(records.first { $0.swingID == swing }?.replayOpens?.count, 2)
+        let data = try BetaExport(records: records, appVersion: "0.1.0", build: "9", now: t0).jsonData()
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let entries = try XCTUnwrap(root["records"] as? [[String: Any]])
+        XCTAssertEqual((entries[0]["replay3DOpens"] as? [String])?.count, 2)
+        XCTAssertEqual((entries[1]["replay3DOpens"] as? [String])?.count, 0)
+        // Records saved before the field existed still load.
+        let old = #"[{"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","createdAt":0,"appVersion":"0.1.0","build":"1","verdict":"withinProRange","swingNotFound":false}]"#
+        XCTAssertNoThrow(try JSONDecoder().decode([BetaRecord].self, from: Data(old.utf8)))
+    }
+
     func testRecordStoreRoundTrip() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: dir) }
@@ -167,6 +192,11 @@ final class BetaModeTests: XCTestCase {
         XCTAssertEqual(zh.guideItems.count, 5)
         XCTAssertEqual(en.guideItems.count, 5)
         XCTAssertNotEqual(zh.uncertainty, en.uncertainty)
+        for s in [zh, en] {
+            XCTAssertFalse(s.replay3D.isEmpty)
+            XCTAssertFalse(s.replay3DNote.contains("°"))
+        }
+        XCTAssertTrue(zh.replay3DNote.contains("不能转视角"))
         XCTAssertEqual(zh.uncertainty, "参照职业球员的路径范围，对业余球手的准确度正在测试中。")
         XCTAssertEqual(zh.pendingCoach, "待教练确认")
         XCTAssertTrue(zh.verdictSummary(.overTheTop, leftHanded: false).contains("还取决于杆面"))

@@ -27,6 +27,8 @@ public final class NetworkGate: @unchecked Sendable {
 public enum AppFeature: String, CaseIterable, Sendable {
     case shootingGuide, pathReport, refusalHelp, recordList, exportRecords, settingsVersion
     case aiCoachChat, aiSettings, jointAngleMetrics, angleCurve, coachRules, keyframeWorkbench
+    /// Single-camera 3D depth is not trustworthy: no 3D avatar or skeleton playback in the beta.
+    case avatar3D, skeletonPlayback
 
     public var isBetaSurface: Bool {
         switch self {

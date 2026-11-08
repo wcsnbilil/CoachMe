@@ -28,7 +28,8 @@ final class BetaModeAppTests: XCTestCase {
             XCTAssertTrue(f.isBetaSurface, "\(f) 不应出现在内测版")
             XCTAssertFalse(f.usesNetwork)
         }
-        let blocked: [AppFeature] = [.aiCoachChat, .aiSettings, .jointAngleMetrics, .angleCurve, .coachRules, .keyframeWorkbench]
+        let blocked: [AppFeature] = [.aiCoachChat, .aiSettings, .jointAngleMetrics, .angleCurve, .coachRules, .keyframeWorkbench,
+                                     .avatar3D, .skeletonPlayback]
         XCTAssertTrue(Set(features).isDisjoint(with: blocked))
     }
 

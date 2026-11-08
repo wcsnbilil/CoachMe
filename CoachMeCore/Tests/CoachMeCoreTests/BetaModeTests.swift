@@ -8,7 +8,8 @@ final class BetaModeTests: XCTestCase {
     func testBetaModeOnlyExposesBetaSurfaces() {
         let reachable = AppFeature.allCases.filter { $0.isAvailable(betaMode: true) }
         XCTAssertEqual(Set(reachable), [.shootingGuide, .pathReport, .refusalHelp, .recordList, .exportRecords, .settingsVersion])
-        for f in [AppFeature.aiCoachChat, .aiSettings, .jointAngleMetrics, .angleCurve, .coachRules, .keyframeWorkbench] {
+        for f in [AppFeature.aiCoachChat, .aiSettings, .jointAngleMetrics, .angleCurve, .coachRules, .keyframeWorkbench,
+                  .avatar3D, .skeletonPlayback] {
             XCTAssertFalse(f.isAvailable(betaMode: true), "\(f) 在内测模式下不应可达")
             XCTAssertTrue(f.isAvailable(betaMode: false), "\(f) 在完整版应保留")
         }

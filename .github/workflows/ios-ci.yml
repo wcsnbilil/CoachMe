@@ -36,6 +36,13 @@ jobs:
           else
             echo "::warning::没有 $FIX，SwingPathParityTests 会被跳过"
           fi
+      - name: 内测版代码不引用 AI / 指标 / 3D 小人 / 骨架回放的界面
+        run: |
+          BANNED='ChatPanelView|AISettingsView|WorkbenchView|[^a-zA-Z]ReportView|AngleChartView|RuleListView|Skeleton3DView|SkeletonOverlay|VideoPlayerView|GolfAvatar|LLMChatService|AISettingsStore'
+          if grep -nE "$BANNED" CoachMe/Features/Beta/*.swift; then
+            echo "::error::内测版页面引用了不该可达的界面"; exit 1
+          fi
+          echo "内测版页面没有引用 AI、关节指标、3D 小人或骨架回放"
       - name: swift test
         run: |
           set -o pipefail

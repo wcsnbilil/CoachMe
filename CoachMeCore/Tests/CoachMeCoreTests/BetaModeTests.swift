@@ -7,7 +7,8 @@ final class BetaModeTests: XCTestCase {
 
     func testBetaModeOnlyExposesBetaSurfaces() {
         let reachable = AppFeature.allCases.filter { $0.isAvailable(betaMode: true) }
-        XCTAssertEqual(Set(reachable), [.shootingGuide, .pathReport, .refusalHelp, .recordList, .exportRecords, .settingsVersion])
+        XCTAssertEqual(Set(reachable), [.shootingGuide, .pathReport, .refusalHelp, .recordList, .exportRecords, .settingsVersion,
+                                        .avatarReplay])
         for f in [AppFeature.aiCoachChat, .aiSettings, .jointAngleMetrics, .angleCurve, .coachRules, .keyframeWorkbench,
                   .avatar3D, .skeletonPlayback] {
             XCTAssertFalse(f.isAvailable(betaMode: true), "\(f) 在内测模式下不应可达")
@@ -167,6 +168,11 @@ final class BetaModeTests: XCTestCase {
         XCTAssertEqual(zh.guideItems.count, 5)
         XCTAssertEqual(en.guideItems.count, 5)
         XCTAssertNotEqual(zh.uncertainty, en.uncertainty)
+        for s in [zh, en] {
+            XCTAssertFalse(s.replay3D.isEmpty)
+            XCTAssertFalse(s.replay3DNote.contains("°"))
+        }
+        XCTAssertTrue(zh.replay3DNote.contains("不能转视角"))
         XCTAssertEqual(zh.uncertainty, "参照职业球员的路径范围，对业余球手的准确度正在测试中。")
         XCTAssertEqual(zh.pendingCoach, "待教练确认")
         XCTAssertTrue(zh.verdictSummary(.overTheTop, leftHanded: false).contains("还取决于杆面"))

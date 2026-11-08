@@ -8,19 +8,22 @@ enum BetaRoute: Hashable {
     case guide
     case analysing(PhotosPickerItem)
     case result(UUID)
+    /// Swing ID of the analysed video.
+    case replay3D(UUID)
 
     var feature: AppFeature {
         switch self {
         case .guide: return .shootingGuide
         case .analysing: return .shootingGuide
         case .result: return .pathReport
+        case .replay3D: return .avatarReplay
         }
     }
 
     /// The root screen and its sheets.
     static let rootFeatures: [AppFeature] = [.recordList, .exportRecords, .settingsVersion]
-    /// A result screen shows either the report or the refusal help.
-    static let resultFeatures: [AppFeature] = [.pathReport, .refusalHelp]
+    /// A result screen shows either the report or the refusal help; a report links to the 3D replay.
+    static let resultFeatures: [AppFeature] = [.pathReport, .refusalHelp, .avatarReplay]
 }
 
 @MainActor
@@ -56,8 +59,11 @@ struct BetaRootView: View {
                         }
                     case .result(let id):
                         if let record = records.first(where: { $0.id == id }) {
-                            BetaResultView(record: record, onAgain: { path = [.guide] })
+                            BetaResultView(record: record, onAgain: { path = [.guide] },
+                                           onReplay: record.swingID.map { id in { path.append(.replay3D(id)) } })
                         }
+                    case .replay3D(let swingID):
+                        BetaReplay3DView(swingID: swingID)
                     }
                 }
         }
@@ -84,12 +90,13 @@ struct BetaResultView: View {
     @Environment(SwingLibrary.self) private var library
     let record: BetaRecord
     var onAgain: () -> Void
+    var onReplay: (() -> Void)? = nil
     @State private var frame: UIImage?
 
     var body: some View {
         Group {
             if let evidence = record.evidence, evidence.isJudged {
-                BetaReportView(record: record, evidence: evidence, frameImage: frame, onAgain: onAgain)
+                BetaReportView(record: record, evidence: evidence, frameImage: frame, onAgain: onAgain, onReplay: onReplay)
             } else {
                 BetaRefusalView(refusal: record.refusal, onRefilm: onAgain)
             }

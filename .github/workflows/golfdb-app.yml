@@ -10,6 +10,8 @@ on:
       - CoachMe/Services/**
       - CoachMeTests/GolfDBAppPipelineTests.swift
       - tools/e2e/golfdb_*.py
+      - tools/benchmark/impact_check.py
+      - tools/split/swing_split.py
   workflow_dispatch:
     inputs:
       limit:
@@ -111,10 +113,20 @@ jobs:
           bash tools/download-model.sh heavy
       - name: run_path（GolfDB 标注阶段）
         run: python tools/faults/run_path.py --golfdb golfdb/data --limit "$LIMIT" --out report_py | tail -5
+      - name: 击球帧交叉核对（SwingNet / 双手高度规则 / 混合），自动阶段下的 P0
+        run: |
+          python tools/benchmark/impact_check.py --golfdb golfdb/data --limit "$LIMIT" \
+            --landmarks report_py/landmarks --out impact | tee -a "$GITHUB_STEP_SUMMARY"
+          for m in swingnet hybrid; do
+            echo; echo "### 自动阶段（$m）"
+            python tools/e2e/golfdb_app_metrics.py report impact/results_$m.json --holdout-from 200 || true
+          done | sed 's/App 流水线/Python（自动阶段）/' | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: golfdb-python
-          path: report_py/results.json
+          path: |
+            report_py/results.json
+            impact/
 
   report:
     name: P0 三项（App vs Python）

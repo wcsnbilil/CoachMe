@@ -33,6 +33,18 @@ offset > 0 = 下杆双手在上杆轨迹靠球一侧（外下），< 0 = 身体�
 阈值是在这 200 杆上定的，上面的数字偏乐观；后 200 杆的留出检查见 PR。
 左手：Bubba Watson、Mike Weir、Scott Langley 四票全部判对。Mike Weir 仍是最大外下（0.45–0.54），不是左右手的问题，待目测。
 
+## 在 Windows 上跑
+
+算法这部分（MediaPipe 关键点 → SwingNet 阶段 → 外下/内下判定 → 叠加图）全是 Python，Windows 上可以直接跑，结果和 Mac 用的是同一个 MediaPipe Heavy 模型；只有 iOS App 本身、`swift test` 和 Swift/Python 一致性检查还需要 Mac。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\setup-windows.ps1     # 建 .venv、装依赖、下载姿态模型、跑合成测试
+.venv\Scripts\python.exe tools\faults\run_path.py --video D:\swings\me.mp4 --out report_me          # 自己的视频
+.venv\Scripts\python.exe tools\faults\run_path.py --golfdb ..\golfdb\data --limit 400 --out report_v4  # GolfDB
+```
+
+SwingNet 在 Windows 上用 `--backend numpy`（默认），不需要 CoreML。所有 JSON/HTML 都按 UTF-8 读写，Windows 生成的 `results.json` 可以直接拿到 Mac 上比较。
+
 ## 重跑同样 200 杆并对比
 
 ```bash

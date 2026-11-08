@@ -67,6 +67,30 @@ MAX_WRIST_GAP = 0.6
 # (0.226), both clearly off the target line by eye, so the cut is 0.2.
 MAX_LINE_WIDTH = 0.2
 
+# Tracking jumps (v4). MediaPipe now and then puts a few frames of the skeleton,
+# or just the wrists, somewhere else (golfdb_478, golfdb_724). The old Hampel
+# filter ran per axis with a 3-frame window on real-time clips, so a jump that
+# lasted two frames went straight through into the path.
+# Hips farther than this from where they are for most of the swing (torso
+# lengths): the whole pose jumped, so that frame's wrists are not trusted.
+MAX_HIP_SHIFT = 0.5
+# Hands farther than this from that frame's shoulder midpoint (torso lengths)
+# cannot be at the end of the arms.
+MAX_REACH = 1.8
+# Despike (see despike()): a step this far (torso lengths, or 3 scaled MADs of
+# the clip's step deviations if that is more) from the median of the steps
+# around it starts or ends a jump; a jump lasts at most MAX_JUMP_FRAMES frames.
+DESPIKE_FLOOR = 0.25
+MAX_JUMP_FRAMES = 4
+# Refuse when the hands are unknown for longer than this share of the downswing:
+# filling it would draw a straight chord, not the path.
+MAX_DOWNSWING_GAP = 0.25
+# A gap this short is always filled (interpolated), however short the downswing.
+# Was 2: on real-time GolfDB clips (downswing 6-9 frames) a single 3-frame dropout
+# refused 13 clips that read in range once filled; none of the 348 clips that
+# already had a verdict changed (GolfDB 400, 2026-11-08).
+MIN_FILLED_GAP = 3
+
 
 def _odd(n: float, lo: int = 3) -> int:
     k = max(lo, int(round(n)))
@@ -128,6 +152,88 @@ def hand_track(lm: np.ndarray, torso: float) -> np.ndarray:
     return hands
 
 
+def _nanmedian(a: np.ndarray, axis: int = 0) -> np.ndarray:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        return np.nanmedian(a, axis=axis)
+
+
+def body_at(lm: np.ndarray, f: int, lo: int, hi: int, h: int) -> np.ndarray:
+    """Per-joint median of frames f-h..f+h (kept inside lo..hi): [33, 2].
+
+    The body is still at address, so a median over a few frames gives the same
+    pose as one frame, but one jumped frame can no longer move the reference
+    line, the torso length or the camera check.
+    """
+    return _nanmedian(lm[max(lo, f - h): min(hi, f + h) + 1, :, 0:2], axis=0)
+
+
+def pose_glitches(lm: np.ndarray, hands: np.ndarray, address: int, impact: int, torso: float) -> np.ndarray:
+    """True for frames whose wrists cannot be trusted because the pose jumped:
+    the hips are far from their usual place, or the hands are beyond arm's reach
+    of the shoulders."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        hip = np.nanmean(lm[:, [L_HIP, R_HIP], 0:2], axis=1)
+        sh = np.nanmean(lm[:, [L_SH, R_SH], 0:2], axis=1)
+    home = _nanmedian(hip[address:impact + 1])
+    shift = np.linalg.norm(hip - home, axis=1) / torso
+    reach = np.linalg.norm(hands - sh, axis=1) / torso
+    with np.errstate(invalid="ignore"):
+        return (shift > MAX_HIP_SHIFT) | (reach > MAX_REACH)
+
+
+def despike(track: np.ndarray, torso: float) -> np.ndarray:
+    """Drop (set NaN) the frames of a jump: the hands leave their path and come back.
+
+    Works on steps (frame-to-frame moves). The median of the five steps around
+    a step is what the step should be: for any smooth motion, even the fast,
+    curved downswing or the turn at the top, the steps change steadily and their
+    median is the step itself. A jump shows as one step far off that median
+    (out) and, within MAX_JUMP_FRAMES, one roughly opposite (back); the frames
+    between them are dropped. A move that does not come back is left alone
+    here (pose_glitches handles a skeleton that stays elsewhere).
+    """
+    out = track.copy()
+    n = len(track)
+    steps = np.full((n, 2), np.nan)
+    steps[1:] = track[1:] - track[:-1]
+    dev = np.full((n, 2), np.nan)
+    for i in range(1, n):
+        if not np.isfinite(steps[i]).all():
+            continue
+        win = steps[max(1, i - 2): i + 3]
+        win = win[np.isfinite(win).all(axis=1)]
+        if len(win) >= 3:
+            dev[i] = steps[i] - np.median(win, axis=0)
+    size = np.linalg.norm(dev, axis=1)
+    finite = size[np.isfinite(size)]
+    if len(finite) < 3:
+        return out
+    limit = max(3.0 * 1.4826 * float(np.median(finite)), DESPIKE_FLOOR * torso)
+    i = 1
+    while i < n:
+        if not size[i] > limit:
+            i += 1
+            continue
+        back = next((j for j in range(i + 1, min(n, i + MAX_JUMP_FRAMES + 1))
+                     if size[j] > 0.5 * limit and np.linalg.norm(dev[i] + dev[j]) < 0.5 * size[i]), None)
+        if back is None:
+            i += 1
+            continue
+        out[i:back] = np.nan
+        i = back + 1
+    return out
+
+
+def longest_gap(ok: np.ndarray) -> int:
+    run = best = 0
+    for v in ok:
+        run = 0 if v else run + 1
+        best = max(best, run)
+    return best
+
+
 def _crossings_x(xs: np.ndarray, ys: np.ndarray, level: float, rising: bool) -> list[float]:
     """x at every crossing of `level` (image y, smaller = higher) in the given direction."""
     out = []
@@ -144,11 +250,12 @@ def _sign(v: float) -> int:
     return 0 if not np.isfinite(v) or v == 0 else (1 if v > 0 else -1)
 
 
-def detect_side(lm: np.ndarray, hands: np.ndarray, address: int, top: int) -> tuple[int, dict]:
-    """+1 if the ball is at larger image x than the hips. Majority of four cues."""
-    a = lm[address]
-    hip = np.nanmean(a[[L_HIP, R_HIP], 0:2], axis=0)[0]
-    sh = np.nanmean(a[[L_SH, R_SH], 0:2], axis=0)[0]
+def detect_side(body: np.ndarray, hands: np.ndarray, address: int, top: int) -> tuple[int, dict]:
+    """+1 if the ball is at larger image x than the hips. Majority of four cues.
+    body: the address pose from body_at."""
+    a = body
+    hip = np.nanmean(a[[L_HIP, R_HIP]], axis=0)[0]
+    sh = np.nanmean(a[[L_SH, R_SH]], axis=0)[0]
     votes = {
         "hands": _sign(hands[address, 0] - hip),     # hands hang toward the ball
         "nose": _sign(a[NOSE, 0] - hip),             # head is over the ball
@@ -159,9 +266,9 @@ def detect_side(lm: np.ndarray, hands: np.ndarray, address: int, top: int) -> tu
     return (0 if total == 0 else (1 if total > 0 else -1)), votes
 
 
-def camera_check(lm: np.ndarray, address: int, torso: float) -> dict:
-    """How wide the shoulder and hip lines look at address, in torso lengths."""
-    a = lm[address]
+def camera_check(body: np.ndarray, torso: float) -> dict:
+    """How wide the shoulder and hip lines look at address (body_at), in torso lengths."""
+    a = body
     return {
         "shoulder_width": round(float(abs(a[L_SH, 0] - a[R_SH, 0]) / torso), 3),
         "hip_width": round(float(abs(a[L_HIP, 0] - a[R_HIP, 0]) / torso), 3),
@@ -213,40 +320,54 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     lm = landmarks.astype(float).copy()
     low = ~(lm[:, :, 2] >= min_visibility)
     lm[low, 0:2] = np.nan
+    k = _odd((impact - address) / 20)
+    h = max(2, k // 2)  # half-width of the address median
 
-    a = lm[address]
-    sh_mid = np.nanmean(a[[L_SH, R_SH], 0:2], axis=0)
-    hip_mid = np.nanmean(a[[L_HIP, R_HIP], 0:2], axis=0)
-    torso = float(np.linalg.norm(sh_mid - hip_mid))
+    def anchors(f: int):
+        body = body_at(lm, f, 0, top - 1, h)
+        sh = np.nanmean(body[[L_SH, R_SH]], axis=0)
+        hip = np.nanmean(body[[L_HIP, R_HIP]], axis=0)
+        return body, sh, hip, float(np.linalg.norm(sh - hip))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        body, sh_mid, hip_mid, torso = anchors(address)
     if not np.isfinite(torso) or torso < 1:
         return {"verdict": "无法判断", "reason": "准备姿势躯干不可见"}
 
     raw = hand_track(lm, torso)
-    if np.isfinite(raw[address:impact + 1]).all(axis=1).mean() < 0.7:
+    span = slice(address, impact + 1)
+    if np.isfinite(raw[span]).all(axis=1).mean() < 0.7:
         return {"verdict": "无法判断", "reason": "手腕可见帧太少"}
-    k = _odd((impact - address) / 20)
+    seen = np.isfinite(raw).all(axis=1)
+    raw[pose_glitches(lm, raw, address, impact, torso)] = np.nan
+    raw = despike(raw, torso)
+    ok = np.isfinite(raw).all(axis=1)
+    jumped = int((seen & ~ok)[span].sum())
+    if ok[span].mean() < 0.7:
+        return {"verdict": "无法判断", "reason": "关键点跳动太多", "jump_frames": jumped}
+    if longest_gap(ok[top:impact + 1]) > max(MIN_FILLED_GAP, MAX_DOWNSWING_GAP * (impact - top)):
+        return {"verdict": "无法判断", "reason": "下杆有一段双手追踪丢失或乱跳", "jump_frames": jumped}
     hands = _smooth(raw, k)
 
     given_address = address
     if refine_address:
         address = still_address(hands, address, top)
-        a = lm[address]
-        sh2 = np.nanmean(a[[L_SH, R_SH], 0:2], axis=0)
-        hip2 = np.nanmean(a[[L_HIP, R_HIP], 0:2], axis=0)
-        t2 = float(np.linalg.norm(sh2 - hip2))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            b2, sh2, hip2, t2 = anchors(address)
         if np.isfinite(t2) and t2 >= 1:
-            sh_mid, hip_mid, torso = sh2, hip2, t2
+            body, sh_mid, hip_mid, torso = b2, sh2, hip2, t2
         else:
             address = given_address
-            a = lm[address]
 
-    cam = camera_check(lm, address, torso)
+    cam = camera_check(body, torso)
     widest = max((v for v in cam.values() if np.isfinite(v)), default=np.nan)
     if widest > max_line_width:
         return {"verdict": "无法判断", "reason": "机位偏离目标线（肩/髋线太宽）", "camera": cam,
                 "torso_px": round(torso, 1), "address_used": int(address)}
 
-    side, votes = detect_side(lm, hands, address, top)
+    side, votes = detect_side(body, hands, address, top)
     if side == 0:
         return {"verdict": "无法判断", "reason": "分不清左右手（线索打平）", "side_votes": votes, "camera": cam}
 
@@ -311,7 +432,8 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
         "side_votes": votes,
         "camera": cam,
         "smooth_frames": k,
-        "dropped_frames": int((~np.isfinite(raw[address:impact + 1]).all(axis=1)).sum()),
+        "dropped_frames": int((~ok[span]).sum()),
+        "jump_frames": jumped,
         "calibration": cal.get("source", "file"),
         "hands": hands.tolist(),
     }

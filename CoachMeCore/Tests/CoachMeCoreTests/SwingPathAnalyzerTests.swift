@@ -138,6 +138,53 @@ final class SwingPathAnalyzerTests: XCTestCase {
         XCTAssertEqual(r.offset!, run(s).offset!, accuracy: 1e-9)
     }
 
+    // MARK: Tracking jumps (path_fault.py v4)
+
+    func testCleanSwingsHaveNoJumpFrames() {
+        for frames in [30, 60, 160] {
+            for loop in [-0.4, 0, 0.6] {
+                let r = run(Self.makeSwing(loop: loop, frames: frames, noise: 1, seed: UInt64(frames)))
+                XCTAssertEqual(r.jumpFrames, 0, "frames \(frames) loop \(loop)")
+            }
+        }
+    }
+
+    func testWholePoseJumpIsDropped() {
+        var s = Self.makeSwing(loop: 0, frames: 60)
+        let base = run(s).offset!
+        for f in (s.2 + 3)..<(s.2 + 6) {
+            s.0[f] = s.0[f].map { P(x: $0.x + 120, y: $0.y - 40, visibility: $0.visibility) }
+        }
+        let r = run(s)
+        XCTAssertEqual(r.jumpFrames, 3)
+        XCTAssertEqual(r.offset!, base, accuracy: 0.03)
+    }
+
+    func testBothWristsJumpingTogetherIsDropped() {
+        var s = Self.makeSwing(loop: 0, frames: 40)
+        let base = run(s)
+        for f in (s.2 + 2)..<(s.2 + 4) { s.0[f][15].x += 70; s.0[f][16].x += 70 }
+        let r = run(s)
+        XCTAssertGreaterThanOrEqual(r.jumpFrames, 2)
+        XCTAssertEqual(r.verdict, base.verdict)
+        XCTAssertEqual(r.offset!, base.offset!, accuracy: 0.03)
+    }
+
+    func testJumpAtAddressDoesNotMoveTheReferenceLine() {
+        var s = Self.makeSwing(loop: 0, frames: 60)
+        let base = run(s)
+        for j in [11, 12, 0] { s.0[s.1][j].x += 60 }
+        let r = run(s)
+        XCTAssertEqual(r.offset!, base.offset!, accuracy: 0.01)
+        XCTAssertEqual(r.shoulderWidth!, base.shoulderWidth!, accuracy: 1e-9)
+    }
+
+    func testLostDownswingIsRefused() {
+        var s = Self.makeSwing(loop: 0, frames: 120)
+        for f in (s.2 + 5)..<(s.2 + 15) { s.0[f][15].visibility = 0; s.0[f][16].visibility = 0 }
+        XCTAssertEqual(run(s).refusal, .downswingGap)
+    }
+
     func testPythonHelpersBehaveLikeNumpy() {
         XCTAssertEqual(SwingPathAnalyzer.median([3, 1, 2, 4]), 2.5)
         XCTAssertEqual(SwingPathAnalyzer.oddWindow(2.5), 3)   // round(2.5) == 2 in Python, then lo = 3
@@ -158,6 +205,7 @@ final class SwingPathParityTests: XCTestCase {
         let offset: Double?
         let backswing_offset: Double?
         let loop: Double?
+        let jump_frames: Int?
     }
 
     func testMatchesPythonOnGolfDB() throws {
@@ -183,7 +231,8 @@ final class SwingPathParityTests: XCTestCase {
                 }
             }
             if r.verdict.nameZH != s.verdict || !close(r.offset, s.offset)
-                || !close(r.backswingOffset, s.backswing_offset) || !close(r.loop, s.loop) {
+                || !close(r.backswingOffset, s.backswing_offset) || !close(r.loop, s.loop)
+                || (s.jump_frames.map { $0 != r.jumpFrames } ?? false) {
                 mismatches.append("\(s.name): swift \(r.verdict.nameZH) \(r.offset ?? .nan) \(r.refusal?.rawValue ?? "")"
                                   + " / python \(s.verdict) \(s.offset ?? .nan)")
             }

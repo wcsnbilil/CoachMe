@@ -174,7 +174,7 @@ def main():
               "by_view": {v: summarize([r for r in results if r["view"] == v])
                           for v in sorted({r["view"] for r in results})},
               "swings": results}
-    a.out.write_text(json.dumps(report, ensure_ascii=False, indent=1))
+    a.out.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps({k: report[k] for k in ("backend", "split", "missing_videos", "all", "real_time", "slow_motion")},
                      ensure_ascii=False, indent=1))
     print(f"full per-swing results: {a.out}")

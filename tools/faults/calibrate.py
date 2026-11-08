@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -29,6 +30,8 @@ import numpy as np
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # Windows console defaults to GBK/cp1252
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("results", type=Path)
     p.add_argument("--coverage", type=float, default=0.98,
@@ -36,7 +39,7 @@ def main():
     p.add_argument("--out", type=Path, default=Path("calibration.json"))
     p.add_argument("--first", type=int, help="calibrate on the first N swings only, keep the rest for checking")
     a = p.parse_args()
-    rows = json.loads(a.results.read_text())[: a.first]
+    rows = json.loads(a.results.read_text(encoding="utf-8"))[: a.first]
 
     by_golfer = defaultdict(list)
     for r in rows:
@@ -55,7 +58,7 @@ def main():
     cal = {"center": round(float(np.median(golfer)), 3), "outside": round(hi, 3), "inside": round(lo, 3),
            "coverage": a.coverage, "most_in_to_out": order[0], "most_out_to_in": order[-1], "golfers": len(golfer), "swings": int(sum(map(len, by_golfer.values()))),
            "source": str(a.results)}
-    a.out.write_text(json.dumps(cal, ensure_ascii=False, indent=1))
+    a.out.write_text(json.dumps(cal, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps(cal, ensure_ascii=False, indent=1))
 
     fmt = lambda g: f"{g} {np.median(by_golfer[g]):+.3f} ({len(by_golfer[g])} clips)"

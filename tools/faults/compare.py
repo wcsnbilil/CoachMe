@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
 
 def load(path: Path, meta: dict | None = None) -> dict:
-    rows = {r["name"]: r for r in json.loads(path.read_text())}
+    rows = {r["name"]: r for r in json.loads(path.read_text(encoding="utf-8"))}
     for name, r in rows.items():  # results from the first version carry no player / slow fields
         for k, v in (meta or {}).get(name, {}).items():
             r.setdefault(k, v)
@@ -73,6 +74,8 @@ def report(tag: str, rows: dict):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # Windows console defaults to GBK/cp1252
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     p = argparse.ArgumentParser()
     p.add_argument("before", type=Path)
     p.add_argument("after", type=Path)

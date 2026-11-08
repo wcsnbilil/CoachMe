@@ -28,6 +28,8 @@ final class MediaPipePoseDetector: PoseDetecting {
     private var landmarker: PoseLandmarker?
     /// MediaPipe's video mode requires strictly increasing timestamps.
     private var lastTimestamp: Int = -1
+    /// Keeps the same person across frames; MediaPipe's pose order is not stable.
+    private var track = PoseTrackSelector()
 
     init(variant: ModelVariant = .heavy,
          numPoses: Int = 2,               // detect a second person so we can REPORT it, not hide it
@@ -59,6 +61,7 @@ final class MediaPipePoseDetector: PoseDetecting {
         do {
             landmarker = try PoseLandmarker(options: options)
             lastTimestamp = -1
+            track.reset()
         } catch {
             throw PoseDetectorError.modelLoadFailed(underlying: error.localizedDescription)
         }
@@ -66,6 +69,7 @@ final class MediaPipePoseDetector: PoseDetecting {
 
     func reset() {
         lastTimestamp = -1
+        track.reset()
     }
 
     func detect(pixelBuffer: CVPixelBuffer, timestampMilliseconds: Int) throws -> PoseDetectionResult {
@@ -92,21 +96,26 @@ final class MediaPipePoseDetector: PoseDetecting {
         }
 
         let personCount = result.landmarks.count
-        guard let first = result.landmarks.first else {
+        let poses: [[CoachMeCore.Landmark]] = result.landmarks.map { pose in
+            pose.map { point in
+                CoachMeCore.Landmark(Double(point.x), Double(point.y), Double(point.z),
+                                     visibility: point.visibility?.doubleValue,
+                                     presence: point.presence?.doubleValue)
+            }
+        }
+        guard let pick = track.select(poses) else {
             return PoseDetectionResult(imageLandmarks: [], worldLandmarks: nil, personCount: 0)
         }
 
-        // Only the first pose is measured. When personCount > 1 the quality gate
-        // in CoachMeCore refuses every metric for the frame, so we never silently
-        // measure whichever body the tracker happened to pick.
-        let imageLandmarks = first.map { point in
-            CoachMeCore.Landmark(Double(point.x), Double(point.y), Double(point.z),
-                     visibility: point.visibility?.doubleValue,
-                     presence: point.presence?.doubleValue)
-        }
+        // One pose is kept: the one continuing the person followed so far (the
+        // pose order MediaPipe returns is not stable, so `first` would jump to a
+        // bystander). When personCount > 1 the quality gate in CoachMeCore still
+        // refuses every metric for the frame.
+        let imageLandmarks = poses[pick]
 
         var worldLandmarks: [CoachMeCore.Landmark]?
-        if let world = result.worldLandmarks.first {
+        if result.worldLandmarks.indices.contains(pick) {
+            let world = result.worldLandmarks[pick]
             worldLandmarks = world.map { point in
                 CoachMeCore.Landmark(Double(point.x), Double(point.y), Double(point.z),
                          visibility: point.visibility?.doubleValue,

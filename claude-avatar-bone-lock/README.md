@@ -1,4 +1,4 @@
-# claude/avatar-bone-lock @ 034ca9c
+# claude/avatar-bone-lock @ 46e9044
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

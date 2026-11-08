@@ -1,0 +1,102 @@
+# 云端 Mac 自动编译 + 测试（GitHub 免费 macOS runner；公开仓库不计分钟）。
+#
+# TODO(TestFlight): 需要 Apple 开发者账号 + App Store Connect API key。
+#   之后在仓库 Secrets 里放 ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8 和签名证书，
+#   再加一个只在 main 上跑的 archive + altool/xcrun upload job。
+name: iOS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: CoachMeCore 测试 + Swift/Python 一致性
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Python 合成测试（tools/faults）
+        run: |
+          pip install --quiet numpy
+          python tools/faults/test_path_fault.py
+      - name: 用当前 Python 重算一致性对照数据
+        run: |
+          FIX=tools/faults/fixtures/path_parity.json
+          if [ -f "$FIX" ]; then
+            python tools/faults/refresh_parity.py "$FIX" --out "$RUNNER_TEMP/path_parity.json"
+            echo "COACHME_PATH_PARITY=$RUNNER_TEMP/path_parity.json" >> "$GITHUB_ENV"
+          else
+            echo "::warning::没有 $FIX，SwingPathParityTests 会被跳过"
+          fi
+      - name: swift test
+        run: |
+          set -o pipefail
+          swift --version
+          swift test --package-path CoachMeCore 2>&1 | tee swift-test.log
+      - name: 测试统计
+        if: always()
+        run: |
+          {
+            echo "### CoachMeCore"
+            grep -E "Executed [0-9]+ tests" swift-test.log | tail -1
+            grep -E "SwingPathParityTests.*(passed|failed|skipped)" swift-test.log | tail -2
+          } | tee -a "$GITHUB_STEP_SUMMARY" || true
+
+  app:
+    name: App 编译 + 模拟器测试（不签名）
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+      - name: 下载 MediaPipe 模型
+        run: bash tools/download-model.sh heavy
+      - name: xcodegen + pod install
+        run: |
+          xcodebuild -version
+          xcodegen generate
+          pod install --repo-update
+      - name: 选模拟器
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devs = json.load(sys.stdin)["devices"]
+          c = [x for k, v in devs.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")]
+          print(c[-1]["udid"])')
+          echo "SIM=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl list devices available | grep "$UDID"
+      - name: xcodebuild test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -workspace CoachMe.xcworkspace -scheme CoachMe \
+            -destination "id=$SIM" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            2>&1 | tee xcodebuild.log | grep -E "error:|warning: .*CoachMe|Test Case .*(passed|failed|skipped)|Executed|\*\* (BUILD|TEST)"
+      - name: 测试统计
+        if: always()
+        run: |
+          {
+            echo "### App (simulator)"
+            grep -E "Executed [0-9]+ tests" xcodebuild.log | tail -1
+            grep -E "Test Case .*failed" xcodebuild.log | head -20
+          } | tee -a "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: xcodebuild-logs
+          path: |
+            xcodebuild.log
+            TestResults.xcresult

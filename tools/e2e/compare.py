@@ -23,13 +23,13 @@ def main():
     p.add_argument("--offset-tol", type=float, default=0.05)
     p.add_argument("--phase-tol", type=int, default=3, help="frames")
     a = p.parse_args()
-    app = {f.stem: json.loads(f.read_text()) for f in sorted(a.app_dir.glob("*.json"))}
+    app = {f.stem: json.loads(f.read_text()) for f in sorted(a.app_dir.glob("*.json")) if not f.stem.endswith(".layers")}
     py = {r["name"]: r for r in json.loads(a.python_results.read_text(encoding="utf-8"))} if a.python_results.exists() else {}
 
     out = ["## 真实视频端到端（App 模拟器 vs Python）", "",
            "模拟器上的耗时和内存只作参考，真机会不同。合成格式（`-dup`）是重复帧，不是真实慢动作。", "",
-           "| 片段 | 格式 | 帧数 | App 结论 | Python 结论 | 一致 | App offset | Py offset | App 阶段帧 | Py 阶段帧 | 耗时 ms | 峰值内存 MB |",
-           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+           "| 片段 | 格式 | 帧数 | App 结论 | App（只检测 1 人） | Python 结论 | 一致 | App offset | Py offset | App 阶段帧 | Py 阶段帧 | 耗时 ms | 峰值内存 MB |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     diffs, agree, total = [], 0, 0
     for name in sorted(set(app) | set(py)):
         ar, pr = app.get(name), py.get(name)
@@ -61,7 +61,7 @@ def main():
         frames = (ar or {}).get("frames", "—")
         f = lambda v: "—" if v is None else f"{v:+.3f}"
         out.append(f"| `{name.split('__')[0]}` | {fmt} {video.get('codec', '')} {video.get('width', '')}×{video.get('height', '')} "
-                   f"{video.get('frameRate', 0):.0f}fps | {frames} | {av} | {pv} | {'✅' if same else '❌'} | {f(ao)} | {f(po)} | "
+                   f"{video.get('frameRate', 0):.0f}fps | {frames} | {av} | {(ar or {}).get('verdictOnePose') or '—'} | {pv} | {'✅' if same else '❌'} | {f(ao)} | {f(po)} | "
                    f"{aph or '—'} | {list(pph) if pph else '—'} | {(ar or {}).get('analysisMs', '—')} | "
                    f"{(ar or {}).get('peakMemoryMB', 0):.0f} |")
     out += ["", f"**结论一致 {agree}/{total}**（offset 容差 ±{a.offset_tol}，阶段帧容差 ±{a.phase_tol}）", ""]

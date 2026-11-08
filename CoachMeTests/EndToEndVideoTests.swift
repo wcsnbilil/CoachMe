@@ -22,6 +22,24 @@ final class EndToEndVideoTests: XCTestCase {
         var analysisMs: Int
         var peakMemoryMB: Double
         var error: String?
+        /// Same clip with MediaPipe asked for one person (Python's setting); clips up to 20 s only.
+        var verdictOnePose: String?
+        var refusalOnePose: String?
+        var offsetOnePose: Double?
+    }
+
+    /// Every layer of the chain, for tools/e2e/layers.py: decoded size and timestamps, per-frame
+    /// landmarks (normalised x, y, visibility), SwingNet probabilities and the phase frames.
+    struct Layers: Codable {
+        var name: String
+        var width: Double
+        var height: Double
+        var nominalFPS: Double?
+        var timestamps: [Double]
+        var personCounts: [Int]
+        var landmarks: [[[Double]]]
+        var probabilities: [[Double]]
+        var phases: [Int]?
     }
 
     func testEveryClipRunsEndToEnd() async throws {
@@ -37,7 +55,13 @@ final class EndToEndVideoTests: XCTestCase {
         XCTAssertFalse(clips.isEmpty, "\(dir) 里没有视频")
 
         for url in clips {
-            let r = await run(url)
+            var r = await run(url, out: out)
+            if r.error == nil, let d = try? await AVURLAsset(url: url).load(.duration).seconds, d <= 20 {
+                let one = await run(url, out: nil, numPoses: 1)
+                r.verdictOnePose = one.verdict
+                r.refusalOnePose = one.refusal
+                r.offsetOnePose = one.offset
+            }
             let data = try JSONEncoder().encode(r)
             try data.write(to: out.appendingPathComponent(url.deletingPathExtension().lastPathComponent + ".json"))
             print("E2E \(r.name) frames=\(r.frames) verdict=\(r.verdict) refusal=\(r.refusal ?? "-") "
@@ -47,14 +71,15 @@ final class EndToEndVideoTests: XCTestCase {
         }
     }
 
-    private func run(_ url: URL) async -> ClipResult {
+    private func run(_ url: URL, out: URL?, numPoses: Int = 2) async -> ClipResult {
         let name = url.deletingPathExtension().lastPathComponent
         let asset = AVURLAsset(url: url)
         let sampler = PeakMemorySampler()
         sampler.start()
         let started = Date()
         do {
-            let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(), phaseDetector: SwingNetPhaseDetector())
+            let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: numPoses),
+                                         phaseDetector: SwingNetPhaseDetector())
             let frames = try await analyzer.analyse(asset: asset, timeRange: nil) { _ in }
             let keyframes = await analyzer.keyframes
             let size = try await BetaAnalysisRunner.presentedSize(asset)
@@ -67,6 +92,18 @@ final class EndToEndVideoTests: XCTestCase {
                 return frames.indices.min { abs(frames[$0].timestampSeconds - t) < abs(frames[$1].timestampSeconds - t) }
             }
             let phases = [index(.address), index(.top), index(.impact)]
+            if let out {
+                let fps = try? await asset.loadTracks(withMediaType: .video).first?.load(.nominalFrameRate)
+                let layers = Layers(
+                    name: name, width: size.width, height: size.height, nominalFPS: fps.map { Double($0) },
+                    timestamps: frames.map(\.timestampSeconds), personCounts: frames.map(\.detectedPersonCount),
+                    landmarks: frames.map { f in
+                        f.imageLandmarks.map { l in [Self.r4(l.position.x), Self.r4(l.position.y), Self.r4(l.visibility ?? 1)] }
+                    },
+                    probabilities: await analyzer.phaseProbabilities.map { $0.map(Self.r4) },
+                    phases: phases.contains(nil) ? nil : phases.compactMap { $0 })
+                try? JSONEncoder().encode(layers).write(to: out.appendingPathComponent(name + ".layers.json"))
+            }
             return ClipResult(name: name, video: try? await BetaAnalysisRunner.videoInfo(asset), frames: frames.count,
                               phases: phases.contains(nil) ? nil : phases.compactMap { $0 },
                               verdict: evidence.verdict.rawValue,
@@ -78,6 +115,10 @@ final class EndToEndVideoTests: XCTestCase {
                               error: String(describing: error))
         }
     }
+}
+
+extension EndToEndVideoTests {
+    nonisolated static func r4(_ v: Double) -> Double { (v * 10000).rounded() / 10000 }
 }
 
 /// Samples the process footprint every 50 ms; `stop()` returns the peak in MB.

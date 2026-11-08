@@ -93,15 +93,14 @@ jobs:
         run: |
           pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
           bash tools/download-model.sh heavy
-      - name: Python 整条链路
+      - name: Python 整条链路（保留每一层：解码、关键点、SwingNet、判定）
         run: |
-          args=()
-          for f in e2e-videos/*.mp4 e2e-videos/*.mov; do [ -f "$f" ] && args+=(--video "$f"); done
-          python tools/faults/run_path.py "${args[@]}" --out e2e-python
+          shopt -s nullglob
+          python tools/e2e/python_layers.py e2e-videos/*.mp4 e2e-videos/*.mov --out e2e-python
       - uses: actions/upload-artifact@v4
         with:
           name: e2e-python
-          path: e2e-python/results.json
+          path: e2e-python/
 
   app:
     name: App 编译 + 模拟器测试（不签名）
@@ -225,3 +224,8 @@ jobs:
         run: |
           set -o pipefail
           python3 tools/e2e/compare.py e2e-app e2e-python/results.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 逐层对比（解码 → 关键点 → SwingNet → 判定）
+        if: always()
+        run: |
+          pip install --quiet numpy
+          python3 tools/e2e/layers.py e2e-app e2e-python | tee -a "$GITHUB_STEP_SUMMARY"

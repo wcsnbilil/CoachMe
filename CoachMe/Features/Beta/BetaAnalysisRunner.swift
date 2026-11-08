@@ -8,6 +8,10 @@ import CoachMeCore
 @MainActor
 enum BetaAnalysisRunner {
 
+    /// One person, like the Python reference: with two, MediaPipe's tracking changed the verdict on
+    /// two clips of the end-to-end matrix (PR #10). The beta screens never report bystanders.
+    static let betaNumPoses = 1
+
     static var recordStore: BetaRecordStore { BetaRecordStore(directory: LocalStore.shared.root) }
 
     static func analyse(videoURL: URL, library: SwingLibrary,
@@ -32,7 +36,8 @@ enum BetaAnalysisRunner {
         let storedURL = LocalStore.shared.videosDirectory.appendingPathComponent(filename)
         let asset = AVURLAsset(url: storedURL)
 
-        let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(), phaseDetector: SwingNetPhaseDetector())
+        let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: betaNumPoses),
+                                     phaseDetector: SwingNetPhaseDetector())
         let frames = try await analyzer.analyse(asset: asset, timeRange: nil) { p in
             Task { @MainActor in onProgress(p.fraction) }
         }

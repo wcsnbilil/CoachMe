@@ -23,10 +23,6 @@ final class EndToEndVideoTests: XCTestCase {
         var analysisMs: Int
         var peakMemoryMB: Double
         var error: String?
-        /// Same clip with MediaPipe asked for one person (Python's setting); clips up to 20 s only.
-        var verdictOnePose: String?
-        var refusalOnePose: String?
-        var offsetOnePose: Double?
     }
 
     /// Every layer of the chain, for tools/e2e/layers.py: decoded size and timestamps, per-frame
@@ -58,13 +54,7 @@ final class EndToEndVideoTests: XCTestCase {
         XCTAssertFalse(clips.isEmpty, "\(dir) 里没有视频")
 
         for url in clips {
-            var r = await run(url, out: out)
-            if r.error == nil, let d = try? await AVURLAsset(url: url).load(.duration).seconds, d <= 20 {
-                let one = await run(url, out: nil, numPoses: 1)
-                r.verdictOnePose = one.verdict
-                r.refusalOnePose = one.refusal
-                r.offsetOnePose = one.offset
-            }
+            let r = await run(url, out: out)
             if let pattern = env["COACHME_E2E_DUMP_FRAMES"], !pattern.isEmpty,
                url.lastPathComponent.contains(pattern) {
                 try await Self.dumpFrames(url, to: out.appendingPathComponent("frames/" + url.deletingPathExtension().lastPathComponent))
@@ -78,14 +68,14 @@ final class EndToEndVideoTests: XCTestCase {
         }
     }
 
-    private func run(_ url: URL, out: URL?, numPoses: Int = 2) async -> ClipResult {
+    private func run(_ url: URL, out: URL?) async -> ClipResult {
         let name = url.deletingPathExtension().lastPathComponent
         let asset = AVURLAsset(url: url)
         let sampler = PeakMemorySampler()
         sampler.start()
         let started = Date()
         do {
-            let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: numPoses),
+            let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: BetaAnalysisRunner.betaNumPoses),
                                          phaseDetector: SwingNetPhaseDetector())
             let frames = try await analyzer.analyse(asset: asset, timeRange: nil) { _ in }
             let keyframes = await analyzer.keyframes

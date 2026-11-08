@@ -9,8 +9,11 @@ struct Skeleton3DView: View {
     let handedness: Handedness
     @State private var standardPose = false
     @State private var showBones = true
-    @State private var angle: Double = 0.35
-    @State private var reset = 0
+    /// The 3D is shown only from the filming camera: MediaPipe's depth is not reliable enough to
+    /// turn the body to another view (same pros: ~40 deg shoulder turn face-on vs ~90 deg down the
+    /// line). 0 = the original camera (MediaPipe -z, avatar +z).
+    private let angle: Double = 0
+    private let reset = 0
 
     var body: some View {
         VStack(spacing:10) {
@@ -22,15 +25,12 @@ struct Skeleton3DView: View {
             }
             AvatarSceneView(frame:standardPose ? nil : frame, angle:angle, reset:reset, showBones:showBones)
                 .clipShape(RoundedRectangle(cornerRadius:18))
-                .accessibilityLabel("半透明三维人体，可拖动旋转、双指缩放")
+                .accessibilityLabel("半透明三维人体，原机位回放")
             HStack(spacing:12) {
-                Button("正面") { angle=0; reset += 1 }
-                Button("侧面") { angle = .pi/2; reset += 1 }
-                Button("斜侧") { angle=0.65; reset += 1 }
                 Spacer()
                 Toggle("标准姿势",isOn:$standardPose).toggleStyle(.button)
             }.font(.caption).buttonStyle(.bordered)
-            Text(frame == nil || standardPose ? "标准体型与球杆示意，不代表个人动作。" : "固定体型由动作数据驱动；遮挡与异常姿态使用约束补位，仅供观察。")
+            Text(frame == nil || standardPose ? "标准体型与球杆示意，不代表个人动作。" : "原机位三维回放（估计）：单机位看不准前后深度，所以不提供换角度。")
                 .font(.caption2).foregroundStyle(.secondary)
         }
     }
@@ -44,6 +44,8 @@ struct AvatarSceneView: UIViewRepresentable {
     let showBones: Bool
     /// Draws on the workbench's dark video panel instead of the grouped background.
     var darkStage = false
+    /// Free rotation. Off for recorded swings: other views would show depth the single camera did not measure.
+    var orbit = false
 
     func makeCoordinator() -> AvatarSceneCoordinator { AvatarSceneCoordinator() }
     func makeUIView(context:Context) -> SCNView {
@@ -52,7 +54,7 @@ struct AvatarSceneView: UIViewRepresentable {
         view.pointOfView=context.coordinator.camera
         view.backgroundColor=UIColor.secondarySystemGroupedBackground
         view.antialiasingMode = .multisampling4X
-        view.allowsCameraControl=true
+        view.allowsCameraControl=orbit
         view.defaultCameraController.target=SCNVector3(0,0.95,0)
         view.defaultCameraController.interactionMode = .orbitTurntable
         view.preferredFramesPerSecond=30

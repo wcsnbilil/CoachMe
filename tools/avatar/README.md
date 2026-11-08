@@ -1,26 +1,14 @@
-# Downloaded human avatar
+# 3D replay check (MediaPipe world landmarks)
 
-CoachMe uses Blender Studio’s existing **GEO-body_male_realistic** mesh and eyes from Human Base Meshes v1.2.0, released under **CC0 1.0**. No procedural body geometry is generated.
+How far the app's 3D figure can be trusted, measured on GolfDB (60 down-the-line + 59 face-on, 160 px) and 40 HD down-the-line pro swings.
 
-Official source and license listing: https://www.blender.org/download/demo-files/
-Archive: https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.2.0.zip
-Downloaded 2026-09-11; archive SHA-256: `b7421350cbad8425dd1ba93c4248867a1c236cc8a3a3dc140d4c2a03144c4bad`.
-License: https://creativecommons.org/publicdomain/zero/1.0/
+    python tools/avatar/w3d.py <out> golfdb <golfdb data dir> down-the-line 0 60
+    python tools/avatar/w3d.py <out> golfdb <golfdb data dir> face-on 0 60
+    python tools/avatar/w3d.py <out> hd <hd_pipeline out dirs...>
+    python tools/avatar/w3d_stats.py <out>     # shoulder/hip turn, bone-length CV, real-time vs slow-mo
+    python tools/avatar/w3d_ll.py <out> 0.15   # WorldDisplaySmoother prototype
 
-The downloaded base mesh has no rig. The conversion adds 15 anatomical display bones with Blender heat weights, maps the surface to the fixed CoachMe bind proportions, subdivides once, and exports 46,698 vertices / 93,384 triangles with four normalized influences. It preserves the original mesh topology and facial/body detail. Eyes follow the head. The model is rendered blue/translucent in SceneKit with optional illustrative inner structure.
-
-## Rebuild
-
-Unzip the official archive, then run from the repository:
-
-```sh
-/Applications/Blender.app/Contents/MacOS/Blender --background --python tools/avatar/bind_downloaded_avatar.py -- /path/to/human_base_meshes_bundle.blend tools/avatar/rest.json /tmp/coachme-avatar
-```
-
-Copy the resulting `GolfAvatar.mesh.json` into `CoachMe/Resources`. The script also saves an editable rigged `.blend` and a standard-address preview. `export_rest.swift` exports the shared bind and preview joint positions.
-
-## Motion behavior
-
-`GolfAvatarPose` maps world-landmark directions to fixed limb lengths and shoulder/hip widths. Missing or invalid coordinates fall back to template directions. Display limits bound torso tilt/twist and joint flexion; the same anatomical across-axis controls limb roll to avoid twisted knees. Raw landmarks and metrics are unchanged. This is a visualization of estimated motion, not calibrated motion capture or a professionally validated swing reference. Hands have no separately tracked finger rig. The club is shown only in the standard address, as a demonstration.
-
-Core tests cover fixed lengths, missing legs, invalid input and deterministic seeking. `AvatarRenderingTests` checks the bundled skin/bone binding and renders actual SceneKit previews. Normal rendering tests make no AI API requests.
+Results (2026-11-08):
+- Depth is view-dependent. Shoulder turn at the top has a median of 94° filmed down the line but 39° filmed face-on, on the same tour players (about 90° expected). The 3D replay therefore stays at the original camera, with no rotation and no angle numbers.
+- Raw forearm length varies by about 13% within a swing. The app's avatar (GolfAvatarPose) already draws fixed bone lengths, so arms do not stretch on screen.
+- WorldDisplaySmoother (σt 0.045 s, σs 0.15 m) roughly halves hand jitter (35 to 17 mm down the line, 65 to 25 mm face-on) and cuts the real-time vs slow-mo shoulder-turn difference from p90 39° to 20°. Hands at impact move 2 cm (median).

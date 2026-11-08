@@ -4,7 +4,8 @@
 
 For each video: OpenCV decode (size, fps, timestamps) -> MediaPipe heavy (VIDEO mode, one pose,
 timestamps i*1000/fps, exactly as run_path.py) -> SwingNet (NumPy port, 64-frame chunks) ->
-path_fault.analyze. Writes <out>/<name>.layers.json (same keys as the App's) and <out>/results.json
+path_fault.analyze. Like the App, a SwingNet pass that finds nothing is rerun on a crop around the
+person (tools/benchmark/person_crop.py). Writes <out>/<name>.layers.json (same keys as the App's) and <out>/results.json
 in run_path.py's format for compare.py.
 """
 from __future__ import annotations
@@ -53,21 +54,23 @@ def pose(frames, fps, model: Path) -> list[list[list[float]]]:
         for i, img in enumerate(frames):
             res = lm.detect_for_video(mp.Image(image_format=mp.ImageFormat.SRGB,
                                                data=cv2.cvtColor(img, cv2.COLOR_BGR2RGB)), int(i * 1000 / fps))
-            out.append([[r4(p.x), r4(p.y), r4(p.visibility)] for p in res.pose_landmarks[0]]
+            out.append([[r4(p.x), r4(p.y), r4(p.visibility), r4(p.presence)] for p in res.pose_landmarks[0]]
                        if res.pose_landmarks else [])
     return out
 
 
-def swingnet(path: Path):
+def swingnet(path: Path, landmarks):
+    """Main pass on the whole frame; when it finds no phases, the App's person-crop rerun."""
     from golfdb_eval import load_model, probabilities, read_frames
-    from app_selector import SwingNetEventSelector
-    probs = probabilities(load_model("numpy"), read_frames(path))
-    sel = SwingNetEventSelector()
-    for t, row in enumerate(probs):
-        sel.append(list(map(float, row)), float(t))
-    marks = sel.keyframes()
-    phases = None if not marks else [int(marks["address"][0]), int(marks["top"][0]), int(marks["impact"][0])]
-    return [[r4(v) for v in row] for row in probs], phases
+    from person_crop import estimate, phases_from_probs, read_frames_cropped
+    model = load_model("numpy")
+    probs = probabilities(model, read_frames(path))
+    phases, crop = phases_from_probs(probs), None
+    if phases is None:
+        crop = estimate(landmarks)
+        if crop is not None:
+            phases = phases_from_probs(probabilities(model, read_frames_cropped(path, crop)))
+    return [[r4(v) for v in row] for row in probs], phases, crop
 
 
 def pixels(landmarks, w: float, h: float) -> np.ndarray:
@@ -91,9 +94,10 @@ def main():
         frames, fps, stamps = decode(v)
         h, w = frames[0].shape[:2]
         lms = pose(frames, fps, a.model)
-        probs, phases = swingnet(v)
+        probs, phases, crop = swingnet(v, lms)
         layers = dict(name=v.stem, width=w, height=h, nominalFPS=fps, timestamps=[r4(t) for t in stamps],
-                      personCounts=[1 if f else 0 for f in lms], landmarks=lms, probabilities=probs, phases=phases)
+                      personCounts=[1 if f else 0 for f in lms], landmarks=lms, probabilities=probs, phases=phases,
+                      personCrop=crop)
         (a.out / f"{v.stem}.layers.json").write_text(json.dumps(layers), encoding="utf-8")
         if phases is None:
             r = {"verdict": "无法判断", "reason": "没有识别出挥杆阶段"}
@@ -102,7 +106,8 @@ def main():
         r = {k: val for k, val in r.items() if k not in ("hands", "ref_line")}
         r.update(name=v.stem, phases=phases)
         results.append(r)
-        print(f"{v.stem}: {w}x{h} {fps:.2f}fps {len(frames)} frames, phases {phases}, {r['verdict']} {r.get('reason', '')}",
+        print(f"{v.stem}: {w}x{h} {fps:.2f}fps {len(frames)} frames, phases {phases}"
+              f"{' (person crop)' if crop else ''}, {r['verdict']} {r.get('reason', '')}",
               flush=True)
     (a.out / "results.json").write_text(json.dumps(results, ensure_ascii=False, indent=1, default=float),
                                         encoding="utf-8")

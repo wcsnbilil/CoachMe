@@ -40,6 +40,8 @@ final class EndToEndVideoTests: XCTestCase {
         var landmarks: [[[Double]]]
         var probabilities: [[Double]]
         var phases: [Int]?
+        /// The phases came from the person-crop rerun (main SwingNet pass found none).
+        var usedPersonCrop: Bool
     }
 
     func testEveryClipRunsEndToEnd() async throws {
@@ -101,7 +103,8 @@ final class EndToEndVideoTests: XCTestCase {
                         f.imageLandmarks.map { l in [Self.r4(l.position.x), Self.r4(l.position.y), Self.r4(l.visibility ?? 1)] }
                     },
                     probabilities: await analyzer.phaseProbabilities.map { $0.map(Self.r4) },
-                    phases: phases.contains(nil) ? nil : phases.compactMap { $0 })
+                    phases: phases.contains(nil) ? nil : phases.compactMap { $0 },
+                    usedPersonCrop: (await analyzer.phaseDetectionNote ?? "").contains("人物增强"))
                 try? JSONEncoder().encode(layers).write(to: out.appendingPathComponent(name + ".layers.json"))
             }
             return ClipResult(name: name, video: try? await BetaAnalysisRunner.videoInfo(asset), frames: frames.count,

@@ -34,7 +34,7 @@ def pixels(layers: dict) -> np.ndarray:
     out = np.full((len(layers["landmarks"]), 33, 3), np.nan)
     for i, fr in enumerate(layers["landmarks"]):
         if len(fr) == 33:
-            a = np.array(fr, float)
+            a = np.array(fr, float)[:, :3]
             out[i] = np.c_[a[:, 0] * w, a[:, 1] * h, a[:, 2]]
     return out
 
@@ -86,6 +86,7 @@ def table(app: dict, py: dict) -> list[str]:
     add("3 SwingNet", "概率最大差（同序号帧）", len(pa), len(pp), f"{np.abs(pa[:m] - pp[:m]).max():.3f}" if m else "—")
     add("", "准备 / 顶点 / 击球帧", app.get("phases") or "—", py.get("phases") or "—",
         "" if app.get("phases") == py.get("phases") else "⚠️ 不同")
+    add("", "阶段来自人物裁剪重跑", "是" if app.get("usedPersonCrop") else "否", "是" if py.get("personCrop") else "否")
     combos = [("App 关键点 + App 阶段", own, app.get("phases")), ("App 关键点 + Py 阶段", own, py.get("phases")),
               ("Py 关键点 + App 阶段", lp, app.get("phases")), ("Py 关键点 + Py 阶段", lp, py.get("phases"))]
     for i, (label, lm, ph) in enumerate(combos):

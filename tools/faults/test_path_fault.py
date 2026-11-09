@@ -173,6 +173,39 @@ def test_lost_downswing_is_refused():
     assert r["verdict"] == "无法判断" and "下杆" in r["reason"], r
 
 
+def test_slow_takeaway_late_address_uses_the_still_frame():
+    # Slow-motion copy whose takeaway starts very slowly (eased in) while the shoulders already turn,
+    # SwingNet's address 45 frames late: still_address only walks back to where the hands are slow
+    # frame to frame, where the shoulder line is already wide. hands_still_address goes back nearer
+    # the real address, so the camera check sees a narrower shoulder line.
+    lm, a, t, i = make_swing(loop=0.0, frames=300)
+    addr_hand, top_hand = lm[a, pf.L_WR, :2].copy(), lm[t, pf.L_WR, :2].copy()
+    start = {j: lm[a, j, :2].copy() for j in (pf.L_WR, pf.R_WR, pf.L_SH, pf.R_SH)}
+    for f in range(a, t + 1):
+        u = (f - a) / (t - a)
+        for j in (pf.L_WR, pf.R_WR):
+            lm[f, j, :2] = start[j] + (top_hand - addr_hand) * u ** 3
+        turn = 0.6 * u * 100 / 2  # shoulders open up to 0.6 torso lengths at the top
+        lm[f, pf.L_SH, 0] = start[pf.L_SH][0] - turn
+        lm[f, pf.R_SH, 0] = start[pf.R_SH][0] + turn
+    late = a + 45
+    w = lambda r: r["camera"]["shoulder_width"]
+    still = pf.analyze(lm, late, t, i)
+    both = pf.analyze(lm, late, t, i, address_mode="both")
+    camera = pf.analyze(lm, late, t, i, address_mode="camera")
+    assert w(both) < w(still) - 0.05 and w(camera) == w(both), (w(still), w(both), w(camera))
+    assert abs(both["address_used"] - a) < abs(still["address_used"] - a), (both["address_used"], still["address_used"])
+    assert camera["address_used"] == still["address_used"]  # (a) keeps the reference line where it was
+
+
+def test_address_mode_still_is_unchanged_on_clean_swings():
+    lm, a, t, i = make_swing(loop=0.3)
+    base = pf.analyze(lm, a, t, i)
+    for mode in ("camera", "both"):
+        r = pf.analyze(lm, a, t, i, address_mode=mode)
+        assert r["verdict"] == base["verdict"] and abs(r["offset"] - base["offset"]) < 0.02, (mode, r, base)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

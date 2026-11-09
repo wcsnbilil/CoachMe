@@ -418,7 +418,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
         else:
             address = given_address
 
-    cam_body, cam_torso = body, torso
+    cam_body, cam_torso, cam_address = body, torso, address
     if address_mode in ("camera", "both"):
         tracks = [hands] + [_smooth(lm[:, j, 0:2], k) for j in (L_SH, R_SH)]
         ha = hands_still_address(tracks, given_address, top, torso)
@@ -427,7 +427,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
                 warnings.simplefilter("ignore", RuntimeWarning)
                 b3, sh3, hip3, t3 = anchors(ha)
             if np.isfinite(t3) and t3 >= 1:
-                cam_body, cam_torso = b3, t3
+                cam_body, cam_torso, cam_address = b3, t3, ha
                 if address_mode == "both":
                     address, body, sh_mid, hip_mid, torso = ha, b3, sh3, hip3, t3
 
@@ -435,7 +435,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     widest = max((v for v in cam.values() if np.isfinite(v)), default=np.nan)
     if widest > max_line_width:
         return {"verdict": "无法判断", "reason": "机位偏离目标线（肩/髋线太宽）", "camera": cam,
-                "torso_px": round(torso, 1), "address_used": int(address)}
+                "torso_px": round(torso, 1), "address_used": int(address), "cam_address": int(cam_address)}
 
     side, votes = detect_side(body, hands, address, top)
     if side == 0:

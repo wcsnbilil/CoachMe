@@ -47,6 +47,13 @@ jobs:
           path: .
           run-id: 42544083210
           github-token: ${{ github.token }}
+      - if: matrix.side == 'Python'
+        uses: actions/download-artifact@v4
+        with:
+          name: golfdb-python-landmarks
+          path: lm/landmarks
+          run-id: 42569334440
+          github-token: ${{ github.token }}
       - if: matrix.side == 'App'
         uses: actions/download-artifact@v4
         with:
@@ -61,18 +68,12 @@ jobs:
             pip install --quiet numpy pandas
             python tools/e2e/golfdb_app_metrics.py cache golfdb-app lm
           else
-            pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
-            bash tools/download-model.sh heavy
-            python tools/faults/run_path.py --golfdb golfdb/data --limit 400 --out lm | tail -2
+            pip install --quiet numpy pandas   # 关键点复用 run 42569334440
+            ls lm/landmarks | wc -l
           fi
       - name: 三个版本 × 两种阶段
         run: |
           set -o pipefail
           python tools/faults/address_eval.py --golfdb golfdb/data --swingnet impact/results_swingnet.json \
-            --landmarks ${{ matrix.side }}=lm/landmarks --still 0.03 --still 0.05 --out address_eval \
+            --landmarks ${{ matrix.side }}=lm/landmarks --still 0.03 --out address_eval \
             | tee -a "$GITHUB_STEP_SUMMARY"
-      - if: matrix.side == 'Python'
-        uses: actions/upload-artifact@v4
-        with:
-          name: golfdb-python-landmarks
-          path: lm/landmarks/

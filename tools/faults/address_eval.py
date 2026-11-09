@@ -127,6 +127,13 @@ def main():
             c = Counter((b["verdict"] if b["verdict"] != REFUSED else "拒判", r["verdict"] if r["verdict"] != REFUSED else "拒判")
                         for r, b in ch)
             out += ["", f"自动阶段 {mode} 对 still 改变 {len(ch)} 段：" + "，".join(f"{x}→{y} {k}" for (x, y), k in c.most_common())]
+            if mode == MODES[1]:
+                out += ["", "| 段 | 慢动作 | still | " + mode + " | 准备帧 still / 新 / 标注 | 肩宽 still / 新 |", "|---|---|---|---|---|---|"]
+                for r, b in ch:
+                    cw = lambda x: (x.get("camera") or {}).get("shoulder_width", "—")
+                    out.append(f"| {r['name']} | {'是' if r.get('slow') else ''} | {b['verdict']} {b.get('reason', '')} | "
+                               f"{r['verdict']} {r.get('reason', '')} | {b.get('address_used', '—')} / "
+                               f"{r.get('cam_address', '—')} / {r['label_address']} | {cw(b)} / {cw(r)} |")
         out.append("")
     print("\n".join(out))
 

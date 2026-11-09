@@ -1,0 +1,78 @@
+# 一次性实验：机位检查 / 参考线用哪一帧当准备帧（tools/faults/address_eval.py），GolfDB 400。
+# App 关键点复用 golfdb-app run 42505130299，SwingNet 自动阶段复用 run 42544083210 的 impact/results_swingnet.json。
+# Python 关键点要重跑 MediaPipe（约 1.5 小时），跑完把关键点（不是视频）上传，下次可复用。
+name: 准备帧实验
+
+on:
+  push:
+    branches: [claude/address-eval]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  eval:
+    name: 准备帧实验（${{ matrix.side }} 关键点）
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [App, Python]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: GolfDB（缓存）
+        uses: actions/cache@v4
+        with:
+          path: golfdb
+          key: golfdb-videos160-v1-${{ runner.os }}
+      - name: 下载 GolfDB（缓存未命中时）
+        run: |
+          if [ ! -f golfdb/data/golfDB.pkl ]; then
+            pip3 install --quiet gdown
+            mkdir -p golfdb/data
+            python3 -m gdown 1uBwRxFxW04EqG87VCoX3l6vXeV5T5JYJ -O golfdb/videos_160.zip
+            unzip -q golfdb/videos_160.zip -d golfdb/data/
+            rm golfdb/videos_160.zip
+            curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: golfdb-python
+          path: .
+          run-id: 42544083210
+          github-token: ${{ github.token }}
+      - if: matrix.side == 'App'
+        uses: actions/download-artifact@v4
+        with:
+          name: golfdb-app-landmarks
+          path: golfdb-app
+          run-id: 42505130299
+          github-token: ${{ github.token }}
+      - name: 关键点
+        run: |
+          set -o pipefail
+          if [ "${{ matrix.side }}" = App ]; then
+            pip install --quiet numpy pandas
+            python tools/e2e/golfdb_app_metrics.py cache golfdb-app lm
+          else
+            pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
+            bash tools/download-model.sh heavy
+            python tools/faults/run_path.py --golfdb golfdb/data --limit 400 --out lm | tail -2
+          fi
+      - name: 三个版本 × 两种阶段
+        run: |
+          set -o pipefail
+          python tools/faults/address_eval.py --golfdb golfdb/data --swingnet impact/results_swingnet.json \
+            --landmarks ${{ matrix.side }}=lm/landmarks --still 0.03 --still 0.05 --out address_eval \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+      - if: matrix.side == 'Python'
+        uses: actions/upload-artifact@v4
+        with:
+          name: golfdb-python-landmarks
+          path: lm/landmarks/

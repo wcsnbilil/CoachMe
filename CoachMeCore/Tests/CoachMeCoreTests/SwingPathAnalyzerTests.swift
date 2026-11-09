@@ -206,6 +206,8 @@ final class SwingPathParityTests: XCTestCase {
         let backswing_offset: Double?
         let loop: Double?
         let jump_frames: Int?
+        let shoulder_width: Double?
+        let hip_width: Double?
     }
 
     func testMatchesPythonOnGolfDB() throws {
@@ -232,7 +234,9 @@ final class SwingPathParityTests: XCTestCase {
             }
             if r.verdict.nameZH != s.verdict || !close(r.offset, s.offset)
                 || !close(r.backswingOffset, s.backswing_offset) || !close(r.loop, s.loop)
-                || (s.jump_frames.map { $0 != r.jumpFrames } ?? false) {
+                || (s.jump_frames.map { $0 != r.jumpFrames } ?? false)
+                || (r.shoulderWidth != nil && s.shoulder_width != nil && !close(r.shoulderWidth, s.shoulder_width))
+                || (r.hipWidth != nil && s.hip_width != nil && !close(r.hipWidth, s.hip_width)) {
                 mismatches.append("\(s.name): swift \(r.verdict.nameZH) \(r.offset ?? .nan) \(r.refusal?.rawValue ?? "")"
                                   + " / python \(s.verdict) \(s.offset ?? .nan)")
             }

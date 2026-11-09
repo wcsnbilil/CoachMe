@@ -27,6 +27,14 @@ def main():
     p.add_argument("--out", type=Path, required=True)
     a = p.parse_args()
     swings = json.loads(a.fixture.read_text(encoding="utf-8"))
+    # Late-address copies (SwingNet's address is often late): exercise the address search too.
+    late = []
+    for s in swings:
+        ad, top, imp = s["phases"]
+        if not s["name"].endswith("_late") and top - ad >= 6:
+            late.append({**s, "name": s["name"] + "_late", "phases": [ad + (top - ad) // 3, top, imp],
+                         "verdict": None})
+    swings = swings + late
     changed = 0
     for s in swings:
         lms = np.array([[[np.nan if v is None else v for v in pt] for pt in fr] for fr in s["landmarks"]], dtype=float)
@@ -37,8 +45,10 @@ def main():
             "backswing_offset": res.get("backswing_offset"),
             "loop": res.get("loop"),
             "jump_frames": res.get("jump_frames"),
+            "shoulder_width": (res.get("camera") or {}).get("shoulder_width"),
+            "hip_width": (res.get("camera") or {}).get("hip_width"),
         }
-        if s.get("verdict") != new["verdict"]:
+        if s.get("verdict") is not None and s.get("verdict") != new["verdict"]:
             changed += 1
             print(f"{s['name']}: fixture verdict {s.get('verdict')} -> python now {new['verdict']}")
         s.update(new)

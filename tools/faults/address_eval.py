@@ -87,7 +87,7 @@ def main():
                     r.update(name=name, phases=list(ph) if ph else None, label_address=lab[0], **extra)
                     rows.append(r)
                 verdict_rows[(label, phase_src, mode)] = rows
-                (a.out / f"{label}_{'labelled' if phase_src == '标注' else 'auto'}_{mode}.json").write_text(
+                (a.out / f"{label}_{'labelled' if phase_src == '标注' else 'auto'}_{mode.replace('/', '-')}.json").write_text(
                     json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
 
         out += [f"### {label} 关键点", "",

@@ -185,7 +185,7 @@ public struct SwingPathAnalyzer: Sendable {
                 minReferenceAngleDegrees: Double = 0,
                 maxWristGap: Double = 0.6,
                 refineAddress: Bool = true,
-                addressMode: AddressMode = .still) {
+                addressMode: AddressMode = .camera) {
         self.refineAddress = refineAddress
         self.addressMode = addressMode
         self.calibration = calibration

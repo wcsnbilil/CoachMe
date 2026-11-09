@@ -362,10 +362,11 @@ def classify(offset: float, cal: dict) -> str:
 def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
             min_visibility: float = 0.5, calibration: dict | None = None,
             max_line_width: float = MAX_LINE_WIDTH, min_ref_angle: float = 0.0,
-            refine_address: bool = True, address_mode: str = "still") -> dict:
+            refine_address: bool = True, address_mode: str = "camera") -> dict:
     # address_mode: which address the camera check and the reference line use.
     #   "still"  = SwingNet's address walked back to the last still frame (still_address), both
-    #   "camera" = camera check at hands_still_address, reference line as "still"
+    #   "camera" = camera check at hands_still_address, reference line as "still" (default, 2026-11-09:
+    #              GolfDB 400 automatic-phase refusals 11.0% -> 9.8% on App landmarks)
     #   "both"   = camera check and reference line at hands_still_address
     # min_ref_angle stays 0: on GolfDB the line's angle is 11.5 deg median and the
     # near-vertical ones are normal address postures, so it does not find bad cameras.

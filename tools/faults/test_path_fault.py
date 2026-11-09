@@ -190,7 +190,7 @@ def test_slow_takeaway_late_address_uses_the_still_frame():
         lm[f, pf.R_SH, 0] = start[pf.R_SH][0] + turn
     late = a + 45
     w = lambda r: r["camera"]["shoulder_width"]
-    still = pf.analyze(lm, late, t, i)
+    still = pf.analyze(lm, late, t, i, address_mode="still")
     both = pf.analyze(lm, late, t, i, address_mode="both")
     camera = pf.analyze(lm, late, t, i, address_mode="camera")
     assert w(both) < w(still) - 0.05 and w(camera) == w(both), (w(still), w(both), w(camera))
@@ -200,7 +200,7 @@ def test_slow_takeaway_late_address_uses_the_still_frame():
 
 def test_address_mode_still_is_unchanged_on_clean_swings():
     lm, a, t, i = make_swing(loop=0.3)
-    base = pf.analyze(lm, a, t, i)
+    base = pf.analyze(lm, a, t, i, address_mode="still")
     for mode in ("camera", "both"):
         r = pf.analyze(lm, a, t, i, address_mode=mode)
         assert r["verdict"] == base["verdict"] and abs(r["offset"] - base["offset"]) < 0.02, (mode, r, base)

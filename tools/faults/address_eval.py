@@ -41,8 +41,10 @@ def main():
     p.add_argument("--holdout-from", type=int, default=200)
     p.add_argument("--out", type=Path, default=Path("address_eval"))
     p.add_argument("--still", type=float, action="append", help="ADDRESS_STILL values to try (default: the module's)")
+    p.add_argument("--div", type=int, action="append", help="ADDRESS_WINDOW_DIV values to try")
     a = p.parse_args()
-    MODES = ["still"] + [f"{m}@{v:g}" for v in (a.still or [path_fault.ADDRESS_STILL]) for m in ("camera", "both")]
+    MODES = ["still"] + [f"{m}@{v:g}/{d}" for v in (a.still or [path_fault.ADDRESS_STILL])
+                         for d in (a.div or [path_fault.ADDRESS_WINDOW_DIV]) for m in ("camera", "both")]
     a.out.mkdir(parents=True, exist_ok=True)
 
     import pandas as pd
@@ -77,7 +79,9 @@ def main():
                             warnings.simplefilter("ignore")
                             m, _, v = mode.partition("@")
                             if v:
+                                v, _, dv = v.partition("/")
                                 path_fault.ADDRESS_STILL = float(v)
+                                path_fault.ADDRESS_WINDOW_DIV = int(dv)
                             r = analyze(np.load(npy), *ph, address_mode=m)
                         r.pop("hands", None)
                     r.update(name=name, phases=list(ph) if ph else None, label_address=lab[0], **extra)

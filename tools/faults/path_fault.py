@@ -297,6 +297,7 @@ def still_address(hands: np.ndarray, address: int, top: int) -> int:
     return address
 
 
+ADDRESS_WINDOW_DIV = 3  # stillness window = backswing time from f / this
 ADDRESS_STILL = 0.03  # still address: every tracked joint within this (torso lengths) over the window
 
 
@@ -328,7 +329,7 @@ def hands_still_address(tracks: list[np.ndarray], address: int, top: int, torso:
         return None
     moved = False  # still frames right after the takeaway started don't count until motion is seen
     for f in range(below[-1], lo - 1, -1):
-        s = min(max(3, (top - f) // 3), f - lo)  # clipped at the clip start / search start
+        s = min(max(3, (top - f) // ADDRESS_WINDOW_DIV), f - lo)  # clipped at the clip start / search start
         if s < 2:
             break
         still, seen = True, False
@@ -495,6 +496,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
         "offset_by_height": [(round(f, 2), round(o, 3)) for f, o in down],
         "ref_angle": round(ref_angle, 1),
         "address_used": int(address),
+        "cam_address": int(cam_address),
         "caution": caution,
         "ref_line": [[round(float(v), 1) for v in h0], [round(float(v), 1) for v in sh_mid]],
         "torso_px": round(torso, 1),

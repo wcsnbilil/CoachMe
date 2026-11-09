@@ -75,5 +75,5 @@ jobs:
         run: |
           set -o pipefail
           python tools/faults/address_eval.py --golfdb golfdb/data --swingnet impact/results_swingnet.json \
-            --landmarks ${{ matrix.side }}=lm/landmarks --still 0.03 --out address_eval \
+            --landmarks ${{ matrix.side }}=lm/landmarks --still 0.03 --still 0.05 --div 3 --div 6 --div 10 --out address_eval \
             | tee -a "$GITHUB_STEP_SUMMARY"

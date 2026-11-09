@@ -297,6 +297,58 @@ def still_address(hands: np.ndarray, address: int, top: int) -> int:
     return address
 
 
+ADDRESS_STILL = 0.03  # still address: every tracked joint within this (torso lengths) over the window
+
+
+def hands_still_address(tracks: list[np.ndarray], address: int, top: int, torso: float) -> int | None:
+    """Address without trusting SwingNet: walking back from the top, the first frame f where the
+    hands and both shoulders have all stayed within ADDRESS_STILL torso lengths of where they are
+    at f, over the frames [f - s, f] with s = max(3, (top - f) // 3) (clipped at the search start).
+    The walk starts where the hands are last below half of the backswing height, after at least one
+    frame that was not still.
+
+    Why not still_address: on GolfDB SwingNet's address is 19-64 frames late on slow-motion clips,
+    and that slow early takeaway already counts as "still" frame to frame. A window that scales with
+    the backswing time catches slow motion at any frame rate. The shoulders are needed because in a
+    down-the-line view the first part of the takeaway moves the hands along the camera axis (hardly
+    at all in the image) while the shoulders already turn (Niko clip A: hands still until frame 20,
+    shoulders turning from 16). tracks: smoothed (frames, 2) tracks, NaN = not tracked. The search
+    goes back at most as far before the given address as that address is before the top.
+    None when nothing still is found.
+    """
+    lo = max(0, address - (top - address))
+    # start below the top pause: the last frame before the top where the hands are less than half
+    # way up from the given address (any stillness above that is the top or a takeaway stall)
+    hy = tracks[0][:, 1]  # tracks[0] = hands
+    if not (np.isfinite(hy[address]) and np.isfinite(hy[top])):
+        return None
+    half = hy[top] + 0.5 * (hy[address] - hy[top])
+    below = [f for f in range(lo, top) if np.isfinite(hy[f]) and hy[f] >= half]
+    if not below:
+        return None
+    moved = False  # still frames right after the takeaway started don't count until motion is seen
+    for f in range(below[-1], lo - 1, -1):
+        s = min(max(3, (top - f) // 3), f - lo)  # clipped at the clip start / search start
+        if s < 2:
+            break
+        still, seen = True, False
+        for t in tracks:
+            if not np.isfinite(t[f]).all():
+                continue
+            w = t[f - s:f + 1]
+            d = np.hypot(*(w - t[f]).T)
+            d = d[np.isfinite(d)]
+            seen = True
+            if len(d) and d.max() > ADDRESS_STILL * torso:
+                still = False
+                break
+        if not still:
+            moved = True
+        elif seen and moved:
+            return f
+    return None
+
+
 def classify(offset: float, cal: dict) -> str:
     """Inside the pro range is fine, whatever shape it suggests (a slight
     out-to-in path is how many pros hit a fade). Only beyond it is a fault."""
@@ -310,7 +362,11 @@ def classify(offset: float, cal: dict) -> str:
 def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
             min_visibility: float = 0.5, calibration: dict | None = None,
             max_line_width: float = MAX_LINE_WIDTH, min_ref_angle: float = 0.0,
-            refine_address: bool = True) -> dict:
+            refine_address: bool = True, address_mode: str = "still") -> dict:
+    # address_mode: which address the camera check and the reference line use.
+    #   "still"  = SwingNet's address walked back to the last still frame (still_address), both
+    #   "camera" = camera check at hands_still_address, reference line as "still"
+    #   "both"   = camera check and reference line at hands_still_address
     # min_ref_angle stays 0: on GolfDB the line's angle is 11.5 deg median and the
     # near-vertical ones are normal address postures, so it does not find bad cameras.
     """landmarks: [frames, 33, 3] as (x_px, y_px, visibility). Returns the path verdict."""
@@ -361,7 +417,20 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
         else:
             address = given_address
 
-    cam = camera_check(body, torso)
+    cam_body, cam_torso = body, torso
+    if address_mode in ("camera", "both"):
+        tracks = [hands] + [_smooth(lm[:, j, 0:2], k) for j in (L_SH, R_SH)]
+        ha = hands_still_address(tracks, given_address, top, torso)
+        if ha is not None and ha < top:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                b3, sh3, hip3, t3 = anchors(ha)
+            if np.isfinite(t3) and t3 >= 1:
+                cam_body, cam_torso = b3, t3
+                if address_mode == "both":
+                    address, body, sh_mid, hip_mid, torso = ha, b3, sh3, hip3, t3
+
+    cam = camera_check(cam_body, cam_torso)
     widest = max((v for v in cam.values() if np.isfinite(v)), default=np.nan)
     if widest > max_line_width:
         return {"verdict": "无法判断", "reason": "机位偏离目标线（肩/髋线太宽）", "camera": cam,

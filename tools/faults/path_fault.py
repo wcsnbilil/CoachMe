@@ -297,6 +297,7 @@ def still_address(hands: np.ndarray, address: int, top: int) -> int:
     return address
 
 
+ADDRESS_BACK = 1.0  # search back at most this x (top - given address) before the given address
 ADDRESS_WINDOW_DIV = 3  # stillness window = backswing time from f / this
 ADDRESS_STILL = 0.03  # still address: every tracked joint within this (torso lengths) over the window
 
@@ -317,7 +318,7 @@ def hands_still_address(tracks: list[np.ndarray], address: int, top: int, torso:
     goes back at most as far before the given address as that address is before the top.
     None when nothing still is found.
     """
-    lo = max(0, address - (top - address))
+    lo = max(0, address - int(ADDRESS_BACK * (top - address)))
     # start below the top pause: the last frame before the top where the hands are less than half
     # way up from the given address (any stillness above that is the top or a takeaway stall)
     hy = tracks[0][:, 1]  # tracks[0] = hands

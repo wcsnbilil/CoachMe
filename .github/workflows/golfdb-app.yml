@@ -3,6 +3,7 @@
 # GolfDB 视频运行时从官方 Google Drive 下载，不进仓库、不上传为 artifact（只上传关键点和结果）。
 # App 模拟器跑 400 段约 3 小时：App 侧代码没变时，在 tools/e2e/golfdb_reuse_app_run.txt 填上一次的 run id
 # 复用它的关键点；改了 App 的解码 / MediaPipe 设置就清空这个文件重跑。
+# Python 侧同理：tools/e2e/golfdb_reuse_py_run.txt 填 run id 复用它的 golfdb-python 产物（改了 Python 算法就清空）。
 name: GolfDB App 基准
 
 on:
@@ -15,6 +16,8 @@ on:
       - tools/benchmark/impact_check.py
       - tools/split/swing_split.py
       - tools/e2e/golfdb_reuse_app_run.txt
+      - tools/e2e/golfdb_reuse_py_run.txt
+      - tools/e2e/refusal_diff.py
   workflow_dispatch:
     inputs:
       limit:
@@ -103,15 +106,21 @@ jobs:
     timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: 复用上一次的 Python 结果？（tools/e2e/golfdb_reuse_py_run.txt 填 run id）
+        id: reuse
+        run: echo "id=$(cat tools/e2e/golfdb_reuse_py_run.txt 2>/dev/null | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - if: steps.reuse.outputs.id == ''
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: GolfDB（缓存）
+        if: steps.reuse.outputs.id == ''
         uses: actions/cache@v4
         with:
           path: golfdb
           key: golfdb-videos160-v1-${{ runner.os }}
       - name: 下载 GolfDB（缓存未命中时）
+        if: steps.reuse.outputs.id == ''
         run: |
           if [ ! -f golfdb/data/golfDB.pkl ]; then
             pip3 install --quiet --break-system-packages gdown 2>/dev/null || pip3 install --quiet gdown
@@ -122,12 +131,15 @@ jobs:
             curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
           fi
           ls golfdb/data | head; ls golfdb/data/videos_160 | wc -l
-      - run: |
+      - if: steps.reuse.outputs.id == ''
+        run: |
           pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
           bash tools/download-model.sh heavy
       - name: run_path（GolfDB 标注阶段）
+        if: steps.reuse.outputs.id == ''
         run: python tools/faults/run_path.py --golfdb golfdb/data --limit "$LIMIT" --out report_py | tail -5
       - name: 击球帧交叉核对（SwingNet / 双手高度规则 / 混合），自动阶段下的 P0
+        if: steps.reuse.outputs.id == ''
         run: |
           set -o pipefail
           python tools/benchmark/impact_check.py --golfdb golfdb/data --limit "$LIMIT" \
@@ -136,7 +148,8 @@ jobs:
             echo; echo "### 自动阶段（$m）"
             python tools/e2e/golfdb_app_metrics.py report impact/results_$m.json --holdout-from 200 || true
           done | sed 's/App 流水线/Python（自动阶段）/' | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - if: steps.reuse.outputs.id == ''
+        uses: actions/upload-artifact@v4
         with:
           name: golfdb-python
           path: |
@@ -175,6 +188,8 @@ jobs:
           ls golfdb/data | head; ls golfdb/data/videos_160 | wc -l
       - id: reuse
         run: echo "id=$(cat tools/e2e/golfdb_reuse_app_run.txt 2>/dev/null | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - id: reuse_py
+        run: echo "id=$(cat tools/e2e/golfdb_reuse_py_run.txt 2>/dev/null | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v4
         with:
           name: golfdb-app-landmarks
@@ -185,6 +200,8 @@ jobs:
         with:
           name: golfdb-python
           path: .          # 产物里本身带 report_py/ 和 impact/ 两级目录
+          run-id: ${{ steps.reuse_py.outputs.id || github.run_id }}
+          github-token: ${{ github.token }}
         continue-on-error: true
       - name: App 关键点 → 同一套判定
         run: |
@@ -199,3 +216,8 @@ jobs:
           set -o pipefail
           python tools/e2e/golfdb_app_metrics.py report report_app/results.json report_py/results.json \
             --holdout-from 200 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 自动阶段比标注阶段多拒判的段（Python）
+        if: always() && hashFiles('impact/results_swingnet.json') != ''
+        run: |
+          python tools/e2e/refusal_diff.py report_py/results.json impact/results_swingnet.json | tee -a "$GITHUB_STEP_SUMMARY"
+          echo; python tools/e2e/refusal_diff.py report_py/results.json impact/results_hybrid.json | head -8

@@ -152,6 +152,19 @@ public struct SwingPathAnalyzer: Sendable {
     public var maxLineWidth: Double
     /// Move a late address back to the stillest frame before it (see stillAddress).
     public var refineAddress: Bool
+    /// Which address the camera check and the reference line use (path_fault address_mode).
+    public enum AddressMode: String, Sendable, Codable {
+        /// SwingNet's address walked back to a still frame (stillAddress), for both.
+        case still
+        /// Camera check at stillBodyAddress, reference line as `still`.
+        case camera
+        /// Camera check and reference line at stillBodyAddress.
+        case both
+    }
+    public var addressMode: AddressMode
+    /// stillBodyAddress: every tracked joint within this (torso lengths) over the window.
+    static let addressStill = 0.03
+
     /// Off by default: on GolfDB near-vertical lines are normal address postures.
     public var minReferenceAngleDegrees: Double
     /// Wrists further apart than this (torso lengths) are not both on the grip.
@@ -171,8 +184,10 @@ public struct SwingPathAnalyzer: Sendable {
                 maxLineWidth: Double = 0.2,
                 minReferenceAngleDegrees: Double = 0,
                 maxWristGap: Double = 0.6,
-                refineAddress: Bool = true) {
+                refineAddress: Bool = true,
+                addressMode: AddressMode = .still) {
         self.refineAddress = refineAddress
+        self.addressMode = addressMode
         self.calibration = calibration
         self.minVisibility = minVisibility
         self.maxLineWidth = maxLineWidth
@@ -263,8 +278,25 @@ public struct SwingPathAnalyzer: Sendable {
             }
         }
 
-        let shoulderWidth = abs(body[J.lSh].0 - body[J.rSh].0) / torso
-        let hipWidth = abs(body[J.lHip].0 - body[J.rHip].0) / torso
+        var camBody = body, camTorso = torso
+        if addressMode != .still {
+            let tracks = [(xs, ys)] + [J.lSh, J.rSh].map { j in
+                (Self.smooth(lm.map { $0.indices.contains(j) ? $0[j].x : .nan }, k: k),
+                 Self.smooth(lm.map { $0.indices.contains(j) ? $0[j].y : .nan }, k: k))
+            }
+            if let ha = Self.stillBodyAddress(tracks, address: givenAddress, top: top, torso: torso), ha < top {
+                let a3 = anchors(ha)
+                if a3.torso.isFinite, a3.torso >= 1 {
+                    camBody = a3.body; camTorso = a3.torso
+                    if addressMode == .both {
+                        address = ha; body = a3.body; shMid = a3.sh; hipMid = a3.hip; torso = a3.torso
+                    }
+                }
+            }
+        }
+
+        let shoulderWidth = abs(camBody[J.lSh].0 - camBody[J.rSh].0) / camTorso
+        let hipWidth = abs(camBody[J.lHip].0 - camBody[J.rHip].0) / camTorso
         let widest = [shoulderWidth, hipWidth].filter(\.isFinite).max() ?? .nan
         if widest > maxLineWidth {
             var r = Result.refused(.cameraOffAxis)
@@ -355,6 +387,33 @@ public struct SwingPathAnalyzer: Sendable {
             return f
         }
         return address
+    }
+
+    /// hands_still_address: walking back from where the hands are last below half of the backswing
+    /// height, the first frame f (after at least one frame that was not still) where the hands and
+    /// both shoulders all stay within addressStill torso lengths of where they are at f over
+    /// f-s...f, s = max(3, (top - f) / 3) clipped at the search start. The search goes back at most
+    /// as far before the given address as it is before the top. tracks[0] = hands.
+    static func stillBodyAddress(_ tracks: [([Double], [Double])], address: Int, top: Int, torso: Double) -> Int? {
+        let lo = max(0, address - (top - address))
+        let hy = tracks[0].1
+        guard hy[address].isFinite, hy[top].isFinite else { return nil }
+        let half = hy[top] + 0.5 * (hy[address] - hy[top])
+        guard let start = (lo..<top).last(where: { hy[$0].isFinite && hy[$0] >= half }) else { return nil }
+        var moved = false
+        for f in stride(from: start, through: lo, by: -1) {
+            let s = min(max(3, (top - f) / 3), f - lo)
+            if s < 2 { break }
+            var still = true, seen = false
+            for (tx, ty) in tracks {
+                guard tx[f].isFinite, ty[f].isFinite else { continue }
+                seen = true
+                let d = (f - s...f).map { hypot(tx[$0] - tx[f], ty[$0] - ty[f]) }.filter(\.isFinite)
+                if let m = d.max(), m > addressStill * torso { still = false; break }
+            }
+            if !still { moved = true } else if seen && moved { return f }
+        }
+        return nil
     }
 
     /// body_at: per-joint nanmedian of frames f-half...f+half, kept inside lo...hi.

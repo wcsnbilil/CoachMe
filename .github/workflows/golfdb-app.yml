@@ -184,7 +184,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: golfdb-python
-          path: report_py
+          path: .          # 产物里本身带 report_py/ 和 impact/ 两级目录
         continue-on-error: true
       - name: App 关键点 → 同一套判定
         run: |

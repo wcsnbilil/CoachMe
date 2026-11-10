@@ -24,6 +24,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "faults"))
 from path_fault import DEFAULT_CALIBRATION  # noqa: E402
 
 REFUSED = "无法判断"
+GAP_REASON = "下杆有一段双手追踪丢失或乱跳"
+CAM_REASON = "机位偏离目标线（肩/髋线太宽）"
+MAX_LINE_WIDTH = 0.2
 BINS = [(0.0, 0.03), (0.03, 0.06), (0.06, 0.1), (0.1, 0.2), (0.2, 9.0)]
 GATE = 0.05
 
@@ -49,6 +52,77 @@ def kind(b, p):
     if bj != pj:
         return "refusal"
     return "same" if b.get("reason") == p.get("reason") else "reason"
+
+
+def gate_ratio(r):
+    """How far past (>1) or short of (<1) its refusal limit the nearest tracking gate was.
+    None when the run has no gate numbers (older output, or refused before the gates)."""
+    g, ratios = r.get("gates") or {}, []
+    if g.get("downswing_gap_allowed"):
+        ratios.append(g["downswing_gap"] / g["downswing_gap_allowed"])
+    cam = [v for v in (r.get("camera") or {}).values() if isinstance(v, (int, float))]
+    if cam:
+        ratios.append(max(cam) / MAX_LINE_WIDTH)
+    return max(ratios) if ratios else None
+
+
+def state(r, w, m, cal=DEFAULT_CALIBRATION):
+    """What a user would read with a near-boundary band of ±w (torso lengths) around each
+    threshold and a ±m (fraction of the limit) low-confidence zone around the tracking gates.
+    Soft states (edge / low) are compatible with their neighbours; hard flips are firm vs firm."""
+    gr = gate_ratio(r)
+    if r["verdict"] == REFUSED:
+        if r.get("reason") in (GAP_REASON, CAM_REASON) and m > 0 and gr is not None and gr <= 1 + m:
+            return "low"
+        return "refused"
+    if m > 0 and gr is not None and gr >= 1 - m:
+        return "low"
+    o = r["offset"]
+    if abs(o - cal["outside"]) <= w or abs(o - cal["inside"]) <= w:
+        return "edge"
+    return "out" if o > cal["outside"] else "in" if o < cal["inside"] else "ok"
+
+
+def hard(a, b):
+    return a != b and a not in ("edge", "low") and b not in ("edge", "low")
+
+
+def simulate(base, runs, out):
+    pairs = [(b, rows[n]) for rows in runs.values() for n, b in base.items() if n in rows]
+    d = sorted(abs(p["offset"] - b["offset"]) for b, p in pairs
+               if b.get("offset") is not None and p.get("offset") is not None)
+    q = lambda f: d[min(len(d) - 1, int(f * len(d)))] if d else float("nan")
+    out += ["", "### 扰动后 offset 变了多少（两次都给结论的）", "",
+            f"{len(d)} 对：中位 {q(0.5):.3f}，90% {q(0.9):.3f}，95% {q(0.95):.3f}，99% {q(0.99):.3f}（躯干长度）。"]
+    has_gates = any(r.get("gates") for r in base.values())
+    out += ["", "### 方案模拟（只算用户读到的说法，不改判定）", "",
+            "w = 阈值两侧「接近边界」的宽度（躯干长度）；m = 追踪/机位关卡两侧「把握不高」的余量（占限值的比例）。"
+            "硬翻转 = 两次都是确定说法且不同（范围内/外下/内下/拒判之间）；软说法 = 接近边界或把握不高。"
+            + ("" if has_gates else "（这批结果没有关卡数值，m 不起作用。）"), "",
+            "| w | m | 硬翻转 | 其中判定之间 | 其中给结论↔拒判 | 软说法占比 |", "|---|---|---|---|---|---|"]
+    for w in (0.0, 0.03, 0.05, 0.08, 0.1):
+        for m in ((0.0, 0.2, 0.35) if has_gates else (0.0,)):
+            hj = hr = soft = 0
+            for b, p in pairs:
+                sb, sp = state(b, w, m), state(p, w, m)
+                soft += (sb in ("edge", "low")) + (sp in ("edge", "low"))
+                if hard(sb, sp):
+                    if "refused" in (sb, sp):
+                        hr += 1
+                    else:
+                        hj += 1
+            n = len(pairs) or 1
+            out.append(f"| {w:.2f} | {m:.2f} | {100 * (hj + hr) / n:.1f}% | {100 * hj / n:.1f}% | {100 * hr / n:.1f}% | "
+                       f"{100 * soft / (2 * n):.1f}% |")
+    if has_gates:
+        ratios = Counter()
+        for b, p in pairs:
+            if kind(b, p) == "refusal":
+                rb, rp = gate_ratio(b), gate_ratio(p)
+                for r in (rb, rp):
+                    ratios["无数值" if r is None else f"{min(r, 2.0):.1f}".replace("2.0", "≥2.0")] += 1
+        out += ["", "给结论↔拒判的那些对里，两次的关卡比值（1 = 正好在限值上）："
+                + "，".join(f"{k} ×{v}" for k, v in sorted(ratios.items())) + "。"]
 
 
 def load(path):
@@ -116,6 +190,7 @@ def main():
                     for d in detail)
     out += ["", "### 翻成了什么", "", "| 原来 | 扰动后 | 次数 |", "|---|---|---|"]
     out += [f"| {x} | {y} | {n} |" for (x, y), n in trans.most_common(15)]
+    simulate(base, runs, out)
     print("\n".join(out))
     if a.json:
         a.json.write_text(json.dumps(detail, ensure_ascii=False, indent=1), encoding="utf-8")

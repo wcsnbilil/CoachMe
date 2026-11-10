@@ -8,8 +8,8 @@ set -euo pipefail
 SRC="$1"; OUT="$2"; P="${3:-$(basename "${SRC%.*}")}"
 mkdir -p "$OUT"
 FF="ffmpeg -v error -y -i $SRC"
-X264="-c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p -an"
-X265="-c:v libx265 -preset veryfast -crf 24 -pix_fmt yuv420p -tag:v hvc1 -an -x265-params log-level=error"
+X264="-c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p -an -threads 4"
+X265="-c:v libx265 -preset veryfast -crf 24 -pix_fmt yuv420p -tag:v hvc1 -an -x265-params log-level=error:pools=4:frame-threads=2"
 
 W=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$SRC")
 H=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$SRC")

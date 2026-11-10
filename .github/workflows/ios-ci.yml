@@ -88,6 +88,11 @@ jobs:
         run: |
           bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
           (cd e2e-videos && sha256sum * | sed 's/^/SHA /')
+          # 转码结果不能取决于 runner 有几个核（以前 x264/x265 按核数开线程，同一份代码每次的视频不一样）
+          taskset -c 0 bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 "$RUNNER_TEMP/one-core" > /dev/null
+          (cd e2e-videos && sha256sum *) > "$RUNNER_TEMP/a.sha"; (cd "$RUNNER_TEMP/one-core" && sha256sum *) > "$RUNNER_TEMP/b.sha"
+          diff "$RUNNER_TEMP/a.sha" "$RUNNER_TEMP/b.sha" || { echo "::error::单核和多核转出来的视频不一样"; exit 1; }
+          { echo "### 端到端视频哈希（编码线程数已固定，同一 ffmpeg 版本下每次应相同）"; echo '```'; (cd e2e-videos && sha256sum * | cut -c1-12,65-); echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # TODO(真实片段)：Niko 的片段放在私有仓库后，在这里用 secrets.FIXTURES_TOKEN 拉取到 e2e-videos/，
       # 并对每段再跑一次 make_variants.sh 生成 H.264 版本。公开仓库不放视频。
       - uses: actions/upload-artifact@v4
@@ -164,12 +169,15 @@ jobs:
           TEST_RUNNER_COACHME_E2E_DIR="$PWD/e2e-videos" \
           TEST_RUNNER_COACHME_E2E_OUT="$PWD/e2e-app" \
           TEST_RUNNER_COACHME_E2E_DUMP_FRAMES="h264_portrait_30" \
+          TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" \
+          TEST_RUNNER_COACHME_DETERMINISM_RUNS=2 \
+          TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=0 \
           xcodebuild test \
             -workspace CoachMe.xcworkspace -scheme CoachMe \
             -destination "id=$SIM" \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            2>&1 | tee xcodebuild.log | grep -E "^E2E |error:|warning: .*CoachMe|Test Case .*(passed|failed|skipped)|Executed|\*\* (BUILD|TEST)"
+            2>&1 | tee xcodebuild.log | grep -E "^E2E |^DET .*run=|error:|warning: .*CoachMe|Test Case .*(passed|failed|skipped)|Executed|\*\* (BUILD|TEST)"
       - name: 测试统计
         if: always()
         run: |

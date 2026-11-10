@@ -44,7 +44,9 @@ def main():
            f"下杆帧数（top→impact）中位：实时 {med:g} 帧（{len(rt)} 段），慢动作 {statistics.median(sl):g} 帧（{len(sl)} 段）。"
            f"所以 kg = 1 帧（30 fps 实时）对应下杆的 **{frac:.4f}**（1/{med:g}）。", ""]
 
-    modes = {"固定 1 帧": lambda r: 1.0, f"按比例 {frac:.4f} × 下杆帧数": lambda r: frac * (downswing(r) or 0)}
+    modes = {"固定 1 帧": lambda r: 1.0,
+             f"按比例 {frac:.4f} × 下杆帧数": lambda r: frac * (downswing(r) or 0),
+             f"按比例，至少 1 帧": lambda r: max(1.0, frac * (downswing(r) or 0))}
     groups = defaultdict(dict)
     for r in rows:
         if "slow" in r:

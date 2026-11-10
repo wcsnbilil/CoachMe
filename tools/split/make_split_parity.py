@@ -101,12 +101,23 @@ def cases(swings: list[dict]) -> list[dict]:
                             fps=fps, lm=lm[::skip], tops=[t * f // skip for t in tops], single=False))
     for s in swings:
         out.append(dict(name=f"single15_{s['name']}", fps=15, lm=s["lm"][::2], tops=[s["phases"][1] // 2], single=True))
+    # slow-motion playback: the file says 30 fps but the motion is 4x / 8x slower (the timeline is stretched),
+    # seen at 15 fps like every long clip in the app
+    quick = [s for s in swings if s["phases"][1] - s["phases"][0] < 45]
+    for f in (4, 8):
+        for k in range(12):
+            grp = rng.sample(quick, rng.randint(1, 3))
+            lm, tops = join(grp, rng, k % 2 == 1)
+            lm = stretch(lm, f)
+            lm[:, :, :2] += nrng.normal(0, 1.5, lm[:, :, :2].shape)
+            out.append(dict(name=f"slowmo{f}x_{k}_" + "+".join(g["name"][7:] for g in grp),
+                            fps=15, lm=lm[::2], tops=[t * f // 2 for t in tops], single=len(grp) == 1))
     return out
 
 
 def located(case: dict, found: list[tuple[int, int, int]]) -> bool:
     """Every true top lies inside a found address..impact span (a few frames of slack)."""
-    tol = max(2, 5 * case["fps"] // 30)
+    tol = max(2, 5 * case["fps"] // 30) * (8 if case["name"].startswith("slowmo") else 1)
     return all(any(a - tol <= t <= i + tol for a, _, i in found) for t in case["tops"])
 
 

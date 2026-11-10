@@ -38,6 +38,12 @@ MIN_BACK = 4           # backswing frames at least
 REST_S = 1.0           # next address at least this long after the previous impact (kills finish -> lower)
 PAD_BEFORE_S = 1.0     # window starts this long before address (SwingNet needs some address)
 PAD_AFTER_S = 1.5      # ... and ends this long after impact (finish)
+# Slow-motion files whose timeline is stretched (iPhone slo-mo exported at 30 fps): the swing itself is
+# found the same way (the rule is about shape, not speed), but one second of padding would be a
+# fraction of a second of real motion. A swing that takes longer than SLOW_SWING_S from address to
+# impact gets its padding stretched by duration / NORMAL_SWING_S.
+SLOW_SWING_S = 2.0     # real-time swings: 0.6-1.4 s address -> impact
+NORMAL_SWING_S = 1.0
 
 
 def _fill(v: np.ndarray) -> np.ndarray:
@@ -147,9 +153,11 @@ def windows(swings: list[tuple[int, int, int]], n: int, fps: float, single: bool
     (fewer than 2 swings, or none when `single`: the app cuts a long clip down to its one swing)."""
     if len(swings) < (1 if single else 2):
         return []
-    pre, post = int(round(PAD_BEFORE_S * fps)), int(round(PAD_AFTER_S * fps))
     out = []
     for idx, (ad, _, imp) in enumerate(swings):
+        took = (imp - ad) / fps
+        slow = took / NORMAL_SWING_S if took > SLOW_SWING_S else 1.0
+        pre, post = int(round(PAD_BEFORE_S * fps * slow)), int(round(PAD_AFTER_S * fps * slow))
         start = max(0, ad - pre)
         end = min(n, imp + post + 1)
         if idx > 0:  # never reach back into the previous swing

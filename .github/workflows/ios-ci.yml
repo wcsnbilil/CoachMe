@@ -42,6 +42,7 @@ jobs:
           if [ -f "$FIX" ]; then
             python -W ignore tools/split/make_split_parity.py "$FIX" --out "$RUNNER_TEMP/split_parity.json" | tee -a "$GITHUB_STEP_SUMMARY"
             echo "COACHME_SPLIT_PARITY=$RUNNER_TEMP/split_parity.json" >> "$GITHUB_ENV"
+            { echo; echo "### 试挥 / 空挥（已知限制，只报告）"; echo; python -W ignore tools/split/practice_swings.py "$FIX"; } >> "$GITHUB_STEP_SUMMARY"
           else
             echo "::warning::没有 $FIX，SwingSplitParityTests 会被跳过"
           fi

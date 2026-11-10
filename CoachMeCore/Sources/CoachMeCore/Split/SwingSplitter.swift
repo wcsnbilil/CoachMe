@@ -35,6 +35,10 @@ public struct SwingSplitter: Sendable {
     public static let restSeconds = 1.0
     public static let padBeforeSeconds = 1.0
     public static let padAfterSeconds = 1.5
+    /// Stretched-timeline slow motion: a swing longer than this (address to impact) gets its padding
+    /// scaled by duration / normalSwingSeconds. See swing_split.py.
+    public static let slowSwingSeconds = 2.0
+    public static let normalSwingSeconds = 1.0
 
     static let lw = 15, rw = 16, ls = 11, rs = 12, lh = 23, rh = 24
 
@@ -127,8 +131,10 @@ public struct SwingSplitter: Sendable {
     /// none when `single`: a long clip is cut down to its one swing).
     public static func windows(_ swings: [Swing], frameCount n: Int, fps: Double, single: Bool = false) -> [Window] {
         guard swings.count >= (single ? 1 : 2) else { return [] }
-        let pre = Int(pyRound(padBeforeSeconds * fps)), post = Int(pyRound(padAfterSeconds * fps))
         return swings.indices.map { idx in
+            let took = Double(swings[idx].impact - swings[idx].address) / fps
+            let slow = took > slowSwingSeconds ? took / normalSwingSeconds : 1.0
+            let pre = Int(pyRound(padBeforeSeconds * fps * slow)), post = Int(pyRound(padAfterSeconds * fps * slow))
             var start = max(0, swings[idx].address - pre)
             var end = min(n, swings[idx].impact + post + 1)
             if idx > 0 { start = max(start, swings[idx - 1].impact + 1) }

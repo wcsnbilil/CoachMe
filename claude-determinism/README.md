@@ -1,4 +1,4 @@
-# claude/determinism @ 7c6c223
+# claude/determinism @ 7cb0315
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

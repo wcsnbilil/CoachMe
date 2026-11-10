@@ -74,7 +74,18 @@ def main():
                 early = {}
                 for src, ph in (("自动", sn.get(name)), ("标注", (int(ev[1]), int(ev[4]), int(ev[6])))):
                     early[src] = preflight.early_setup(lm, *ph) if ph else "没有识别出挥杆阶段"
-            rows.append(dict(name=name, slow=int(row.slow), pre=pre, full=full, early=early))
+                # where does the sparse preflight lose agreement? same early rules, varying frames and phases
+                sw = preflight.swing_split.find_swings(sp, fps)
+                spl = sw[-1] if sw else None
+                snp = sn.get(name)
+                variants = {
+                    "15fps + SwingNet 阶段": preflight.early_setup(sp, *[p // a.step for p in snp]) if snp else "无",
+                    "15fps + 切分器阶段": preflight.early_setup(sp, *spl) if spl else None,
+                    "30fps + 切分器阶段": preflight.early_setup(lm, *[min(len(lm) - 1, p * a.step) for p in spl]) if spl else None,
+                    "30fps + 切分器顶点/击球 + SwingNet 准备": (preflight.early_setup(lm, snp[0], spl[1] * a.step, spl[2] * a.step)
+                                                       if spl and snp and snp[0] < spl[1] * a.step else None),
+                }
+            rows.append(dict(name=name, slow=int(row.slow), pre=pre, full=full, early=early, variants=variants))
         n = len(rows)
         out += [f"### {label} 关键点（{n} 段）", ""]
         found = Counter(next(iter(r["pre"].values()))["swings"] for r in rows)
@@ -109,6 +120,11 @@ def main():
             mixed = Counter((r["early"][src], r["full"][src][1]) for r in both if r["early"][src] != r["full"][src][1])
             if mixed:
                 out += ["  - 两边都拒但原因不同：" + "，".join(f"{a} / {b} ×{v}" for (a, b), v in mixed.items())]
+        out += ["", "| 提前判定的输入 | 一致（对自动阶段完整分析） | 提前拒、完整给结论 | 提前放行、完整拒 |", "|---|---|---|---|"]
+        for v in rows[0]["variants"]:
+            po = [r["name"] for r in rows if r["variants"][v] and r["full"]["自动"][0] != REFUSED]
+            fo = sum(not r["variants"][v] and r["full"]["自动"][0] == REFUSED for r in rows)
+            out.append(f"| {v} | {n - len(po) - fo}/{n}（{(n - len(po) - fo) / n:.1%}） | {len(po)} {' '.join(po[:12])} | {fo} |")
         out.append("")
         # the disagreement list, for the last method / policy (the configured one when not sweeping)
         for key in ([(h, t, pol) for h, t in methods for pol in policies] if a.sweep else [(a.how, a.tol, a.policy)]):

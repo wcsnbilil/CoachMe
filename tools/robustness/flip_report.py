@@ -135,6 +135,7 @@ def main():
     ap.add_argument("baseline")
     ap.add_argument("perturbed", nargs="+")
     ap.add_argument("--json", type=Path, help="also write the per-clip flips here")
+    ap.add_argument("--title", default="Python，GolfDB 沿目标线，标注阶段")
     a = ap.parse_args()
     base = load(a.baseline)
     runs = {}
@@ -169,7 +170,7 @@ def main():
     tot = sum(per_run.values(), Counter())
     total_flip = rate(tot, "judged") + rate(tot, "refusal")
     judged = Counter(r["verdict"] for r in base.values())
-    out = ["## 轻微扰动下的结论翻转率（Python，GolfDB 沿目标线，标注阶段）", "",
+    out = [f"## 轻微扰动下的结论翻转率（{a.title}）", "",
            f"基线 {len(base)} 段：" + "，".join(f"{k} {v}" for k, v in judged.most_common()) + "。"
            f"阈值 外下 > {DEFAULT_CALIBRATION['outside']}，内下 < {DEFAULT_CALIBRATION['inside']}（offset，躯干长度）。", "",
            f"**总翻转率 {pct(total_flip)}**（判定之间 {pct(rate(tot, 'judged'))} + 给结论↔拒判 {pct(rate(tot, 'refusal'))}，"

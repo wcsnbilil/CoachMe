@@ -84,17 +84,31 @@ jobs:
       - uses: actions/checkout@v4
       - name: ffmpeg
         run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
-      - name: 从仓库里的测试片段生成格式矩阵
+      - name: ffmpeg 版本
+        id: ff
         run: |
           echo "cores=$(nproc) $(grep -m1 "model name" /proc/cpuinfo)"; ffmpeg -version | head -1
+          echo "ver=$(ffmpeg -version | head -1 | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
+      # 同一份脚本 + 同一个源片段 + 同一个 ffmpeg 版本 → 直接用上次转好的文件，每次跑的输入逐字节相同。
+      - name: 转好的视频（缓存）
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: e2e-videos
+          key: e2e-videos-${{ hashFiles('tools/e2e/make_variants.sh', 'CoachMeTests/Fixtures/swing3s.mp4') }}-ffmpeg-${{ steps.ff.outputs.ver }}
+      - name: 从仓库里的测试片段生成格式矩阵
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
           bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
-          (cd e2e-videos && sha256sum * | sed 's/^/SHA /')
-          # 转码结果不能取决于 runner 的 CPU：缩放以前按 CPU 选 SIMD，不同 runner（Zen3 / AVX-512）转出的像素不一样，
-          # 编码器按核数开线程也会变。这里用单核 + 关掉所有 SIMD 再转一次，必须逐字节相同。
+          # 转码结果不能取决于 runner 的 CPU：缩放以前按 CPU 选 SIMD、编码器和滤镜按核数开线程，
+          # 不同 runner 转出的文件不一样。这里用单核 + 关掉所有 SIMD 再转一次，必须逐字节相同。
           FF_EXTRA="-cpuflags 0" taskset -c 0 bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 "$RUNNER_TEMP/one-core" > /dev/null
           (cd e2e-videos && sha256sum *) > "$RUNNER_TEMP/a.sha"; (cd "$RUNNER_TEMP/one-core" && sha256sum *) > "$RUNNER_TEMP/b.sha"
           diff "$RUNNER_TEMP/a.sha" "$RUNNER_TEMP/b.sha" || { echo "::error::单核无 SIMD 和正常转出来的视频不一样：端到端结论会随 runner 变"; exit 1; }
-          { echo "### 端到端视频哈希（编码线程数已固定，同一 ffmpeg 版本下每次应相同）"; echo '```'; (cd e2e-videos && sha256sum * | cut -c1-12,65-); echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: 视频哈希
+        run: |
+          (cd e2e-videos && sha256sum * | sed 's/^/SHA /')
+          { echo "### 端到端视频哈希（缓存命中：${{ steps.cache.outputs.cache-hit == 'true' && '是' || '否，新转' }}）"; echo '```'; (cd e2e-videos && sha256sum * | cut -c1-12,65-); echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # TODO(真实片段)：Niko 的片段放在私有仓库后，在这里用 secrets.FIXTURES_TOKEN 拉取到 e2e-videos/，
       # 并对每段再跑一次 make_variants.sh 生成 H.264 版本。公开仓库不放视频。
       - uses: actions/upload-artifact@v4

@@ -127,3 +127,53 @@ def check(lm: np.ndarray, fps: float, duration: float | None = None, how: str = 
     kind = "camera" if why in CAMERA else "body" if why in BODY else "tracking"
     return {"ok": not stop, "reason": kind if stop else None, "detail": why if stop else "", "swings": found,
             "sparse_verdict": r["verdict"], "sparse_reason": why, "camera": r.get("camera")}
+
+
+def early_setup(landmarks: np.ndarray, address: int, top: int, impact: int, min_visibility: float = 0.5) -> str | None:
+    """The full analysis's set-up refusals, decided as soon as the pose pass has reached the top of the
+    backswing (phases known beforehand). Same steps and constants as path_fault.analyze up to its camera
+    check, on the frames up to `top` plus the smoothing margin; nothing after that is looked at.
+    Returns the refusal reason, or None = carry on.
+
+    The visibility / jump shares are over address..impact in the full analysis; here the frames after
+    the top count as good, so this never refuses a swing the full analysis would judge."""
+    if not (0 <= address < top < impact):
+        return "阶段顺序不对"
+    k = path_fault._odd((impact - address) / 20)
+    h = max(2, k // 2)
+    seen = min(len(landmarks), top + k + 3)
+    if seen <= top:
+        return None
+    lm = landmarks[:seen].astype(float).copy()
+    lm[~(lm[:, :, 2] >= min_visibility), 0:2] = np.nan
+
+    def anchors(f: int):
+        body = path_fault.body_at(lm, f, 0, top - 1, h)
+        sh = np.nanmean(body[[path_fault.L_SH, path_fault.R_SH]], axis=0)
+        hip = np.nanmean(body[[path_fault.L_HIP, path_fault.R_HIP]], axis=0)
+        return body, float(np.linalg.norm(sh - hip))
+
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        body, torso = anchors(address)
+    if not np.isfinite(torso) or torso < 1:
+        return "准备姿势躯干不可见"
+    raw = path_fault.hand_track(lm, torso)
+    span, rest = impact - address + 1, impact - top
+    if (np.isfinite(raw[address:top + 1]).all(axis=1).sum() + rest) / span < 0.7:
+        return "手腕可见帧太少"
+    raw[path_fault.pose_glitches(lm, raw, address, min(impact, seen - 1), torso)] = np.nan
+    raw = path_fault.despike(raw, torso)
+    if (np.isfinite(raw[address:top + 1]).all(axis=1).sum() + rest) / span < 0.7:
+        return "关键点跳动太多"
+    hands = path_fault._smooth(raw, k)
+    f = path_fault.still_address(hands, address, top)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        b2, t2 = anchors(f)
+    if np.isfinite(t2) and t2 >= 1:
+        body, torso = b2, t2
+    cam = path_fault.camera_check(body, torso)
+    widest = max((v for v in cam.values() if np.isfinite(v)), default=np.nan)
+    return "机位偏离目标线（肩/髋线太宽）" if widest > path_fault.MAX_LINE_WIDTH else None

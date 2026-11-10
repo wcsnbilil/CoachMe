@@ -71,7 +71,10 @@ def main():
                 for src, ph in (("自动", sn.get(name)), ("标注", (int(ev[1]), int(ev[4]), int(ev[6])))):
                     r = analyze(lm, *ph) if ph else {"verdict": REFUSED, "reason": "没有识别出挥杆阶段"}
                     full[src] = (r["verdict"], r.get("reason", ""), r.get("camera"))
-            rows.append(dict(name=name, slow=int(row.slow), pre=pre, full=full))
+                early = {}
+                for src, ph in (("自动", sn.get(name)), ("标注", (int(ev[1]), int(ev[4]), int(ev[6])))):
+                    early[src] = preflight.early_setup(lm, *ph) if ph else "没有识别出挥杆阶段"
+            rows.append(dict(name=name, slow=int(row.slow), pre=pre, full=full, early=early))
         n = len(rows)
         out += [f"### {label} 关键点（{n} 段）", ""]
         found = Counter(next(iter(r["pre"].values()))["swings"] for r in rows)
@@ -93,6 +96,19 @@ def main():
                         failed |= not ok
                     out.append(f"| {how}{f' {tol}' if how == 'mode' else ''} | {pol} | {src} | {agree}/{n}（{agree / n:.1%}）"
                                f"{'✅' if ok else '❌'} | {both} | {pre_only} | {full_only} |")
+        out += ["", "**分两步的方案：阶段先出，姿态跑到上杆顶点就按完整分析的同一套规则判机位 / 全身**", ""]
+        for src in ("自动", "标注"):
+            both = [r for r in rows if r["early"][src] and r["full"][src][0] == REFUSED]
+            pre_only = [r for r in rows if r["early"][src] and r["full"][src][0] != REFUSED]
+            full_only = [r for r in rows if not r["early"][src] and r["full"][src][0] == REFUSED]
+            agree = n - len(pre_only) - len(full_only)
+            out += [f"- {src}阶段：一致 {agree}/{n}（{agree / n:.1%}）{'✅' if agree / n >= GATE else '❌'}，两边都拒 {len(both)}，"
+                    f"提前拒、完整给结论 {len(pre_only)}（{'，'.join(r['name'] + ' ' + r['early'][src] for r in pre_only)}），"
+                    f"提前放行、完整拒 {len(full_only)}（" +
+                    "，".join(f"{k} {v}" for k, v in Counter(r["full"][src][1] for r in full_only).most_common()) + "）"]
+            mixed = Counter((r["early"][src], r["full"][src][1]) for r in both if r["early"][src] != r["full"][src][1])
+            if mixed:
+                out += ["  - 两边都拒但原因不同：" + "，".join(f"{a} / {b} ×{v}" for (a, b), v in mixed.items())]
         out.append("")
         # the disagreement list, for the last method / policy (the configured one when not sweeping)
         for key in ([(h, t, pol) for h, t in methods for pol in policies] if a.sweep else [(a.how, a.tol, a.policy)]):

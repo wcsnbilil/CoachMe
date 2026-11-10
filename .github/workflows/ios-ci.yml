@@ -89,10 +89,11 @@ jobs:
           echo "cores=$(nproc) $(grep -m1 "model name" /proc/cpuinfo)"; ffmpeg -version | head -1
           bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
           (cd e2e-videos && sha256sum * | sed 's/^/SHA /')
-          # 转码结果不能取决于 runner 有几个核（以前 x264/x265 按核数开线程，同一份代码每次的视频不一样）
-          taskset -c 0 bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 "$RUNNER_TEMP/one-core" > /dev/null
+          # 转码结果不能取决于 runner 的 CPU：缩放以前按 CPU 选 SIMD，不同 runner（Zen3 / AVX-512）转出的像素不一样，
+          # 编码器按核数开线程也会变。这里用单核 + 关掉所有 SIMD 再转一次，必须逐字节相同。
+          FF_EXTRA="-cpuflags 0" taskset -c 0 bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 "$RUNNER_TEMP/one-core" > /dev/null
           (cd e2e-videos && sha256sum *) > "$RUNNER_TEMP/a.sha"; (cd "$RUNNER_TEMP/one-core" && sha256sum *) > "$RUNNER_TEMP/b.sha"
-          diff "$RUNNER_TEMP/a.sha" "$RUNNER_TEMP/b.sha" || { echo "::error::单核和多核转出来的视频不一样"; exit 1; }
+          diff "$RUNNER_TEMP/a.sha" "$RUNNER_TEMP/b.sha" || { echo "::error::单核无 SIMD 和正常转出来的视频不一样：端到端结论会随 runner 变"; exit 1; }
           { echo "### 端到端视频哈希（编码线程数已固定，同一 ffmpeg 版本下每次应相同）"; echo '```'; (cd e2e-videos && sha256sum * | cut -c1-12,65-); echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # TODO(真实片段)：Niko 的片段放在私有仓库后，在这里用 secrets.FIXTURES_TOKEN 拉取到 e2e-videos/，
       # 并对每段再跑一次 make_variants.sh 生成 H.264 版本。公开仓库不放视频。

@@ -23,6 +23,13 @@ final class EndToEndVideoTests: XCTestCase {
         var analysisMs: Int
         var peakMemoryMB: Double
         var error: String?
+        /// Long clips only (BetaAnalysisRunner.selectSwing): swings found, the one analysed (from 1),
+        /// time of the quick first pass, and the analysed window. `phases` count from `phaseOffset`.
+        var swingsFound: Int?
+        var swingChosen: Int?
+        var scoutMs: Int?
+        var windowSeconds: [Double]?
+        var phaseOffset: Int?
     }
 
     /// Every layer of the chain, for tools/e2e/layers.py: decoded size and timestamps, per-frame
@@ -61,7 +68,9 @@ final class EndToEndVideoTests: XCTestCase {
             }
             let data = try JSONEncoder().encode(r)
             try data.write(to: out.appendingPathComponent(url.deletingPathExtension().lastPathComponent + ".json"))
-            print("E2E \(r.name) frames=\(r.frames) verdict=\(r.verdict) refusal=\(r.refusal ?? "-") "
+            print("E2E \(r.name) frames=\(r.frames) swings=\(r.swingsFound.map(String.init) ?? "-") "
+                  + "window=\(r.windowSeconds.map { "\($0)" } ?? "-") scoutMs=\(r.scoutMs.map(String.init) ?? "-") "
+                  + "verdict=\(r.verdict) refusal=\(r.refusal ?? "-") "
                   + "ms=\(r.analysisMs) peakMB=\(String(format: "%.0f", r.peakMemoryMB)) \(r.error ?? "")")
             XCTAssertNil(r.error, "\(r.name) 没跑通：\(r.error ?? "")")
             XCTAssertGreaterThan(r.frames, 0, "\(r.name) 没解出画面")
@@ -77,7 +86,10 @@ final class EndToEndVideoTests: XCTestCase {
         do {
             let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: BetaAnalysisRunner.betaNumPoses),
                                          phaseDetector: SwingNetPhaseDetector())
-            let frames = try await analyzer.analyse(asset: asset, timeRange: nil) { _ in }
+            // Same path as BetaAnalysisRunner.analyse: a long clip is cut down to its last swing first.
+            let duration = try await asset.load(.duration).seconds
+            let selection = try await BetaAnalysisRunner.selectSwing(asset: asset, duration: duration)
+            let frames = try await analyzer.analyse(asset: asset, timeRange: selection?.range) { _ in }
             let keyframes = await analyzer.keyframes
             let size = try await BetaAnalysisRunner.presentedSize(asset)
             let evidence = BetaAnalysisRunner.pathEvidence(frames: frames, keyframes: keyframes,
@@ -89,8 +101,8 @@ final class EndToEndVideoTests: XCTestCase {
                 return frames.indices.min { abs(frames[$0].timestampSeconds - t) < abs(frames[$1].timestampSeconds - t) }
             }
             let phases = [index(.address), index(.top), index(.impact)]
+            let fps = try? await asset.loadTracks(withMediaType: .video).first?.load(.nominalFrameRate)
             if let out {
-                let fps = try? await asset.loadTracks(withMediaType: .video).first?.load(.nominalFrameRate)
                 let layers = Layers(
                     name: name, width: size.width, height: size.height, nominalFPS: fps.map { Double($0) },
                     timestamps: frames.map(\.timestampSeconds), personCounts: frames.map(\.detectedPersonCount),
@@ -106,7 +118,11 @@ final class EndToEndVideoTests: XCTestCase {
                               phases: phases.contains(nil) ? nil : phases.compactMap { $0 },
                               verdict: evidence.verdict.rawValue,
                               refusal: evidence.refusal?.rawValue ?? (evidence.isJudged ? nil : "swingNotFound"),
-                              offset: evidence.offset, analysisMs: ms, peakMemoryMB: peak, error: nil)
+                              offset: evidence.offset, analysisMs: ms, peakMemoryMB: peak, error: nil,
+                              swingsFound: duration > BetaAnalysisRunner.splitMinimumSeconds ? (selection?.windows.count ?? 0) : nil,
+                              swingChosen: selection.map { $0.chosen + 1 }, scoutMs: selection?.scoutMilliseconds,
+                              windowSeconds: selection.map { [Self.r4($0.windows[$0.chosen].lowerBound), Self.r4($0.windows[$0.chosen].upperBound)] },
+                              phaseOffset: selection.flatMap { s in fps.map { Int((s.windows[s.chosen].lowerBound * Double($0)).rounded()) } })
         } catch {
             return ClipResult(name: name, video: nil, frames: 0, phases: nil, verdict: "error", refusal: nil, offset: nil,
                               analysisMs: Int(Date().timeIntervalSince(started) * 1000), peakMemoryMB: sampler.stop(),

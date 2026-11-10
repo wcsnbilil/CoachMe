@@ -87,21 +87,26 @@ def cases(swings: list[dict]) -> list[dict]:
     out = []
     for s in swings:
         out.append(dict(name=f"single_{s['name']}", fps=30, lm=s["lm"], tops=[s["phases"][1]], single=True))
-    for fps, n, walk, noise in [(30, 60, False, 0.0), (30, 40, True, 2.4), (60, 30, False, 1.2), (240, 15, True, 0.6)]:
-        f = fps // 30
+    # 15 fps = every other frame of a 30 fps sequence: what the app's quick first pass sees
+    for fps, n, walk, noise in [(30, 60, False, 0.0), (30, 40, True, 2.4), (60, 30, False, 1.2), (240, 15, True, 0.6),
+                                (15, 40, False, 1.2), (15, 30, True, 2.4)]:
+        f = max(1, fps // 30)
+        skip = 30 // fps if fps < 30 else 1
         for k in range(n):
             grp = rng.sample(swings, rng.randint(2, 5))
             lm, tops = join(grp, rng, walk)
             lm = stretch(lm, f)
             lm[:, :, :2] += nrng.normal(0, noise, lm[:, :, :2].shape) if noise else 0
             out.append(dict(name=f"join{fps}_{'walk_' if walk else ''}{k}_" + "+".join(g["name"][7:] for g in grp),
-                            fps=fps, lm=lm, tops=[t * f for t in tops], single=False))
+                            fps=fps, lm=lm[::skip], tops=[t * f // skip for t in tops], single=False))
+    for s in swings:
+        out.append(dict(name=f"single15_{s['name']}", fps=15, lm=s["lm"][::2], tops=[s["phases"][1] // 2], single=True))
     return out
 
 
 def located(case: dict, found: list[tuple[int, int, int]]) -> bool:
     """Every true top lies inside a found address..impact span (a few frames of slack)."""
-    tol = 5 * case["fps"] // 30
+    tol = max(2, 5 * case["fps"] // 30)
     return all(any(a - tol <= t <= i + tol for a, _, i in found) for t in case["tops"])
 
 
@@ -127,6 +132,7 @@ def main():
         rows.append(dict(name=c["name"], fps=c["fps"], expected=len(c["tops"]),
                          swings=[list(map(int, s)) for s in found],
                          windows=[list(map(int, w)) for w in ss.windows(found, len(lm), c["fps"])],
+                         single_windows=[list(map(int, w)) for w in ss.windows(found, len(lm), c["fps"], single=True)],
                          joints=JOINTS,
                          landmarks=[[[None if not np.isfinite(v) else float(v) for v in fr[j]] for j in JOINTS]
                                     for fr in lm]))

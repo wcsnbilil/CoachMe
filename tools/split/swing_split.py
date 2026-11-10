@@ -11,6 +11,7 @@ Rule (all lengths in torso units = median shoulder-mid to hip-mid distance):
   impact  = after the top, the hands come back to the address height (+ IMPACT_TOL) near the
             address x, and the downswing is not slower than DOWN_RATIO x the backswing
 A clip with 0 or 1 swings found is analysed whole, exactly as before (no change for single swings).
+Below 30 fps the frame counts shrink with the rate: the app's first pass samples about 15 fps.
 
 CoachMeCore/Sources/CoachMeCore/Split/SwingSplitter.swift is a line-by-line port; CI checks both
 give the same windows on tools/split/fixtures/split_parity.json.
@@ -85,9 +86,17 @@ def find_swings(lm: np.ndarray, fps: float = 30.0) -> list[tuple[int, int, int]]
             or not np.isfinite(hip[:, 1]).any():
         return []
     r = max(1, int(round(fps / 30.0)))  # frame counts below are tuned at 30 fps
-    hy, hx = smooth(hands[:, 1], 3 * r), smooth(hands[:, 0], 3 * r)
-    shy, hipy = smooth(sh[:, 1], 9 * r), smooth(hip[:, 1], 9 * r)
-    win, min_back = 5 * r, MIN_BACK * r
+    # below 30 fps (the app's quick first pass samples about 15 fps) the counts shrink with the rate
+    q = min(1.0, fps / 30.0)
+
+    def frames(count: int, least: int) -> int:
+        return max(least, int(round(count * r * q)))
+
+    ks, kb = max(1, int(3 * r * q)), max(3, int(9 * r * q))  # smoothing never wider in time than at 30 fps
+    hy, hx = smooth(hands[:, 1], ks), smooth(hands[:, 0], ks)
+    shy, hipy = smooth(sh[:, 1], kb), smooth(hip[:, 1], kb)
+    win, min_back = frames(5, 2), frames(MIN_BACK, 2)
+    near = frames(3, 2)
 
     def high(i: int) -> bool:
         return hy[i] < shy[i] + TOP_BELOW * torso
@@ -117,12 +126,14 @@ def find_swings(lm: np.ndarray, fps: float = 30.0) -> list[tuple[int, int, int]]
         limit = top + int(DOWN_RATIO * back) + 1
         while k < n and k <= limit and hy[k] < hy[ad] - IMPACT_TOL * torso:
             k += 1
-        if k >= n or k > limit or abs(hx[k] - hx[ad]) > IMPACT_X * torso:
+        # the hands' x is checked over the next ~0.1 s too: at a low frame rate the first frame back at
+        # address height can still be well short of the ball
+        if k >= n or k > limit or np.abs(hx[k:k + near + 1] - hx[ad]).min() > IMPACT_X * torso:
             i = top + 1
             continue
         # impact = hands' lowest point before they rise again for the finish
         m = k
-        cap = max(3 * r, (k - top) // 2)
+        cap = max(frames(3, 1), (k - top) // 2)
         while m + 1 < n and not high(m + 1) and m - k < cap:
             m += 1
         imp = top + int(np.argmax(hy[top:m + 1]))
@@ -131,9 +142,10 @@ def find_swings(lm: np.ndarray, fps: float = 30.0) -> list[tuple[int, int, int]]
     return out
 
 
-def windows(swings: list[tuple[int, int, int]], n: int, fps: float) -> list[tuple[int, int]]:
-    """[start, end) frame windows for each swing; empty when the clip should be analysed whole."""
-    if len(swings) < 2:
+def windows(swings: list[tuple[int, int, int]], n: int, fps: float, single: bool = False) -> list[tuple[int, int]]:
+    """[start, end) frame windows for each swing; empty when the clip should be analysed whole
+    (fewer than 2 swings, or none when `single`: the app cuts a long clip down to its one swing)."""
+    if len(swings) < (1 if single else 2):
         return []
     pre, post = int(round(PAD_BEFORE_S * fps)), int(round(PAD_AFTER_S * fps))
     out = []

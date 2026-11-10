@@ -36,6 +36,15 @@ jobs:
           else
             echo "::warning::没有 $FIX，SwingPathParityTests 会被跳过"
           fi
+      - name: 多次挥杆切分：拼接序列上的次数准确率 + Swift 对照数据
+        run: |
+          FIX=tools/faults/fixtures/path_parity.json
+          if [ -f "$FIX" ]; then
+            python -W ignore tools/split/make_split_parity.py "$FIX" --out "$RUNNER_TEMP/split_parity.json" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "COACHME_SPLIT_PARITY=$RUNNER_TEMP/split_parity.json" >> "$GITHUB_ENV"
+          else
+            echo "::warning::没有 $FIX，SwingSplitParityTests 会被跳过"
+          fi
       - name: 内测版代码不引用 AI / 指标 / 3D 小人 / 骨架回放的界面
         run: |
           BANNED='ChatPanelView|AISettingsView|WorkbenchView|[^a-zA-Z]ReportView|AngleChartView|RuleListView|Skeleton3DView|SkeletonOverlay|VideoPlayerView|GolfAvatar|LLMChatService|AISettingsStore'
@@ -54,7 +63,7 @@ jobs:
           {
             echo "### CoachMeCore"
             grep -E "Executed [0-9]+ tests" swift-test.log | tail -1
-            grep -E "SwingPathParityTests.*(passed|failed|skipped)" swift-test.log | tail -2
+            grep -E "(SwingPathParityTests|SwingSplitParityTests).*(passed|failed|skipped)" swift-test.log | tail -4
           } | tee -a "$GITHUB_STEP_SUMMARY" || true
 
   e2e-fixtures:
@@ -148,7 +157,7 @@ jobs:
             -destination "id=$SIM" \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            2>&1 | tee xcodebuild.log | grep -E "error:|warning: .*CoachMe|Test Case .*(passed|failed|skipped)|Executed|\*\* (BUILD|TEST)"
+            2>&1 | tee xcodebuild.log | grep -E "^E2E |error:|warning: .*CoachMe|Test Case .*(passed|failed|skipped)|Executed|\*\* (BUILD|TEST)"
       - name: 测试统计
         if: always()
         run: |

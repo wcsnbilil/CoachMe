@@ -81,9 +81,13 @@ public struct SwingSplitter: Sendable {
               hip.contains(where: { $0.y.isFinite }) else { return [] }
 
         let r = max(1, Int(Self.pyRound(fps / 30)))
-        let hy = Self.smooth(hands.map(\.y), 3 * r), hx = Self.smooth(hands.map(\.x), 3 * r)
-        let shy = Self.smooth(sh.map(\.y), 9 * r), hipy = Self.smooth(hip.map(\.y), 9 * r)
-        let win = 5 * r, minBack = Self.minBack * r
+        // below 30 fps (the app's quick first pass samples about 15 fps) the counts shrink with the rate
+        let q = min(1.0, fps / 30)
+        func count(_ c: Int, _ least: Int) -> Int { max(least, Int(Self.pyRound(Double(c * r) * q))) }
+        let ks = max(1, Int(Double(3 * r) * q)), kb = max(3, Int(Double(9 * r) * q))
+        let hy = Self.smooth(hands.map(\.y), ks), hx = Self.smooth(hands.map(\.x), ks)
+        let shy = Self.smooth(sh.map(\.y), kb), hipy = Self.smooth(hip.map(\.y), kb)
+        let win = count(5, 2), minBack = count(Self.minBack, 2), near = count(3, 2)
         func high(_ i: Int) -> Bool { hy[i] < shy[i] + Self.topBelow * torso }
 
         var out: [Swing] = []
@@ -103,10 +107,14 @@ public struct SwingSplitter: Sendable {
             var k = top + 1
             let limit = top + Int(Self.downRatio * Double(back)) + 1
             while k < n && k <= limit && hy[k] < hy[ad] - Self.impactTolerance * torso { k += 1 }
-            if k >= n || k > limit || abs(hx[k] - hx[ad]) > Self.impactX * torso { i = top + 1; continue }
+            // x is checked over the next ~0.1 s too: the first frame back at address height can be short of the ball
+            if k >= n || k > limit
+                || Self.nanMin(ArraySlice(hx[k..<min(n, k + near + 1)].map { abs($0 - hx[ad]) })) > Self.impactX * torso {
+                i = top + 1; continue
+            }
             // impact = hands' lowest point before they rise again for the finish
             var m = k
-            let cap = max(3 * r, (k - top) / 2)
+            let cap = max(count(3, 1), (k - top) / 2)
             while m + 1 < n && !high(m + 1) && m - k < cap { m += 1 }
             let impact = top + Self.argmax(hy[top...m])
             out.append(Swing(address: ad, top: top, impact: impact))
@@ -115,9 +123,10 @@ public struct SwingSplitter: Sendable {
         return out
     }
 
-    /// Windows to analyse one by one; empty when the clip should be analysed whole (< 2 swings).
-    public static func windows(_ swings: [Swing], frameCount n: Int, fps: Double) -> [Window] {
-        guard swings.count >= 2 else { return [] }
+    /// Windows to analyse one by one; empty when the clip should be analysed whole (< 2 swings, or
+    /// none when `single`: a long clip is cut down to its one swing).
+    public static func windows(_ swings: [Swing], frameCount n: Int, fps: Double, single: Bool = false) -> [Window] {
+        guard swings.count >= (single ? 1 : 2) else { return [] }
         let pre = Int(pyRound(padBeforeSeconds * fps)), post = Int(pyRound(padAfterSeconds * fps))
         return swings.indices.map { idx in
             var start = max(0, swings[idx].address - pre)

@@ -66,25 +66,42 @@ def gate_ratio(r):
     return max(ratios) if ratios else None
 
 
-def state(r, w, m, cal=DEFAULT_CALIBRATION):
-    """What a user would read with a near-boundary band of ±w (torso lengths) around each
-    threshold and a ±m (fraction of the limit) low-confidence zone around the tracking gates.
-    Soft states (edge / low) are compatible with their neighbours; hard flips are firm vs firm."""
-    gr = gate_ratio(r)
+def _gates(r):
+    g = r.get("gates") or {}
+    gap = (g["downswing_gap"], g["downswing_gap_allowed"]) if g.get("downswing_gap_allowed") else None
+    cam = [v for v in (r.get("camera") or {}).values() if isinstance(v, (int, float))]
+    return gap, (max(cam) if cam else None)
+
+
+def state(r, w, kg=0, mc=0.0, cal=DEFAULT_CALIBRATION):
+    """What a user would read with
+      w:  a near-boundary band of ±w torso lengths around each threshold ("edge"),
+      kg: a low-confidence zone of kg frames on both sides of the downswing-gap limit ("low_gap"),
+      mc: a low-confidence zone of ±mc (fraction of the limit) around the camera-line limit ("low_cam").
+    Soft states are compatible with their neighbours; hard flips are firm vs firm."""
+    gap, cam = _gates(r)
     if r["verdict"] == REFUSED:
-        if r.get("reason") in (GAP_REASON, CAM_REASON) and m > 0 and gr is not None and gr <= 1 + m:
-            return "low"
+        if r.get("reason") == GAP_REASON and kg and gap and gap[0] <= gap[1] + kg:
+            return "low_gap"
+        if r.get("reason") == CAM_REASON and mc and cam is not None and cam <= MAX_LINE_WIDTH * (1 + mc):
+            return "low_cam"
         return "refused"
-    if m > 0 and gr is not None and gr >= 1 - m:
-        return "low"
+    if kg and gap and gap[0] > gap[1] - kg:
+        return "low_gap"
+    if mc and cam is not None and cam > MAX_LINE_WIDTH * (1 - mc):
+        return "low_cam"
     o = r["offset"]
     if abs(o - cal["outside"]) <= w or abs(o - cal["inside"]) <= w:
         return "edge"
     return "out" if o > cal["outside"] else "in" if o < cal["inside"] else "ok"
 
 
+SOFT = ("edge", "low_gap", "low_cam")
+HARD_GOAL, SOFT_GOAL = 0.03, 0.15
+
+
 def hard(a, b):
-    return a != b and a not in ("edge", "low") and b not in ("edge", "low")
+    return a != b and a not in SOFT and b not in SOFT
 
 
 def simulate(base, runs, out):
@@ -95,30 +112,46 @@ def simulate(base, runs, out):
     out += ["", "### 扰动后 offset 变了多少（两次都给结论的）", "",
             f"{len(d)} 对：中位 {q(0.5):.3f}，90% {q(0.9):.3f}，95% {q(0.95):.3f}，99% {q(0.99):.3f}（躯干长度）。"]
     has_gates = any(r.get("gates") for r in base.values())
+    rows = []
+    for w in (0.0, 0.03, 0.05, 0.08, 0.1, 0.15):
+        for kg in ((0, 1, 2) if has_gates else (0,)):
+            for mc in ((0.0, 0.05, 0.1, 0.2) if has_gates else (0.0,)):
+                hj = hr = 0
+                soft = Counter()
+                for b, p in pairs:
+                    sb, sp = state(b, w, kg, mc), state(p, w, kg, mc)
+                    soft.update(x for x in (sb, sp) if x in SOFT)
+                    if hard(sb, sp):
+                        hr += "refused" in (sb, sp)
+                        hj += "refused" not in (sb, sp)
+                n = len(pairs) or 1
+                rows.append(dict(w=w, kg=kg, mc=mc, hard=(hj + hr) / n, hj=hj / n, hr=hr / n,
+                                 soft=sum(soft.values()) / (2 * n), **{k: soft[k] / (2 * n) for k in SOFT}))
+    frontier = [r for r in rows if not any(o["hard"] <= r["hard"] and o["soft"] <= r["soft"]
+                                           and (o["hard"], o["soft"]) != (r["hard"], r["soft"]) for o in rows)]
+    frontier = sorted({(r["hard"], r["soft"]): r for r in reversed(frontier)}.values(), key=lambda r: r["soft"])  # simplest setting per point
+    ok = [r for r in rows if r["hard"] <= HARD_GOAL and r["soft"] <= SOFT_GOAL]
+    pct = lambda x: f"{100 * x:.1f}%"
+    line = lambda r: (f"| {r['w']:.2f} | {r['kg']} | {r['mc']:.2f} | {pct(r['hard'])} | {pct(r['hj'])} | {pct(r['hr'])} | "
+                      f"{pct(r['soft'])} | {pct(r['edge'])} | {pct(r['low_gap'])} | {pct(r['low_cam'])} |")
+    head = ["| w | kg | mc | 硬翻转 | 判定之间 | 给结论↔拒判 | 软说法合计 | 接近边界 | 把握不高（下杆缺口） | 把握不高（机位） |",
+            "|---|---|---|---|---|---|---|---|---|---|"]
     out += ["", "### 方案模拟（只算用户读到的说法，不改判定）", "",
-            "w = 阈值两侧「接近边界」的宽度（躯干长度）；m = 追踪/机位关卡两侧「把握不高」的余量（占限值的比例）。"
-            "硬翻转 = 两次都是确定说法且不同（范围内/外下/内下/拒判之间）；软说法 = 接近边界或把握不高。"
-            + ("" if has_gates else "（这批结果没有关卡数值，m 不起作用。）"), "",
-            "| w | m | 硬翻转 | 其中判定之间 | 其中给结论↔拒判 | 软说法占比 |", "|---|---|---|---|---|---|"]
-    for w in (0.0, 0.03, 0.05, 0.08, 0.1):
-        for m in ((0.0, 0.2, 0.35) if has_gates else (0.0,)):
-            hj = hr = soft = 0
-            for b, p in pairs:
-                sb, sp = state(b, w, m), state(p, w, m)
-                soft += (sb in ("edge", "low")) + (sp in ("edge", "low"))
-                if hard(sb, sp):
-                    if "refused" in (sb, sp):
-                        hr += 1
-                    else:
-                        hj += 1
-            n = len(pairs) or 1
-            out.append(f"| {w:.2f} | {m:.2f} | {100 * (hj + hr) / n:.1f}% | {100 * hj / n:.1f}% | {100 * hr / n:.1f}% | "
-                       f"{100 * soft / (2 * n):.1f}% |")
+            "w = 阈值两侧「接近边界」的宽度（躯干长度）；kg = 下杆缺口限值两侧「把握不高」的帧数；"
+            "mc = 机位线宽限值两侧「把握不高」的比例。硬翻转 = 两次都是确定说法且不同（范围内/外下/内下/拒判之间）；"
+            "软说法占比 = 所有结果里说「接近边界」或「把握不高」的比例。"
+            + ("" if has_gates else "（这批结果没有关卡数值，kg/mc 不起作用。）"), "",
+            f"目标：硬翻转 ≤ {pct(HARD_GOAL)} 且软说法 ≤ {pct(SOFT_GOAL)} → "
+            + (f"有 {len(ok)} 组满足，软说法最少的是 w={min(ok, key=lambda r: r['soft'])['w']:.2f}，"
+               f"kg={min(ok, key=lambda r: r['soft'])['kg']}，mc={min(ok, key=lambda r: r['soft'])['mc']:.2f}。" if ok
+               else "没有一组同时满足，下面是取舍曲线。"), "",
+            "取舍曲线（没有别的组合能在两项上同时更好的那些）：", ""] + head + [line(r) for r in frontier]
+    out += ["", "<details><summary>全部组合</summary>", ""] + head + [line(r) for r in rows] + ["", "</details>"]
     if has_gates:
         ratios = Counter()
         for b, p in pairs:
             if kind(b, p) == "refusal":
-                rb, rp = gate_ratio(b), gate_ratio(p)
+                rb, rp = gate_ratio(b), gate_ratio(p)  # noqa
                 for r in (rb, rp):
                     ratios["无数值" if r is None else f"{min(r, 2.0):.1f}".replace("2.0", "≥2.0")] += 1
         out += ["", "给结论↔拒判的那些对里，两次的关卡比值（1 = 正好在限值上）："

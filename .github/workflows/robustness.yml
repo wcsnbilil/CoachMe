@@ -15,6 +15,9 @@ on:
       limit:
         description: GolfDB 沿目标线前几段
         default: "400"
+      reuse_run:
+        description: 只重算报告：用这个运行号已有的 results（不重跑 MediaPipe）
+        default: ""
 
 concurrency:
   group: robustness-${{ github.ref }}
@@ -26,6 +29,7 @@ env:
 jobs:
   run:
     name: run_path（${{ matrix.perturb }}）
+    if: github.event.inputs.reuse_run == '' || github.event.inputs.reuse_run == null
     runs-on: ubuntu-latest
     timeout-minutes: 240
     strategy:
@@ -73,6 +77,9 @@ jobs:
     needs: run
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -83,11 +90,13 @@ jobs:
           pattern: robust-*
           path: res
           merge-multiple: true
+          run-id: ${{ github.event.inputs.reuse_run || github.run_id }}
+          github-token: ${{ github.token }}
       - name: 报告
         run: |
           pip install --quiet numpy
           ls res
-          python tools/robustness/flip_report.py res/none.json $(ls res/*.json | grep -v '/none.json') --json flips.json | tee -a "$GITHUB_STEP_SUMMARY"
+          python tools/robustness/flip_report.py res/none.json $(ls res/*.json | grep -v -e '/none.json' -e '/flips.json') --json flips.json | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: robust-flips

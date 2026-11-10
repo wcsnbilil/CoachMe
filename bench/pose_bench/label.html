@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>骨架标注</title>
+<style>
+:root { --bg:#111; --fg:#eee; --mut:#999; --acc:#ffd400; --pane:#1c1c1c; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.5 system-ui, "Microsoft YaHei", sans-serif; display:flex; height:100vh; }
+#side { width:300px; padding:12px; background:var(--pane); overflow:auto; }
+#main { flex:1; position:relative; overflow:hidden; cursor:crosshair; }
+canvas { position:absolute; inset:0; }
+h1 { font-size:16px; margin:0 0 6px; }
+.pt { display:flex; justify-content:space-between; padding:3px 6px; border-radius:4px; cursor:pointer; }
+.pt.cur { background:#333; outline:1px solid var(--acc); }
+.pt .v { color:var(--mut); font-size:12px; }
+button { background:#333; color:var(--fg); border:1px solid #555; border-radius:4px; padding:5px 10px; margin:2px 2px 2px 0; cursor:pointer; }
+.help { color:var(--mut); font-size:12px; margin-top:10px; }
+kbd { background:#333; border-radius:3px; padding:0 4px; }
+#prog { color:var(--acc); }
+</style>
+</head>
+<body>
+<div id="side">
+  <h1>骨架标注 <span id="prog"></span></h1>
+  <div id="meta" class="help"></div>
+  <div id="pts"></div>
+  <div>
+    <button id="prev">上一帧</button><button id="next">下一帧</button>
+    <button id="skip">这个点看不见</button>
+  </div>
+  <div><button id="save">导出结果 (JSON)</button></div>
+  <div class="help">
+    点图片放下当前点，自动跳到下一个点。<br>
+    滚轮放大缩小，按住右键拖动画面。<br>
+    <kbd>S</kbd> 看不见/跳过，<kbd>←</kbd><kbd>→</kbd> 换帧，<kbd>Z</kbd> 撤销当前点。<br>
+    点的位置：肩和髋点在关节中心（不是衣服边缘）；手腕点在腕关节中心；食指根点在食指根部关节；脚跟点在鞋跟最后端；大脚趾点在鞋头最前端。<br>
+    "左"、"右"指球员自己的左右（右手球员的左手在上面握杆）。<br>
+    结果会自动保存在这个浏览器里，做完点"导出结果"，把下载的文件放回 pose_bench 文件夹。
+  </div>
+</div>
+<div id="main"><canvas id="cv"></canvas></div>
+<script src="frames.js"></script>
+<script>
+const NAMES = [["l_sh","左肩"],["r_sh","右肩"],["l_hip","左髋"],["r_hip","右髋"],["l_wr","左手腕"],["r_wr","右手腕"],
+  ["l_index_mcp","左手食指根"],["r_index_mcp","右手食指根"],["l_heel","左脚跟"],["r_heel","右脚跟"],["l_bigtoe","左脚尖"],["r_bigtoe","右脚尖"]];
+const COLORS = ["#ff4d4d","#4da6ff","#ff9f1a","#33cc99","#ff66cc","#99ff33","#cc99ff","#ffff66","#ff3300","#00ccff","#ff9999","#66ffcc"];
+const params = new URLSearchParams(location.search);
+const SET = params.get("set") || "all";
+const who = params.get("who") || "niko";
+const frames = (window.FRAMES || []).filter(f => SET === "all" || (f.sets || []).includes(SET));
+const KEY = "poselabels_" + who + "_" + SET;
+let store = {};
+try { store = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { store = {}; }
+let fi = Math.min(frames.length - 1, +(params.get("i") || 0)), pi = 0, img = new Image();
+let view = { s: 1, x: 0, y: 0 }, drag = null;
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d"), main = document.getElementById("main");
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+function lab() { const id = frames[fi].id; return store[id] || (store[id] = {}); }
+function fit() {
+  cv.width = main.clientWidth; cv.height = main.clientHeight;
+  const s = Math.min(cv.width / img.width, cv.height / img.height);
+  view = { s, x: (cv.width - img.width * s) / 2, y: (cv.height - img.height * s) / 2 };
+}
+function load() {
+  const f = frames[fi]; img = new Image();
+  img.onload = () => { fit(); pi = NAMES.findIndex(n => !(n[0] in lab())); if (pi < 0) pi = 0; render(); };
+  img.src = "frames/" + f.id + ".png";
+  document.getElementById("prog").textContent = (fi + 1) + " / " + frames.length;
+  document.getElementById("meta").textContent = "机位：" + ({dtl:"后方", face_on:"正面", angle:"斜角"}[f.view] || f.view) + "　帧：" + f.id;
+}
+function render() {
+  ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle = "#000"; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.setTransform(view.s,0,0,view.s,view.x,view.y); ctx.imageSmoothingEnabled = view.s < 3;
+  ctx.drawImage(img, 0, 0);
+  const L = lab();
+  NAMES.forEach(([k], i) => {
+    const p = L[k]; if (!p) return;
+    const r = 4 / view.s;
+    ctx.strokeStyle = COLORS[i]; ctx.lineWidth = 1.5 / view.s;
+    ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p[0]-2*r,p[1]); ctx.lineTo(p[0]+2*r,p[1]); ctx.moveTo(p[0],p[1]-2*r); ctx.lineTo(p[0],p[1]+2*r); ctx.stroke();
+  });
+  const el = document.getElementById("pts"); el.innerHTML = "";
+  NAMES.forEach(([k, n], i) => {
+    const d = document.createElement("div"); d.className = "pt" + (i === pi ? " cur" : "");
+    const v = L[k] === null ? "看不见" : L[k] ? L[k].map(x => x.toFixed(1)).join(", ") : "—";
+    d.innerHTML = `<span style="color:${COLORS[i]}">● ${n}</span><span class="v">${v}</span>`;
+    d.onclick = () => { pi = i; render(); }; el.appendChild(d);
+  });
+}
+function nextPoint() { const L = lab(); let j = NAMES.findIndex((n, i) => i > pi && !(n[0] in L)); if (j < 0) j = NAMES.findIndex(n => !(n[0] in L)); pi = j < 0 ? pi : j; render(); }
+main.addEventListener("contextmenu", e => e.preventDefault());
+main.addEventListener("mousedown", e => {
+  if (e.button === 2) { drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; return; }
+  if (e.button !== 0) return;
+  const r = cv.getBoundingClientRect();
+  const x = (e.clientX - r.left - view.x) / view.s, y = (e.clientY - r.top - view.y) / view.s;
+  if (x < 0 || y < 0 || x > img.width || y > img.height) return;
+  lab()[NAMES[pi][0]] = [Math.round(x * 10) / 10, Math.round(y * 10) / 10]; persist(); nextPoint();
+});
+window.addEventListener("mousemove", e => { if (!drag) return; view.x = drag.vx + e.clientX - drag.x; view.y = drag.vy + e.clientY - drag.y; render(); });
+window.addEventListener("mouseup", () => drag = null);
+main.addEventListener("wheel", e => {
+  e.preventDefault(); const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const k = e.deltaY < 0 ? 1.25 : 0.8; view.x = mx - (mx - view.x) * k; view.y = my - (my - view.y) * k; view.s *= k; render();
+}, { passive: false });
+function go(d) { fi = Math.max(0, Math.min(frames.length - 1, fi + d)); load(); }
+document.getElementById("prev").onclick = () => go(-1);
+document.getElementById("next").onclick = () => go(1);
+document.getElementById("skip").onclick = () => { lab()[NAMES[pi][0]] = null; persist(); nextPoint(); };
+window.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") go(1); else if (e.key === "ArrowLeft") go(-1);
+  else if (e.key === "s" || e.key === "S") document.getElementById("skip").click();
+  else if (e.key === "z" || e.key === "Z") { delete lab()[NAMES[pi][0]]; persist(); render(); }
+});
+document.getElementById("save").onclick = () => {
+  const blob = new Blob([JSON.stringify({ who, set: SET, saved: new Date().toISOString(), labels: store }, null, 1)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `labels_${who}_${SET}.json`; a.click();
+};
+window.addEventListener("resize", () => { fit(); render(); });
+if (frames.length) load(); else document.getElementById("meta").textContent = "没有找到 frames.js 或这个集合是空的。";
+</script>
+</body>
+</html>

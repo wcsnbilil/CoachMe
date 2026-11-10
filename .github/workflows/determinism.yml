@@ -1,0 +1,60 @@
+# 同一视频多次运行结论是否相同（CoachMeTests/DeterminismTests + tools/e2e/determinism.py）。
+# 视频 = 仓库里的 swing3s 测试片段转出的格式矩阵（和 iOS CI 端到端同一批），不含第三方视频。
+name: 结论稳定性
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 每段跑几次
+        default: "5"
+
+concurrency:
+  group: determinism-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repeat:
+    name: 同一视频跑多次（模拟器）
+    runs-on: macos-15
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: ffmpeg + 格式矩阵
+        run: |
+          which ffmpeg || brew install ffmpeg
+          bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+      - name: 下载 MediaPipe 模型
+        run: bash tools/download-model.sh heavy
+      - name: xcodegen + pod install
+        run: |
+          xcodegen generate
+          pod install --repo-update
+      - name: 选模拟器
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devs = json.load(sys.stdin)["devices"]
+          c = [x for k, v in devs.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")]
+          print(c[-1]["udid"])')
+          echo "SIM=$UDID" >> "$GITHUB_ENV"
+      - name: 每段跑 ${{ github.event.inputs.runs || '5' }} 次
+        run: |
+          set -o pipefail
+          TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" \
+          TEST_RUNNER_COACHME_DETERMINISM_OUT="$PWD/determinism" \
+          TEST_RUNNER_COACHME_DETERMINISM_RUNS="${{ github.event.inputs.runs || '5' }}" \
+          xcodebuild test \
+            -workspace CoachMe.xcworkspace -scheme CoachMe \
+            -destination "id=$SIM" \
+            -only-testing:CoachMeTests/DeterminismTests \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            2>&1 | tee xcodebuild.log | grep -E "^DET |error:|Test Case .*(passed|failed)|Executed|\*\* (BUILD|TEST)" || true
+      - name: 汇总
+        if: always()
+        run: |
+          pip3 install --quiet --break-system-packages numpy || pip3 install --quiet numpy
+          python3 tools/e2e/determinism.py determinism | tee -a "$GITHUB_STEP_SUMMARY"

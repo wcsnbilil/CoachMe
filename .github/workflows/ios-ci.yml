@@ -85,7 +85,9 @@ jobs:
       - name: ffmpeg
         run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
       - name: 从仓库里的测试片段生成格式矩阵
-        run: bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
+        run: |
+          bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
+          (cd e2e-videos && sha256sum * | sed 's/^/SHA /')
       # TODO(真实片段)：Niko 的片段放在私有仓库后，在这里用 secrets.FIXTURES_TOKEN 拉取到 e2e-videos/，
       # 并对每段再跑一次 make_variants.sh 生成 H.264 版本。公开仓库不放视频。
       - uses: actions/upload-artifact@v4

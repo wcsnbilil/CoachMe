@@ -52,27 +52,38 @@ actor SwingAnalyzer {
         self.phaseDetector = phaseDetector
     }
 
+    /// Set when `analyse` stopped at `earlyStop` (the retake check refused); the frames returned end there.
+    private(set) var stoppedEarly = false
+
+    /// - knownKeyframes: phases from `phases(asset:timeRange:)` on the same range. SwingNet is then not run
+    ///   again; decoding stays at SwingNet's size so the poses are exactly those of a combined pass.
+    /// - earlyStop: once `at` frames have poses, `check` is called with them; true stops the pass there.
     func analyse(asset: AVAsset,
                  timeRange: CMTimeRange?,
+                 knownKeyframes: [Keyframe]? = nil,
+                 earlyStop: (at: Int, check: @Sendable ([PoseFrame]) -> Bool)? = nil,
                  onProgress: @Sendable @escaping (AnalysisProgress) -> Void) async throws -> [PoseFrame] {
 
         onProgress(AnalysisProgress(framesProcessed: 0, estimatedTotalFrames: 0, currentTimestampSeconds: 0, stage: "正在加载分析模型…"))
         try detector.prepare()
         detector.reset()
-        keyframes = []
+        keyframes = knownKeyframes ?? []
         phaseDetectionNote = nil
-        var phaseActive = phaseDetector != nil
-        do { try phaseDetector?.prepare() }
-        catch {
-            phaseActive = false
-            phaseDetectionNote = "姿态分析已保留；动作阶段模型无法载入，可稍后重试或手动标记。"
+        stoppedEarly = false
+        var phaseActive = phaseDetector != nil && knownKeyframes == nil
+        if phaseActive {
+            do { try phaseDetector?.prepare() }
+            catch {
+                phaseActive = false
+                phaseDetectionNote = "姿态分析已保留；动作阶段模型无法载入，可稍后重试或手动标记。"
+            }
         }
 
         let reader = VideoAssetReader(asset: asset)
         do {
             // Keep source detail for SwingNet; a second resize from 720 pixels
             // changed event maxima in the verified 4K regression clip.
-            try await reader.start(timeRange: timeRange, maxDimension: phaseDetector == nil ? 720 : 4096)
+            try await reader.start(timeRange: timeRange, maxDimension: phaseDetector == nil && knownKeyframes == nil ? 720 : 4096)
         } catch let error as VideoReaderError {
             throw AnalysisError.video(error)
         }
@@ -129,6 +140,10 @@ actor SwingAnalyzer {
             }
 
             processed += 1
+            if let earlyStop, frames.count == earlyStop.at, earlyStop.check(frames) {
+                stoppedEarly = true
+                return frames
+            }
             if Date().timeIntervalSince(lastProgress) >= 0.1 || processed == estimatedTotal {
                 lastProgress = Date()
                 onProgress(AnalysisProgress(framesProcessed: processed,
@@ -162,6 +177,81 @@ actor SwingAnalyzer {
                     : "已使用人物增强生成关键帧候选，请逐帧复核。"
             } catch is CancellationError { throw CancellationError() }
             catch { phaseDetectionNote = "人物增强失败，姿态分析已保留；可手动标记。" }
+        }
+        return frames
+    }
+
+    /// SwingNet alone over the range (no pose), decoded exactly as `analyse` decodes it, so the phases
+    /// equal those of the combined pass. Returns them with every frame's timestamp, in decode order,
+    /// so a phase time maps to the frame index `analyse` will reach. Empty keyframes = none found
+    /// (`analyse` then runs SwingNet itself, with its person-crop retry).
+    func phases(asset: AVAsset, timeRange: CMTimeRange?,
+                onProgress: @Sendable @escaping (AnalysisProgress) -> Void) async throws -> (keyframes: [Keyframe], timestamps: [Double]) {
+        guard let phaseDetector else { return ([], []) }
+        do { try phaseDetector.prepare() } catch { return ([], []) }
+        let reader = VideoAssetReader(asset: asset)
+        do { try await reader.start(timeRange: timeRange, maxDimension: 4096) }
+        catch let error as VideoReaderError { throw AnalysisError.video(error) }
+        defer { reader.cancel() }
+        let estimated = await Self.estimateFrameCount(asset: asset, timeRange: timeRange, fallbackFPS: reader.nominalFrameRate)
+        var stamps: [Double] = []
+        var lastProgress = Date.distantPast
+        while true {
+            if Task.isCancelled { throw AnalysisError.cancelled }
+            let decoded: DecodedFrame?
+            do { decoded = try reader.nextFrame() }
+            catch let error as VideoReaderError { throw AnalysisError.video(error) }
+            guard let decoded else { break }
+            do {
+                try autoreleasepool { try phaseDetector.append(pixelBuffer: decoded.pixelBuffer, timestamp: decoded.timestampSeconds) }
+            } catch is CancellationError { throw CancellationError() }
+            catch { return ([], stamps) }
+            stamps.append(decoded.timestampSeconds)
+            if Date().timeIntervalSince(lastProgress) >= 0.1 {
+                lastProgress = Date()
+                onProgress(AnalysisProgress(framesProcessed: stamps.count, estimatedTotalFrames: estimated,
+                                            currentTimestampSeconds: decoded.timestampSeconds, stage: "识别动作阶段"))
+            }
+        }
+        let found = (try? phaseDetector.finish()) ?? []
+        return (found, stamps)
+    }
+
+    /// Poses on about `count` frames spread evenly over the clip (the retake check right after import).
+    /// Small frames; the whole clip is decoded but only the picked frames go through the detector.
+    func sample(asset: AVAsset, count: Int) async throws -> [PoseFrame] {
+        try detector.prepare()
+        detector.reset()
+        let duration = (try? await asset.load(.duration).seconds) ?? 0
+        let reader = VideoAssetReader(asset: asset)
+        do { try await reader.start(timeRange: nil, maxDimension: 720) }
+        catch let error as VideoReaderError { throw AnalysisError.video(error) }
+        defer { reader.cancel() }
+        let targets = (0..<count).map { count > 1 ? duration * Double($0) / Double(count - 1) : 0 }
+        var next = 0
+        var frames: [PoseFrame] = []
+        var last: DecodedFrame?
+        while next < targets.count {
+            if Task.isCancelled { throw AnalysisError.cancelled }
+            let decoded: DecodedFrame?
+            do { decoded = try reader.nextFrame() }
+            catch let error as VideoReaderError { throw AnalysisError.video(error) }
+            guard let frame = decoded ?? last else { break }
+            if decoded != nil { last = frame }
+            // the last target is the clip's end: take the final frame when decoding runs out
+            guard frame.timestampSeconds >= targets[next] - 0.001 || decoded == nil else { continue }
+            let result: PoseDetectionResult
+            do {
+                result = try autoreleasepool {
+                    try detector.detect(pixelBuffer: frame.pixelBuffer,
+                                        timestampMilliseconds: Int((frame.timestampSeconds * 1000).rounded()))
+                }
+            } catch let error as PoseDetectorError { throw AnalysisError.detector(error) }
+            frames.append(PoseFrame(timestampSeconds: frame.timestampSeconds, imageLandmarks: result.imageLandmarks,
+                                    worldLandmarks: result.worldLandmarks, detectedPersonCount: result.personCount))
+            next += 1
+            while next < targets.count, targets[next] <= frame.timestampSeconds { next += 1 }
+            if decoded == nil { break }
         }
         return frames
     }

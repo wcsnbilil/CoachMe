@@ -62,6 +62,8 @@ def main():
                 res = {}
                 for src, ph in (("自动", sn.get(name)), ("标注", (int(ev[1]), int(ev[4]), int(ev[6])))):
                     full = analyze(lm, *ph) if ph else {"verdict": REFUSED, "reason": "没有识别出挥杆阶段"}
+                    # no phases: the app then still runs the whole pose pass (SwingNet is retried on a person crop
+                    # made from it), so the preflight has nothing to say
                     early = preflight.early_setup(lm, *ph) if ph and q["ok"] else None
                     at = preflight.early_frames(*ph) / len(lm) if ph else None
                     res[src] = dict(full=(full["verdict"], full.get("reason", "")), early=early, at=at,

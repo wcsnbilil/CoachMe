@@ -16,6 +16,8 @@ Two layers (CoachMeCore/Sources/CoachMeCore/Beta/Preflight.swift is a line-by-li
    pass has reached the top of the backswing, the full analysis's set-up refusals (trunk not visible,
    wrists not visible, jumpy key points, camera off the target line) with the same steps and
    constants as path_fault.analyze, on the frames seen so far. The analysis stops there on a refusal.
+   When SwingNet finds no swing there is no early decision: the app retries SwingNet on a person crop
+   made from the whole pose pass, as before.
 
 Why not the camera rule on the sampled / first-pass poses: the full analysis measures the shoulder and
 hip lines at SwingNet's address, a pass without SwingNet has to find its own address, and they are

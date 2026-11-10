@@ -88,6 +88,26 @@ enum BetaAnalysisRunner {
         let storedURL = LocalStore.shared.videosDirectory.appendingPathComponent(filename)
         let asset = AVURLAsset(url: storedURL)
 
+        let size = try await presentedSize(asset)
+        let info = try? await videoInfo(asset)
+
+        // Retake check 1 (seconds): a dozen poses across the clip. Only what the full analysis would
+        // certainly refuse stops here (Preflight.quick).
+        let quick = try await quickCheck(asset: asset, duration: duration, size: size)
+        try Task.checkCancellation()
+        if let reason = quick.reason {
+            // nothing worth keeping: no SwingRecord, the imported copy is discarded by the defer above
+            let refusal = Preflight.refusal(for: reason)
+            let ms = Int(Date().timeIntervalSince(started) * 1000)
+            let beta = BetaRecord(appVersion: BetaMode.appVersion, build: BetaMode.build, verdict: .cannotJudge,
+                                  refusal: refusal, swingNotFound: refusal == nil, offset: nil, swingID: nil,
+                                  evidence: refusedEvidence(refusal, size: size), video: info, analysisMilliseconds: ms,
+                                  deviceModel: BetaMode.deviceModel, preflight: "quick:\(reason.rawValue)",
+                                  preflightMilliseconds: ms)
+            try recordStore.append(beta)
+            return beta
+        }
+
         // Long clip: first find the swings (a third of the progress bar), then analyse one of them.
         let selection = try await selectSwing(asset: asset, duration: duration, swingIndex: swingIndex) { p in
             onProgress(p * 0.3)
@@ -98,12 +118,33 @@ enum BetaAnalysisRunner {
             record.clipEndSeconds = selection.windows[selection.chosen].upperBound
         }
         let scouted = selection != nil || duration > splitMinimumSeconds
+        let base = scouted ? 0.3 : 0.0, rest = 1 - base
         let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: betaNumPoses),
                                      phaseDetector: SwingNetPhaseDetector())
-        let frames = try await analyzer.analyse(asset: asset, timeRange: selection?.range) { p in
-            Task { @MainActor in onProgress(scouted ? 0.3 + 0.7 * p.fraction : p.fraction) }
+        // SwingNet first (light), so the set-up rules can run as soon as the poses reach the top.
+        let phased = try await analyzer.phases(asset: asset, timeRange: selection?.range) { p in
+            Task { @MainActor in onProgress(base + rest * 0.15 * p.fraction) }
         }
         try Task.checkCancellation()
+        let early = EarlyCheck(phases: phased, size: size)
+        let frames = try await analyzer.analyse(asset: asset, timeRange: selection?.range,
+                                                knownKeyframes: phased.keyframes.isEmpty ? nil : phased.keyframes,
+                                                earlyStop: early.stop) { p in
+            Task { @MainActor in onProgress(base + rest * (0.15 + 0.85 * p.fraction)) }
+        }
+        try Task.checkCancellation()
+        if await analyzer.stoppedEarly, let refusal = early.refusal {
+            let ms = Int(Date().timeIntervalSince(started) * 1000)
+            let beta = BetaRecord(appVersion: BetaMode.appVersion, build: BetaMode.build, verdict: .cannotJudge,
+                                  refusal: refusal, offset: nil, swingID: nil,
+                                  evidence: refusedEvidence(refusal, size: size), video: info, analysisMilliseconds: ms,
+                                  deviceModel: BetaMode.deviceModel,
+                                  swingsFound: scouted ? (selection?.windows.count ?? 0) : nil,
+                                  swingChosen: selection.map { $0.chosen + 1 },
+                                  preflight: "early:\(refusal.rawValue)", preflightMilliseconds: ms)
+            try recordStore.append(beta)
+            return beta
+        }
         record.keyframes = await analyzer.keyframes
         record.phaseDetectionNote = await analyzer.phaseDetectionNote
         let cache = AnalysisCache(swingID: swingID, analysisVersion: record.analysisVersion,
@@ -114,10 +155,8 @@ enum BetaAnalysisRunner {
         try library.saveChecked(record)
         committed = true
 
-        let size = try await presentedSize(asset)
         let evidence = pathEvidence(frames: frames, keyframes: record.keyframes,
                                     imageWidth: size.width, imageHeight: size.height)
-        let info = try? await videoInfo(asset)
         let beta = BetaRecord(appVersion: BetaMode.appVersion, build: BetaMode.build, verdict: evidence.verdict,
                               refusal: evidence.refusal, swingNotFound: !evidence.isJudged && evidence.refusal == nil,
                               offset: evidence.offset, swingID: swingID, evidence: evidence,
@@ -127,6 +166,44 @@ enum BetaAnalysisRunner {
                               swingChosen: selection.map { $0.chosen + 1 })
         try recordStore.append(beta)
         return beta
+    }
+
+    /// Retake check 1: Preflight.quick on poses sampled across the clip (room for two people, so a
+    /// bystander can be counted; never refused for).
+    static func quickCheck(asset: AVAsset, duration: Double,
+                           size: (width: Double, height: Double)) async throws -> Preflight.QuickResult {
+        let sampler = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: 2))
+        let frames = try await sampler.sample(asset: asset, count: Preflight.quickSamples)
+        return Preflight.quick(samples: Preflight.points(frames, imageWidth: size.width, imageHeight: size.height),
+                               duration: duration, people: frames.map(\.detectedPersonCount).max() ?? 0)
+    }
+
+    /// Retake check 2: the full analysis's set-up rules once the poses reach SwingNet's top
+    /// (Preflight.earlySetup). Holds the refusal it found for the caller.
+    final class EarlyCheck: @unchecked Sendable {
+        private(set) var refusal: SwingPathAnalyzer.Refusal?
+        private(set) var stop: (at: Int, check: @Sendable ([PoseFrame]) -> Bool)?
+
+        init(phases: (keyframes: [Keyframe], timestamps: [Double]), size: (width: Double, height: Double)) {
+            let stamps = phases.timestamps
+            func index(_ phase: SwingPhase) -> Int? {
+                guard let t = phases.keyframes.keyframe(for: phase)?.timestampSeconds, !stamps.isEmpty else { return nil }
+                return stamps.indices.min { abs(stamps[$0] - t) < abs(stamps[$1] - t) }
+            }
+            guard let a = index(.address), let t = index(.top), let i = index(.impact), a < t, t < i else { return }
+            let at = Preflight.earlyFrames(address: a, top: t, impact: i)
+            guard at < stamps.count else { return }  // nothing left to save
+            stop = (at, { [unowned self] frames in
+                let lm = Preflight.points(frames, imageWidth: size.width, imageHeight: size.height)
+                self.refusal = Preflight.earlySetup(landmarks: lm, address: a, top: t, impact: i)
+                return self.refusal != nil
+            })
+        }
+    }
+
+    static func refusedEvidence(_ refusal: SwingPathAnalyzer.Refusal?, size: (width: Double, height: Double)) -> PathEvidence {
+        PathEvidence(verdict: .cannotJudge, refusal: refusal, offset: nil, side: nil, imageWidth: size.width,
+                     imageHeight: size.height, downswing: [], referenceLine: [], torsoPixels: nil, evidenceSeconds: nil)
     }
 
     static func presentedSize(_ asset: AVAsset) async throws -> (width: Double, height: Double) {

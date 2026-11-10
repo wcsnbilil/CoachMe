@@ -72,6 +72,23 @@ def main():
                    f"{aph or '—'} | {list(pph) if pph else '—'} | {(ar or {}).get('analysisMs', '—')} | "
                    f"{(ar or {}).get('peakMemoryMB', 0):.0f} |")
     out += ["", f"**结论一致 {agree}/{total}**（offset 容差 ±{a.offset_tol}，阶段帧容差 ±{a.phase_tol}）", ""]
+    # retake checks (PR-4): the run never stops early here, so both answers can be held against the verdict
+    pre = [(n, r) for n, r in sorted(app.items()) if "quick" in r]
+    if pre:
+        out += ["### 拍摄预检（App）", "",
+                "① 导入后抽 16 帧的快速检查；② SwingNet 先跑、姿态到上杆顶点时按完整分析的规则判准备姿势 / 机位。"
+                "这里不提前停，好拿最终结论对照：预检拒了的，最终也必须拒。", "",
+                "| 片段 | ① 结果 | ① 用时 ms | 最窄站姿宽度 | ② 结果 | ② 在第几帧 / 共几帧 | ② 用时 ms | 全程 ms | 最终结论 | 对得上 |",
+                "|---|---|---|---|---|---|---|---|---|---|"]
+        bad = 0
+        for n, r in pre:
+            refused = (r.get("quick") not in (None, "ok")) or (r.get("early") not in (None, "ok"))
+            ok = (not refused) or r["verdict"] == "cannotJudge"
+            bad += not ok
+            out.append(f"| `{n.split('__')[0]}` | {r.get('quick')} | {r.get('quickMs')} | {r.get('quickWidth')} | {r.get('early') or '没到'} | "
+                       f"{r.get('earlyAtFrame') or '—'} / {r.get('frames')} | {r.get('earlyMs') or '—'} | {r.get('analysisMs')} | "
+                       f"{r['verdict']} {r.get('refusal') or ''} | {'✅' if ok else '❌'} |")
+        out += ["", f"预检拒了而最终给了结论：{bad} 段", ""]
     out += ["### 差异", ""] + (diffs or ["无"])
     print("\n".join(out))
     missing_app = [n for n in py if n not in app]

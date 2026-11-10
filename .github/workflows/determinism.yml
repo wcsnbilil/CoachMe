@@ -1,5 +1,7 @@
 # 同一视频多次运行结论是否相同（CoachMeTests/DeterminismTests + tools/e2e/determinism.py）。
 # 视频 = 仓库里的 swing3s 测试片段转出的格式矩阵（和 iOS CI 端到端同一批），不含第三方视频。
+# 两台 runner 各跑三个独立的测试进程：①不先快检 ②先快检（和 App 一样）③再不先快检；
+# 同一进程内每段跑 N 次。最后一个 job 跨进程、跨机器比较。
 name: 结论稳定性
 
 on:
@@ -7,8 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       runs:
-        description: 每段跑几次
-        default: "5"
+        description: 同一进程内每段跑几次
+        default: "2"
 
 concurrency:
   group: determinism-${{ github.ref }}
@@ -16,11 +18,19 @@ concurrency:
 
 jobs:
   repeat:
-    name: 同一视频跑多次（模拟器）
+    name: 同一视频跑多次（模拟器 ${{ matrix.machine }}）
     runs-on: macos-15
     timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [m1, m2]
     steps:
       - uses: actions/checkout@v4
+      - name: 机器
+        run: |
+          sysctl -n machdep.cpu.brand_string hw.ncpu hw.physicalcpu hw.memsize || true
+          { echo "### ${{ matrix.machine }}"; echo; echo "\`$(sysctl -n machdep.cpu.brand_string) · $(sysctl -n hw.ncpu) 核\`"; } >> "$GITHUB_STEP_SUMMARY"
       - name: ffmpeg + 格式矩阵
         run: |
           which ffmpeg || brew install ffmpeg
@@ -41,20 +51,50 @@ jobs:
           c = [x for k, v in devs.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")]
           print(c[-1]["udid"])')
           echo "SIM=$UDID" >> "$GITHUB_ENV"
-      - name: 每段跑 ${{ github.event.inputs.runs || '5' }} 次
+      - name: 编译一次
         run: |
           set -o pipefail
-          TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" \
-          TEST_RUNNER_COACHME_DETERMINISM_OUT="$PWD/determinism" \
-          TEST_RUNNER_COACHME_DETERMINISM_RUNS="${{ github.event.inputs.runs || '5' }}" \
-          xcodebuild test \
-            -workspace CoachMe.xcworkspace -scheme CoachMe \
-            -destination "id=$SIM" \
-            -only-testing:CoachMeTests/DeterminismTests \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            2>&1 | tee xcodebuild.log | grep -E "^DET |error:|Test Case .*(passed|failed)|Executed|\*\* (BUILD|TEST)" || true
-      - name: 汇总
+          xcodebuild build-for-testing -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tail -3
+      - name: 三个独立进程
+        run: |
+          set -o pipefail
+          for p in 1 2 3; do
+            Q=0; L=1; [ $p = 2 ] && Q=1; [ $p != 1 ] && L=0
+            TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" \
+            TEST_RUNNER_COACHME_DETERMINISM_OUT="$PWD/det/p$p" \
+            TEST_RUNNER_COACHME_DETERMINISM_RUNS="${{ github.event.inputs.runs || '2' }}" \
+            TEST_RUNNER_COACHME_DETERMINISM_QUICK=$Q TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=$L \
+            xcodebuild test-without-building -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
+              -derivedDataPath dd -only-testing:CoachMeTests/DeterminismTests \
+              2>&1 | grep -E "^DET |Test Case .*(passed|failed)|\*\* TEST" || true
+          done
+      - name: 同一进程内
         if: always()
         run: |
           pip3 install --quiet --break-system-packages numpy || pip3 install --quiet numpy
-          python3 tools/e2e/determinism.py determinism | tee -a "$GITHUB_STEP_SUMMARY"
+          for p in 1 2 3; do python3 tools/e2e/determinism.py det/p$p | tee -a "$GITHUB_STEP_SUMMARY" || true; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: det-${{ matrix.machine }}
+          path: det/
+          retention-days: 7
+
+  compare:
+    name: 跨进程、跨机器比较
+    needs: repeat
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: det-*
+          path: det
+      - name: 比较
+        run: |
+          pip install --quiet numpy
+          python tools/e2e/determinism.py --across \
+            m1不快检=det/det-m1/p1 m1先快检=det/det-m1/p2 m1再不快检=det/det-m1/p3 \
+            m2不快检=det/det-m2/p1 m2先快检=det/det-m2/p2 | tee -a "$GITHUB_STEP_SUMMARY"

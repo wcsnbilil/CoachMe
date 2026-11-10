@@ -38,6 +38,10 @@ final class DeterminismTests: XCTestCase {
         var name: String
         var runs: [Run]
         var lockstep: Lockstep?
+        /// Cores the simulator process sees: MediaPipe's CPU backend splits work by thread count.
+        var processors: Int?
+        /// The quick retake check (a two-person detector) ran before each analysis, as in the app.
+        var quickFirst: Bool?
     }
 
     func testSameVideoSameAnswer() async throws {
@@ -46,6 +50,9 @@ final class DeterminismTests: XCTestCase {
             throw XCTSkip("set COACHME_DETERMINISM_DIR to a folder of videos (CI does this)")
         }
         let runs = Int(env["COACHME_DETERMINISM_RUNS"] ?? "") ?? 5
+        let quickFirst = env["COACHME_DETERMINISM_QUICK"] == "1"
+        let doLockstep = env["COACHME_DETERMINISM_LOCKSTEP"] != "0"
+        print("DET processors=\(ProcessInfo.processInfo.activeProcessorCount) quickFirst=\(quickFirst)")
         let out = URL(fileURLWithPath: env["COACHME_DETERMINISM_OUT"] ?? NSTemporaryDirectory() + "determinism", isDirectory: true)
         try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
         let clips = try FileManager.default.contentsOfDirectory(at: URL(fileURLWithPath: dir), includingPropertiesForKeys: nil)
@@ -54,14 +61,15 @@ final class DeterminismTests: XCTestCase {
         XCTAssertFalse(clips.isEmpty)
         for url in clips {
             let name = url.deletingPathExtension().lastPathComponent
-            var clip = Clip(name: name, runs: [], lockstep: nil)
+            var clip = Clip(name: name, runs: [], lockstep: nil,
+                            processors: ProcessInfo.processInfo.activeProcessorCount, quickFirst: quickFirst)
             for i in 1...runs {
-                let r = try await Self.run(url)
+                let r = try await Self.run(url, quickFirst: quickFirst)
                 clip.runs.append(r)
                 print("DET \(name) run=\(i) verdict=\(r.verdict) refusal=\(r.refusal ?? "-") phases=\(r.phases.map { "\($0)" } ?? "-") "
                       + "pixels=\(Self.digest(r.frameHashes)) poses=\(Self.digest(r.landmarks)) ms=\(r.ms)")
             }
-            clip.lockstep = try await Self.lockstep(url)
+            clip.lockstep = doLockstep ? try await Self.lockstep(url) : nil
             if let l = clip.lockstep {
                 print("DET \(name) lockstep frames=\(l.frames) differing=\(l.differing) first=\(l.firstDiffering.map(String.init) ?? "-") "
                       + "max=\(l.maxDifference)")
@@ -73,10 +81,14 @@ final class DeterminismTests: XCTestCase {
     }
 
     /// The beta pipeline as BetaAnalysisRunner.analyse runs it, minus storage and the retake stops.
-    static func run(_ url: URL) async throws -> Run {
+    static func run(_ url: URL, quickFirst: Bool = false) async throws -> Run {
         let started = Date()
         let asset = AVURLAsset(url: url)
         let duration = try await asset.load(.duration).seconds
+        if quickFirst {
+            _ = try await BetaAnalysisRunner.quickCheck(asset: asset, duration: duration,
+                                                        size: try await BetaAnalysisRunner.presentedSize(asset))
+        }
         let selection = try await BetaAnalysisRunner.selectSwing(asset: asset, duration: duration)
         let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: BetaAnalysisRunner.betaNumPoses),
                                      phaseDetector: SwingNetPhaseDetector())

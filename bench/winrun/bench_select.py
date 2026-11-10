@@ -1,14 +1,14 @@
 """Pick ~300 skeleton-benchmark frames (mostly downswing), balanced over views, one swing per video,
 and save them as PNG (local only). View from address landmarks: shoulder spread / torso length."""
-import json, random, zlib
+import json, os, random, zlib
 from pathlib import Path
 import cv2, numpy as np
 
-B = Path(r"C:\Users\49907\coachme-bench")
-OUT = B / "pose_bench"; (OUT / "frames").mkdir(parents=True, exist_ok=True)
+B = Path(r"C:\Users\k8881\coachme-bench")
+OUT = Path(os.environ.get("CM_POSE_OUT", B / "pose_bench")); (OUT / "frames").mkdir(parents=True, exist_ok=True)
 random.seed(7)
 rows = []
-for src in [B / f"hd_part{i}/results.json" for i in range(4)] + [B / f"hd_swings/seg_p{i}/results.json" for i in range(4)]:
+for src in [B / f"hd_part{i}/results.json" for i in range(4)] + [B / f"hd_swings/seg_p{i}/results.json" for i in range(4)] + ([Path(os.environ["CM_SEG"]) / "results.json"] if os.environ.get("CM_SEG") else []):
     if src.exists():
         rows += [dict(r, src=src.parent.name) for r in json.load(open(src, encoding="utf-8"))]
 by_video = {}
@@ -22,7 +22,7 @@ for v, rs in by_video.items():
     lm = np.load(r["lm"])
     a = np.nanmedian(lm[ad:ad + 5], axis=0)
     torso = np.linalg.norm((a[11, :2] + a[12, :2]) / 2 - (a[23, :2] + a[24, :2]) / 2)
-    if not np.isfinite(torso) or torso < 40: continue  # golfer too small to label precisely
+    if not np.isfinite(torso) or torso < float(os.environ.get("CM_MIN_TORSO", 40)): continue  # golfer too small to label precisely
     spread = abs(a[11, 0] - a[12, 0]) / torso
     view = "face_on" if spread > 0.55 else "dtl" if spread < 0.3 else "angle"
     pool[view].append((r, torso, spread))

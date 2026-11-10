@@ -5,7 +5,7 @@ usage: python hd_collect.py search | meta | download | report"""
 import json, re, subprocess, sys, time
 from pathlib import Path
 
-OUT = Path(r"C:\Users\49907\coachme-bench\hd_swings")
+OUT = Path(r"C:\Users\k8881\coachme-bench\hd_swings")
 META, VID = OUT / "meta", OUT / "video"
 CAND, KEEP = OUT / "candidates.jsonl", OUT / "keep.jsonl"
 YTDLP = str(Path(sys.executable).with_name("yt-dlp.exe"))
@@ -112,10 +112,10 @@ def download():
     VID.mkdir(parents=True, exist_ok=True)
     rows = [json.loads(l) for l in KEEP.open(encoding="utf-8")]
     for n, k in enumerate(rows):
-        if list(VID.glob(f"{k['id']}.*")):
+        if [p for p in VID.glob(f"{k['id']}.*") if p.suffix not in (".part", ".ytdl")]:
             continue
         subprocess.run([YTDLP, f"https://www.youtube.com/watch?v={k['id']}",
-                        "-f", "bv*[height=1080][ext=mp4]/bv*[height=1080]/bv*[height>=1080]", "--no-part",
+                        "-f", "bv*[height=1080][ext=mp4]/bv*[height=1080]/bv*[height>=1080]",
                         "-o", str(VID / "%(id)s.%(ext)s"), "--sleep-requests", "1", "--ignore-errors", "--no-playlist"],
                        capture_output=True, text=True, encoding="utf-8", errors="replace")
         if n % 10 == 0:

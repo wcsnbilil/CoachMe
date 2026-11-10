@@ -86,6 +86,7 @@ jobs:
         run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
       - name: 从仓库里的测试片段生成格式矩阵
         run: |
+          echo "cores=$(nproc) $(grep -m1 "model name" /proc/cpuinfo)"; ffmpeg -version | head -1
           bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
           (cd e2e-videos && sha256sum * | sed 's/^/SHA /')
           # 转码结果不能取决于 runner 有几个核（以前 x264/x265 按核数开线程，同一份代码每次的视频不一样）

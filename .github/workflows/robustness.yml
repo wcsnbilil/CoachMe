@@ -97,6 +97,8 @@ jobs:
           pip install --quiet numpy
           ls res
           python tools/robustness/flip_report.py res/none.json $(ls res/*.json | grep -v -e '/none.json' -e '/flips.json') --json flips.json | tee -a "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          python tools/robustness/kg_scale.py res/none.json $(ls res/*.json | grep -v -e '/none.json' -e '/flips.json') | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: robust-flips

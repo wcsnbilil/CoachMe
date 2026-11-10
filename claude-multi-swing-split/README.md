@@ -1,4 +1,4 @@
-# claude/multi-swing-split @ c467b0f
+# claude/multi-swing-split @ 441fe97
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

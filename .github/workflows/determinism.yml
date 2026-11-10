@@ -69,6 +69,23 @@ jobs:
               -derivedDataPath dd -only-testing:CoachMeTests/DeterminismTests \
               2>&1 | grep -E "^DET |Test Case .*(passed|failed)|\*\* TEST" || true
           done
+      - name: 端到端测试在不同组合里（找出是哪一步让结论变了）
+        if: matrix.machine == 'm1'
+        run: |
+          set -o pipefail
+          run() {  # $1 = label, rest = -only-testing args
+            label=$1; shift
+            echo "=== $label"
+            TEST_RUNNER_COACHME_E2E_DIR="$PWD/e2e-videos" TEST_RUNNER_COACHME_E2E_OUT="$PWD/e2e/$label" \
+            TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" TEST_RUNNER_COACHME_DETERMINISM_OUT="$PWD/det/$label" \
+            TEST_RUNNER_COACHME_DETERMINISM_RUNS=1 TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=0 \
+            xcodebuild test-without-building -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
+              -derivedDataPath dd "$@" 2>&1 | grep -E "^E2E |^DET .*run=|Test Case .*(passed|failed)" | sed "s/^/[$label] /" || true
+          }
+          run e2e_alone -only-testing:CoachMeTests/EndToEndVideoTests
+          run e2e_after_others -only-testing:CoachMeTests/BetaModeAppTests -only-testing:CoachMeTests/EndToEndJourneyTests -only-testing:CoachMeTests/EndToEndVideoTests
+          run e2e_then_det -only-testing:CoachMeTests/EndToEndVideoTests -only-testing:CoachMeTests/DeterminismTests
+          run full_suite_e2e
       - name: 同一进程内
         if: always()
         run: |

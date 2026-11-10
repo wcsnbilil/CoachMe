@@ -1,0 +1,94 @@
+# 轻微扰动下的结论翻转率（tools/robustness/flip_report.py）：Python 流水线，GolfDB 沿目标线前 400 段，标注阶段。
+# 每种扰动一个 job 并行跑 run_path --perturb；只上传 results.json（数值和结论），不上传任何画面或视频。
+# GolfDB 视频只在运行时下载、走缓存，不提交、不上传。
+name: 扰动稳健性
+
+on:
+  pull_request:
+    paths:
+      - tools/robustness/**
+      - tools/faults/run_path.py
+      - tools/faults/path_fault.py
+      - .github/workflows/robustness.yml
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: GolfDB 沿目标线前几段
+        default: "400"
+
+concurrency:
+  group: robustness-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LIMIT: ${{ github.event.inputs.limit || '400' }}
+
+jobs:
+  run:
+    name: run_path（${{ matrix.perturb }}）
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        perturb: [none, reencode, scale0.9, scale1.1, crop2, bright+5, bright-5]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: GolfDB（缓存）
+        uses: actions/cache@v4
+        with:
+          path: golfdb
+          key: golfdb-videos160-v1-${{ runner.os }}
+      - name: 下载 GolfDB（缓存未命中时；只在本次运行里用，不上传）
+        run: |
+          if [ ! -f golfdb/data/golfDB.pkl ]; then
+            pip3 install --quiet gdown
+            mkdir -p golfdb/data
+            python3 -m gdown 1uBwRxFxW04EqG87VCoX3l6vXeV5T5JYJ -O golfdb/videos_160.zip
+            unzip -q golfdb/videos_160.zip -d golfdb/data/
+            rm golfdb/videos_160.zip
+            curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+          fi
+      - name: 依赖和模型
+        run: |
+          which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas
+          bash tools/download-model.sh heavy
+      - name: run_path --perturb ${{ matrix.perturb }}
+        run: |
+          python -W ignore tools/faults/run_path.py --golfdb golfdb/data --limit "$LIMIT" --perturb "${{ matrix.perturb }}" \
+            --no-sheet --out out | tail -3
+          mkdir -p res && cp out/results.json "res/${{ matrix.perturb }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: robust-${{ matrix.perturb }}
+          path: res/
+          retention-days: 14
+
+  report:
+    name: 翻转率
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: robust-*
+          path: res
+          merge-multiple: true
+      - name: 报告
+        run: |
+          pip install --quiet numpy
+          ls res
+          python tools/robustness/flip_report.py res/none.json $(ls res/*.json | grep -v '/none.json') --json flips.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: robust-flips
+          path: flips.json

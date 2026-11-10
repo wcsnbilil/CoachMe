@@ -28,13 +28,18 @@ public struct BetaRecord: Sendable, Codable, Identifiable, Equatable {
     /// ("quick:camera", "early:cameraOffAxis", ...; nil = it ran to the end) and how long that took.
     public var preflight: String?
     public var preflightMilliseconds: Int?
+    /// Added in log schema 5: how sure the report sounded (normal / near_boundary / low_tracking /
+    /// low_camera); nil when refused or saved before schema 5.
+    public var confidence: SwingPathAnalyzer.Confidence?
 
     public init(id: UUID = UUID(), createdAt: Date = Date(), appVersion: String, build: String,
                 verdict: SwingPathAnalyzer.Verdict, refusal: SwingPathAnalyzer.Refusal?, swingNotFound: Bool = false,
                 offset: Double?, swingID: UUID?, evidence: PathEvidence?,
                 video: VideoInfo? = nil, analysisMilliseconds: Int? = nil, deviceModel: String? = nil,
                 swingsFound: Int? = nil, swingChosen: Int? = nil,
-                preflight: String? = nil, preflightMilliseconds: Int? = nil) {
+                preflight: String? = nil, preflightMilliseconds: Int? = nil,
+                confidence: SwingPathAnalyzer.Confidence? = nil) {
+        self.confidence = confidence
         self.swingsFound = swingsFound; self.swingChosen = swingChosen
         self.preflight = preflight; self.preflightMilliseconds = preflightMilliseconds
         self.id = id; self.createdAt = createdAt; self.appVersion = appVersion; self.build = build
@@ -106,6 +111,7 @@ public struct BetaExport: Equatable, Sendable {
         public var swingChosen: Int?
         public var preflight: String?
         public var preflightMs: Int?
+        public var confidence: String?
     }
     public var schema: Int
     public var exportedAt: String
@@ -118,14 +124,14 @@ public struct BetaExport: Equatable, Sendable {
     public static let requiredEntryKeys = [
         "time", "appVersion", "build", "deviceModel", "verdict", "refusalReason", "refusalCategory", "analysisMs",
         "videoDurationSeconds", "videoWidth", "videoHeight", "videoFrameRate", "videoCodec", "videoOrientation",
-        "swingsFound", "swingChosen", "preflight", "preflightMs",
+        "swingsFound", "swingChosen", "preflight", "preflightMs", "confidence",
     ]
     public static let requiredRootKeys = ["schema", "exportedAt", "appVersion", "build", "deviceModel", "recordCount", "records"]
 
     public init(records: [BetaRecord], appVersion: String, build: String, deviceModel: String? = nil, now: Date = Date()) {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime]
-        schema = 4
+        schema = 5
         exportedAt = f.string(from: now)
         self.appVersion = appVersion
         self.build = build
@@ -136,7 +142,8 @@ public struct BetaExport: Equatable, Sendable {
                   deviceModel: $0.deviceModel, verdict: $0.verdict.rawValue, refusalReason: $0.refusalCode,
                   refusalCategory: $0.refusalCategory, analysisMs: $0.analysisMilliseconds, video: $0.video,
                   swingsFound: $0.swingsFound, swingChosen: $0.swingChosen,
-                  preflight: $0.preflight, preflightMs: $0.preflightMilliseconds)
+                  preflight: $0.preflight, preflightMs: $0.preflightMilliseconds,
+                  confidence: $0.verdict == .cannotJudge ? nil : $0.confidence?.rawValue)
         }
     }
 
@@ -161,6 +168,7 @@ public struct BetaExport: Equatable, Sendable {
                 "videoCodec": Self.json(e.video?.codec), "videoOrientation": Self.json(e.video?.orientation),
                 "swingsFound": Self.json(e.swingsFound), "swingChosen": Self.json(e.swingChosen),
                 "preflight": Self.json(e.preflight), "preflightMs": Self.json(e.preflightMs),
+                "confidence": Self.json(e.confidence),
             ]
         }
         return try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])

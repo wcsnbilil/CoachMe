@@ -218,7 +218,7 @@ final class BetaModeTests: XCTestCase {
         let data = try BetaExport(records: [rec], appVersion: "0.1.0", build: "9", deviceModel: "iPhone15,2", now: t0).jsonData()
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(Set(root.keys), Set(BetaExport.requiredRootKeys))
-        XCTAssertEqual(root["schema"] as? Int, 4)
+        XCTAssertEqual(root["schema"] as? Int, 5)
         XCTAssertEqual(root["deviceModel"] as? String, "iPhone15,2")
         let e = try XCTUnwrap((root["records"] as? [[String: Any]])?.first)
         XCTAssertEqual(Set(e.keys), Set(BetaExport.requiredEntryKeys))
@@ -278,6 +278,75 @@ final class BetaModeTests: XCTestCase {
             XCTAssertTrue(e["deviceModel"] is NSNull)
         }
         XCTAssertEqual(entries[1]["refusalCategory"] as? String, "cameraOffLine")
+    }
+
+    // MARK: Soft wording (schema 5 confidence)
+
+    func testExportCarriesConfidenceOnlyForJudgedRecords() throws {
+        let t0 = Date(timeIntervalSince1970: 1_800_000_000)
+        var records: [BetaRecord] = SwingPathAnalyzer.Confidence.allCases.enumerated().map { i, c in
+            BetaRecord(createdAt: t0.addingTimeInterval(Double(i)), appVersion: "0.1.0", build: "9", verdict: .withinProRange,
+                       refusal: nil, offset: -0.1, swingID: nil, evidence: nil, confidence: c)
+        }
+        records.append(BetaRecord(createdAt: t0.addingTimeInterval(10), appVersion: "0.1.0", build: "9", verdict: .cannotJudge,
+                                  refusal: .downswingGap, offset: nil, swingID: nil, evidence: nil, confidence: .lowTracking))
+        records.append(BetaRecord(createdAt: t0.addingTimeInterval(11), appVersion: "0.1.0", build: "9", verdict: .overTheTop,
+                                  refusal: nil, offset: 0.3, swingID: nil, evidence: nil))
+        let data = try BetaExport(records: records, appVersion: "0.1.0", build: "9", now: t0).jsonData()
+        let entries = try XCTUnwrap((try JSONSerialization.jsonObject(with: data) as? [String: Any])?["records"] as? [[String: Any]])
+        XCTAssertEqual(entries.compactMap { $0["confidence"] as? String },
+                       ["normal", "near_boundary", "low_tracking", "low_camera"])
+        XCTAssertTrue(entries[4]["confidence"] is NSNull, "拒判不带 confidence")
+        XCTAssertTrue(entries[5]["confidence"] is NSNull, "schema 5 之前的记录导出 null")
+    }
+
+    func testSoftWordingTextsInBothLanguages() {
+        let zh = BetaStrings(.zh), en = BetaStrings(.en)
+        XCTAssertEqual(zh.nearBoundaryNote(outside: true), "这一杆手的路线接近外下的边界，结果可能来回变。建议多拍几杆，看多数结果。")
+        XCTAssertEqual(zh.nearBoundaryNote(outside: false), "这一杆手的路线接近内下的边界，结果可能来回变。建议多拍几杆，看多数结果。")
+        XCTAssertEqual(zh.lowTrackingNote, "这段视频下杆时手的追踪不太稳定，下面的结果仅供参考。可以换个光线、穿和背景对比明显的衣服再拍一次。")
+        XCTAssertEqual(zh.lowCameraNote, "机位离后方正中稍有偏差，下面的结果仅供参考。下次把手机放在你身后、对准目标再拍。")
+        for s in [zh, en] {
+            XCTAssertNil(s.confidenceNote(.normal, nearOutside: true))
+            XCTAssertNil(s.confidenceNote(nil, nearOutside: true))
+            for c in SwingPathAnalyzer.Confidence.allCases where c.isSoft {
+                XCTAssertFalse((s.confidenceNote(c, nearOutside: true) ?? "").isEmpty)
+            }
+        }
+        XCTAssertNotEqual(zh.lowCameraNote, en.lowCameraNote)
+        // near_boundary replaces the verdict title, also for a verdict inside the pro range
+        XCTAssertEqual(zh.headline(.withinProRange, confidence: .nearBoundary, nearOutside: true), "接近外下边界")
+        XCTAssertEqual(zh.headline(.tooInside, confidence: .nearBoundary, nearOutside: false), "接近内下边界")
+        XCTAssertEqual(zh.headline(.overTheTop, confidence: .lowTracking, nearOutside: true), zh.verdictTitle(.overTheTop))
+        XCTAssertEqual(zh.headline(.cannotJudge, confidence: .nearBoundary, nearOutside: true), zh.verdictTitle(.cannotJudge))
+    }
+
+    /// The soft wording never reassures: no "in range", "no problem", "normal" in either language.
+    func testSoftWordingNeverSaysInRangeOrFine() {
+        let banned = ["范围内", "没问题", "正常", "within range", "in range", "no problem", "normal", "fine", "nothing wrong"]
+        for s in [BetaStrings(.zh), BetaStrings(.en)] {
+            let texts = [s.nearBoundaryTitle(outside: true), s.nearBoundaryTitle(outside: false),
+                         s.nearBoundaryNote(outside: true), s.nearBoundaryNote(outside: false),
+                         s.lowConfidenceTitle, s.lowTrackingNote, s.lowCameraNote]
+            for text in texts {
+                for word in banned {
+                    XCTAssertFalse(text.lowercased().contains(word), "软说法里不能出现「\(word)」：\(text)")
+                }
+            }
+        }
+    }
+
+    /// Soft states show filming advice, never a practice tip (the report hides the tip when isSoft).
+    func testSoftStatesHideThePracticeTip() {
+        func ev(_ c: SwingPathAnalyzer.Confidence?, offset: Double = 0.12) -> PathEvidence {
+            PathEvidence(verdict: .withinProRange, refusal: nil, offset: offset, side: 1, imageWidth: 720, imageHeight: 1280,
+                         downswing: [], referenceLine: [], torsoPixels: 100, evidenceSeconds: nil, confidence: c)
+        }
+        XCTAssertFalse(ev(.normal).isSoft)
+        XCTAssertFalse(ev(nil).isSoft)
+        for c in [SwingPathAnalyzer.Confidence.nearBoundary, .lowTracking, .lowCamera] { XCTAssertTrue(ev(c).isSoft) }
+        XCTAssertTrue(ev(.nearBoundary, offset: 0.12).nearOutside)
+        XCTAssertFalse(ev(.nearBoundary, offset: -0.5).nearOutside)
     }
 
     func testCodecNamesAndOrientation() {

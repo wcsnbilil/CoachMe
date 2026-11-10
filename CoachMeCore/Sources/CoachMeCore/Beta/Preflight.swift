@@ -138,6 +138,7 @@ public enum Preflight {
         if a2.torso.isFinite, a2.torso >= 1 { body = a2.body; torso = a2.torso }
         let widths = [abs(body[A.J.lSh].0 - body[A.J.rSh].0) / torso, abs(body[A.J.lHip].0 - body[A.J.rHip].0) / torso]
         let widest = widths.filter(\.isFinite).max() ?? .nan
-        return widest > analyzer.maxLineWidth ? .cameraOffAxis : nil
+        // Same cut as the full analysis: just past the limit is judged with "camera slightly off", not refused.
+        return widest > analyzer.maxLineWidth * (1 + SwingPathAnalyzer.lowCameraMargin) ? .cameraOffAxis : nil
     }
 }

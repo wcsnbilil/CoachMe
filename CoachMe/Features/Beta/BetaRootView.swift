@@ -160,9 +160,11 @@ struct BetaRecordsView: View {
 
     private func row(_ record: BetaRecord) -> some View {
         HStack(spacing: 12) {
-            Circle().fill(record.verdict.betaColor).frame(width: 10, height: 10)
+            Circle().fill(record.confidence == .nearBoundary ? CoachStyle.pending : record.verdict.betaColor)
+                .frame(width: 10, height: 10)
             VStack(alignment: .leading, spacing: 3) {
-                Text(s.verdictTitle(record.verdict)).font(.body.weight(.semibold))
+                Text(s.headline(record.verdict, confidence: record.confidence,
+                                nearOutside: record.evidence?.nearOutside ?? true)).font(.body.weight(.semibold))
                     .foregroundStyle(CoachStyle.text)
                 Text(s.dateText(record.createdAt)).font(.caption).foregroundStyle(CoachStyle.textSecondary)
             }

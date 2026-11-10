@@ -2,7 +2,8 @@ import SwiftUI
 import CoachMeCore
 
 /// The beta report says one thing: the downswing path verdict, with the frame
-/// it is based on, how sure we are, and a practice tip slot.
+/// it is based on, how sure we are, and a practice tip slot. When the result sits on a limit
+/// (evidence.confidence is soft) it says so, and gives filming advice instead of a practice tip.
 @MainActor
 struct BetaReportView: View {
     @Environment(\.betaStrings) private var s
@@ -14,13 +15,16 @@ struct BetaReportView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
+                if lowConfidence, let note = s.confidenceNote(evidence.confidence, nearOutside: evidence.nearOutside) {
+                    lowConfidenceCard(note)
+                }
                 verdictHeader
                 evidenceCard
                 Label(s.uncertainty, systemImage: "info.circle")
                     .font(.footnote)
                     .foregroundStyle(CoachStyle.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                practiceCard
+                if !evidence.isSoft { practiceCard }
             }
             .padding(.horizontal, 18)
             .padding(.top, 8)
@@ -38,19 +42,37 @@ struct BetaReportView: View {
         }
     }
 
+    private var nearBoundary: Bool { evidence.confidence == .nearBoundary }
+    private var lowConfidence: Bool { evidence.confidence == .lowTracking || evidence.confidence == .lowCamera }
+
     private var verdictHeader: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(s.dateText(record.createdAt)).font(.caption).foregroundStyle(CoachStyle.textSecondary)
-            Text(s.verdictTitle(evidence.verdict))
-                .font(.system(size: 44, weight: .bold))
-                .foregroundStyle(evidence.verdict.betaColor)
-            Text(s.verdictSummary(evidence.verdict, leftHanded: evidence.side == -1))
+            Text(s.headline(evidence.verdict, confidence: evidence.confidence, nearOutside: evidence.nearOutside))
+                .font(.system(size: nearBoundary ? 34 : 44, weight: .bold))
+                .foregroundStyle(nearBoundary ? CoachStyle.pending : evidence.verdict.betaColor)
+            Text(nearBoundary ? s.nearBoundaryNote(outside: evidence.nearOutside)
+                              : s.verdictSummary(evidence.verdict, leftHanded: evidence.side == -1))
                 .font(.body)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(evidence.verdict.betaFill, in: RoundedRectangle(cornerRadius: 20))
+        .background(nearBoundary ? CoachStyle.pendingFill : evidence.verdict.betaFill, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    /// Tracking or camera close to its limit: the result below is a rough guide; how to film it better.
+    private func lowConfidenceCard(_ note: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(s.lowConfidenceTitle, systemImage: "exclamationmark.triangle")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(CoachStyle.pending)
+            Text(note).font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(CoachStyle.pendingFill, in: RoundedRectangle(cornerRadius: 16))
     }
 
     private var evidenceCard: some View {

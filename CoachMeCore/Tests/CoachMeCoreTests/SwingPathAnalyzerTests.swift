@@ -181,8 +181,55 @@ final class SwingPathAnalyzerTests: XCTestCase {
 
     func testLostDownswingIsRefused() {
         var s = Self.makeSwing(loop: 0, frames: 120)
-        for f in (s.2 + 5)..<(s.2 + 15) { s.0[f][15].visibility = 0; s.0[f][16].visibility = 0 }
+        for f in (s.2 + 5)..<(s.2 + 18) { s.0[f][15].visibility = 0; s.0[f][16].visibility = 0 }  // 13 of 30 frames
         XCTAssertEqual(run(s).refusal, .downswingGap)
+        XCTAssertNil(run(s).confidence)
+    }
+
+    private func lost(_ gap: Int, frames: Int = 120) -> SwingPathAnalyzer.Result {
+        var s = Self.makeSwing(loop: 0, frames: frames)
+        for f in (s.2 + 5)..<(s.2 + 5 + gap) { s.0[f][15].visibility = 0; s.0[f][16].visibility = 0 }
+        return run(s)
+    }
+
+    /// Same cases as test_path_fault.test_gap_near_its_limit_is_low_tracking_on_both_sides.
+    func testGapNearItsLimitIsLowTrackingOnBothSides() {
+        XCTAssertEqual(lost(3).confidence, .normal)
+        for gap in [4, 7, 8, 11] {
+            XCTAssertEqual(lost(gap).verdict, .withinProRange, "gap \(gap)")
+            XCTAssertEqual(lost(gap).confidence, .lowTracking, "gap \(gap)")
+        }
+        XCTAssertEqual(lost(12).refusal, .downswingGap)
+    }
+
+    func testGapMarginScalesWithTheDownswing() {
+        XCTAssertEqual(lost(1, frames: 60).confidence, .normal)
+        XCTAssertEqual(lost(2, frames: 60).confidence, .lowTracking)
+        XCTAssertEqual(lost(5, frames: 60).confidence, .lowTracking)
+        XCTAssertEqual(lost(6, frames: 60).refusal, .downswingGap)
+    }
+
+    func testCameraNearItsLimitIsLowCameraOnBothSides() {
+        for (width, want) in [(0.15, SwingPathAnalyzer.Confidence.normal), (0.195, .lowCamera), (0.205, .lowCamera)] {
+            let r = run(Self.makeSwing(loop: 0, shoulderWidth: width))
+            XCTAssertEqual(r.verdict, .withinProRange, "width \(width)")
+            XCTAssertEqual(r.confidence, want, "width \(width)")
+        }
+        XCTAssertEqual(run(Self.makeSwing(loop: 0, shoulderWidth: 0.22)).refusal, .cameraOffAxis)
+    }
+
+    func testOffsetNearAThresholdIsNearBoundary() throws {
+        let base = run(Self.makeSwing(loop: 0))
+        XCTAssertEqual(base.confidence, .normal)
+        let o = try XCTUnwrap(base.offset)
+        for edge in [o + 0.04, o - 0.04] {
+            let a = SwingPathAnalyzer(calibration: .init(outside: edge, inside: -0.516, source: "test"))
+            let s = Self.makeSwing(loop: 0)
+            XCTAssertEqual(a.analyze(landmarks: s.0, address: s.1, top: s.2, impact: s.3).confidence, .nearBoundary)
+        }
+        let far = SwingPathAnalyzer(calibration: .init(outside: o + 0.06, inside: -0.516, source: "test"))
+        let s = Self.makeSwing(loop: 0)
+        XCTAssertEqual(far.analyze(landmarks: s.0, address: s.1, top: s.2, impact: s.3).confidence, .normal)
     }
 
     func testPythonHelpersBehaveLikeNumpy() {
@@ -206,6 +253,8 @@ final class SwingPathParityTests: XCTestCase {
         let backswing_offset: Double?
         let loop: Double?
         let jump_frames: Int?
+        /// normal / near_boundary / low_tracking / low_camera; null when refused.
+        let confidence: String?
     }
 
     func testMatchesPythonOnGolfDB() throws {
@@ -216,6 +265,7 @@ final class SwingPathParityTests: XCTestCase {
         XCTAssertFalse(swings.isEmpty)
         let analyzer = SwingPathAnalyzer()
         var mismatches: [String] = []
+        var states = Set<String>()
         for s in swings {
             let pts = s.landmarks.map { frame in
                 frame.map { v in
@@ -232,11 +282,15 @@ final class SwingPathParityTests: XCTestCase {
             }
             if r.verdict.nameZH != s.verdict || !close(r.offset, s.offset)
                 || !close(r.backswingOffset, s.backswing_offset) || !close(r.loop, s.loop)
-                || (s.jump_frames.map { $0 != r.jumpFrames } ?? false) {
-                mismatches.append("\(s.name): swift \(r.verdict.nameZH) \(r.offset ?? .nan) \(r.refusal?.rawValue ?? "")"
-                                  + " / python \(s.verdict) \(s.offset ?? .nan)")
+                || (s.jump_frames.map { $0 != r.jumpFrames } ?? false)
+                || r.confidence?.rawValue != s.confidence {
+                mismatches.append("\(s.name): swift \(r.verdict.nameZH) \(r.offset ?? .nan) \(r.refusal?.rawValue ?? "") \(r.confidence?.rawValue ?? "-")"
+                                  + " / python \(s.verdict) \(s.offset ?? .nan) \(s.confidence ?? "-")")
             }
+            if let c = s.confidence { states.insert(c) }
         }
+        // The fixture (GolfDB + make_synthetic_parity.py) must keep every soft state covered.
+        XCTAssertEqual(states, Set(SwingPathAnalyzer.Confidence.allCases.map(\.rawValue)), "一致性数据缺少某种结论把握状态")
         XCTAssertTrue(mismatches.isEmpty, "\(mismatches.count)/\(swings.count) differ:\n" + mismatches.prefix(20).joined(separator: "\n"))
     }
 }

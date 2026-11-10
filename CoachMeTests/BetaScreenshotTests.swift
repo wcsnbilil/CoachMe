@@ -39,9 +39,21 @@ final class BetaScreenshotTests: XCTestCase {
                 NavigationStack { BetaRecordsView(records: list, exportURL: exportURL, onNew: {}, onOpen: { _ in }) }
             }
             try shot("6_settings", lang, height: 852) { BetaSettingsView() }
+            let near = Self.record(.withinProRange, offset: 0.12, confidence: .nearBoundary)
+            try shot("7_near_boundary", lang, height: 1500) {
+                NavigationStack { BetaReportView(record: near, evidence: near.evidence!, frameImage: frame, onAgain: {}) }
+            }
+            let low = Self.record(.overTheTop, offset: 0.3, confidence: .lowTracking)
+            try shot("8_low_tracking", lang, height: 1600) {
+                NavigationStack { BetaReportView(record: low, evidence: low.evidence!, frameImage: frame, onAgain: {}) }
+            }
+            let cam = Self.record(.withinProRange, offset: -0.2, confidence: .lowCamera)
+            try shot("9_low_camera", lang, height: 1600) {
+                NavigationStack { BetaReportView(record: cam, evidence: cam.evidence!, frameImage: frame, onAgain: {}) }
+            }
         }
         let files = try FileManager.default.contentsOfDirectory(atPath: outputDir.path).filter { $0.hasSuffix(".png") }
-        XCTAssertGreaterThanOrEqual(files.count, 12)
+        XCTAssertGreaterThanOrEqual(files.count, 18)
         print("BETA_SCREENSHOTS \(outputDir.path) \(files.count) files")
     }
 
@@ -81,7 +93,8 @@ final class BetaScreenshotTests: XCTestCase {
     static let imageWidth = 720.0, imageHeight = 1280.0
 
     /// Portrait down-the-line geometry: address hands, shoulders, top of swing.
-    static func evidence(_ verdict: SwingPathAnalyzer.Verdict, offset: Double) -> PathEvidence {
+    static func evidence(_ verdict: SwingPathAnalyzer.Verdict, offset: Double,
+                         confidence: SwingPathAnalyzer.Confidence = .normal) -> PathEvidence {
         let hands = PathEvidence.Point(x: 430, y: 840), shoulders = PathEvidence.Point(x: 330, y: 560)
         let torso = 260.0
         func refX(_ y: Double) -> Double { hands.x + (y - hands.y) * (shoulders.x - hands.x) / (shoulders.y - hands.y) }
@@ -95,13 +108,14 @@ final class BetaScreenshotTests: XCTestCase {
         }
         return PathEvidence(verdict: verdict, refusal: nil, offset: offset, side: 1, imageWidth: imageWidth,
                             imageHeight: imageHeight, downswing: down, referenceLine: [hands, shoulders],
-                            torsoPixels: torso, evidenceSeconds: 1.0)
+                            torsoPixels: torso, evidenceSeconds: 1.0, confidence: confidence)
     }
 
-    static func record(_ verdict: SwingPathAnalyzer.Verdict, offset: Double) -> BetaRecord {
+    static func record(_ verdict: SwingPathAnalyzer.Verdict, offset: Double,
+                       confidence: SwingPathAnalyzer.Confidence = .normal) -> BetaRecord {
         BetaRecord(createdAt: Date(timeIntervalSince1970: 1_794_143_400), appVersion: "0.1.0", build: "1",
                    verdict: verdict, refusal: nil, offset: offset, swingID: nil,
-                   evidence: evidence(verdict, offset: offset))
+                   evidence: evidence(verdict, offset: offset, confidence: confidence), confidence: confidence)
     }
 
     static func sampleRecords() -> [BetaRecord] {
@@ -113,6 +127,9 @@ final class BetaScreenshotTests: XCTestCase {
                        refusal: .cameraOffAxis, offset: nil, swingID: nil, evidence: nil),
             BetaRecord(createdAt: base.addingTimeInterval(-86_400), appVersion: "0.1.0", build: "1", verdict: .withinProRange,
                        refusal: nil, offset: -0.12, swingID: nil, evidence: nil),
+            BetaRecord(createdAt: base.addingTimeInterval(-87_000), appVersion: "0.1.0", build: "1", verdict: .withinProRange,
+                       refusal: nil, offset: 0.12, swingID: nil, evidence: evidence(.withinProRange, offset: 0.12, confidence: .nearBoundary),
+                       confidence: .nearBoundary),
             BetaRecord(createdAt: base.addingTimeInterval(-90_000), appVersion: "0.1.0", build: "1", verdict: .cannotJudge,
                        refusal: .downswingGap, offset: nil, swingID: nil, evidence: nil),
         ]

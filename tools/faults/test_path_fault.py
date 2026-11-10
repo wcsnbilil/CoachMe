@@ -168,9 +168,50 @@ def test_jump_at_address_does_not_move_the_reference_line():
 
 def test_lost_downswing_is_refused():
     lm, a, t, i = make_swing(loop=0.0, frames=120)
-    lm[t + 5:t + 15, [pf.L_WR, pf.R_WR], 2] = 0.0  # a third of the downswing unseen
+    lm[t + 5:t + 18, [pf.L_WR, pf.R_WR], 2] = 0.0  # 13 of 30 downswing frames unseen
     r = pf.analyze(lm, a, t, i)
     assert r["verdict"] == "无法判断" and "下杆" in r["reason"], r
+
+
+def lost(gap: int, frames: int = 120):
+    lm, a, t, i = make_swing(loop=0.0, frames=frames)
+    lm[t + 5:t + 5 + gap, [pf.L_WR, pf.R_WR], 2] = 0.0
+    return pf.analyze(lm, a, t, i)
+
+
+def test_gap_near_its_limit_is_low_tracking_on_both_sides():
+    # 30-frame downswing: limit 7.5 frames, margin max(1, 30/8) = 3.75 -> soft from 4 to 11 frames
+    assert lost(3)["confidence"] == "normal"
+    for gap in (4, 7, 8, 11):
+        r = lost(gap)
+        assert r["verdict"] == "路径在职业范围内" and r["confidence"] == "low_tracking", (gap, r)
+    assert lost(12)["verdict"] == "无法判断"
+
+
+def test_gap_margin_scales_with_the_downswing():
+    # real-time sized: 60 frames -> downswing 15, limit 3.75, margin 1.875 -> soft above 1.875 up to 5.625
+    assert lost(1, frames=60)["confidence"] == "normal"
+    assert lost(2, frames=60)["confidence"] == "low_tracking"
+    assert lost(5, frames=60)["confidence"] == "low_tracking"
+    assert lost(6, frames=60)["verdict"] == "无法判断"
+
+
+def test_camera_near_its_limit_is_low_camera_on_both_sides():
+    for width, want in ((0.15, "normal"), (0.195, "low_camera"), (0.205, "low_camera")):
+        r = pf.analyze(*make_swing(loop=0.0, shoulder_width=width))
+        assert r["verdict"] == "路径在职业范围内" and r["confidence"] == want, (width, r)
+    assert pf.analyze(*make_swing(loop=0.0, shoulder_width=0.22))["verdict"] == "无法判断"
+
+
+def test_offset_near_a_threshold_is_near_boundary():
+    r = pf.analyze(*make_swing(loop=0.0))
+    assert r["confidence"] == "normal"
+    o = r["offset"]
+    for cal_edge in (o + 0.04, o - 0.04):  # move the outside threshold next to this swing's offset
+        cal = dict(pf.DEFAULT_CALIBRATION, outside=cal_edge)
+        assert pf.analyze(*make_swing(loop=0.0), calibration=cal)["confidence"] == "near_boundary"
+    cal = dict(pf.DEFAULT_CALIBRATION, outside=o + 0.06)
+    assert pf.analyze(*make_swing(loop=0.0), calibration=cal)["confidence"] == "normal"
 
 
 if __name__ == "__main__":

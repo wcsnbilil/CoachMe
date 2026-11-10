@@ -31,7 +31,9 @@ jobs:
         run: |
           FIX=tools/faults/fixtures/path_parity.json
           if [ -f "$FIX" ]; then
-            python tools/faults/refresh_parity.py "$FIX" --out "$RUNNER_TEMP/path_parity.json"
+            # GolfDB clips plus synthetic swings on both sides of every soft-wording limit
+            python tools/faults/refresh_parity.py "$FIX" tools/faults/fixtures/path_parity_synthetic.json \
+              --out "$RUNNER_TEMP/path_parity.json" | tee -a "$GITHUB_STEP_SUMMARY"
             echo "COACHME_PATH_PARITY=$RUNNER_TEMP/path_parity.json" >> "$GITHUB_ENV"
           else
             echo "::warning::没有 $FIX，SwingPathParityTests 会被跳过"

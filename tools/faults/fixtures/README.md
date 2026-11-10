@@ -16,3 +16,9 @@ What the 22 swings cover:
 - Boundary: golfdb_724 (-0.513, 11 jump frames; the inside line is -0.516).
 
 Note: with coarser rounding (0.1 px), 724 moved to -0.403 and 396 moved from -0.43 to -0.30, because a 0.1 px change flips which frames despike drops. Parity on these swings is therefore a strict test of the jump guard. A small Swift/Python float difference in the despike step will show up here first.
+
+## Soft wording (confidence)
+
+Since the soft-wording change, refresh_parity.py also writes `confidence` (normal / near_boundary / low_tracking / low_camera, null when refused) and the Swift test compares it. On the 22 GolfDB swings, 6 are near_boundary and 5 are low_tracking (several of the gap-filled and jump-frame clips). None is low_camera.
+
+`path_parity_synthetic.json` (from make_synthetic_parity.py) adds 21 made-up swings (no video, no person). They sit on both sides of every limit: offset near the outside and inside thresholds, downswing gap just under and over its limit for a 30-frame and a 15-frame downswing, and camera line width 0.18 / 0.195 / 0.205 / 0.215. CI passes both files to refresh_parity.py.

@@ -163,7 +163,8 @@ enum BetaAnalysisRunner {
                               video: info, analysisMilliseconds: Int(Date().timeIntervalSince(started) * 1000),
                               deviceModel: BetaMode.deviceModel,
                               swingsFound: scouted ? (selection?.windows.count ?? 0) : nil,
-                              swingChosen: selection.map { $0.chosen + 1 })
+                              swingChosen: selection.map { $0.chosen + 1 },
+                              confidence: evidence.confidence)
         try recordStore.append(beta)
         return beta
     }

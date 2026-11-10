@@ -74,7 +74,7 @@ jobs:
         run: |
           set -o pipefail
           python -W ignore tools/preflight/preflight_eval.py --golfdb golfdb/data --swingnet impact/results_swingnet.json \
-            --landmarks ${{ matrix.side }}=lm/landmarks | tee -a "$GITHUB_STEP_SUMMARY"
+            --landmarks ${{ matrix.side }}=lm/landmarks ${{ matrix.side == 'Python' && '--report-only' || '' }} | tee -a "$GITHUB_STEP_SUMMARY"
 
   faceon:
     name: 正面机位能否被快速检查拦下（GolfDB face-on，MediaPipe）

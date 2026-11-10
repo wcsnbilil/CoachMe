@@ -9,7 +9,7 @@ then early_setup() with the same phases. Agreement = both refuse, or both let th
 full-analysis refusal the preflight lets through counts against it whatever the reason (most are
 tracking lost in the downswing, which nothing before the downswing can see).
 Gate (PM): agreement >= 95% with automatic phases, every disagreement listed. Markdown to stdout,
-exit 1 below the gate.
+exit 1 below the gate (CI gates the App landmarks; Python landmarks are --report-only).
 """
 from __future__ import annotations
 
@@ -38,6 +38,8 @@ def main():
     p.add_argument("--swingnet", type=Path, required=True)
     p.add_argument("--landmarks", action="append", required=True, help="Label=dir of <name>.npy")
     p.add_argument("--limit", type=int, default=400)
+    p.add_argument("--report-only", action="store_true",
+                   help="never exit 1 (Python landmarks: a reference, the app ships with its own)")
     a = p.parse_args()
     import pandas as pd
     df = pd.read_pickle(a.golfdb / "golfDB.pkl")
@@ -96,7 +98,7 @@ def main():
                 out.append(f"| {r['name']} | {'是' if r['slow'] else ''} | {x['pre'] or '放行'} | {x['full'][0]} {x['full'][1]} |")
             out.append("")
     print("\n".join(out))
-    sys.exit(1 if failed else 0)
+    sys.exit(1 if failed and not a.report_only else 0)
 
 
 if __name__ == "__main__":

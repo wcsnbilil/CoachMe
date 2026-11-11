@@ -74,6 +74,7 @@ def main():
             (x0, y0), (x1, y1) = np.percentile(pts, 1, axis=0), np.percentile(pts, 99, axis=0)
             cx, cy, half = (x0 + x1) / 2, (y0 + y1) / 2, max(x1 - x0, y1 - y0) * 0.65
             cap = cv2.VideoCapture(r["video"])
+            cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 1)  # iPhone portrait clips carry rotation metadata; OpenCV ignores it by default
             fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
             cap.set(cv2.CAP_PROP_POS_FRAMES, lo)
             frames = []

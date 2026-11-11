@@ -44,6 +44,8 @@ actor SwingAnalyzer {
     private let phaseDetector: SwingNetPhaseDetector?
     private(set) var keyframes: [Keyframe] = []
     private(set) var phaseDetectionNote: String?
+    /// SwingNet's per-frame probabilities from the main pass (empty if it did not run).
+    var phaseProbabilities: [[Double]] { phaseDetector?.probabilityLog ?? [] }
 
     init(detector: PoseDetecting, phaseDetector: SwingNetPhaseDetector? = nil) {
         self.detector = detector

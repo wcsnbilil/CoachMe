@@ -23,7 +23,7 @@ def main():
     p.add_argument("--offset-tol", type=float, default=0.05)
     p.add_argument("--phase-tol", type=int, default=3, help="frames")
     a = p.parse_args()
-    app = {f.stem: json.loads(f.read_text()) for f in sorted(a.app_dir.glob("*.json"))}
+    app = {f.stem: json.loads(f.read_text()) for f in sorted(a.app_dir.glob("*.json")) if not f.stem.endswith(".layers")}
     py = {r["name"]: r for r in json.loads(a.python_results.read_text(encoding="utf-8"))} if a.python_results.exists() else {}
 
     out = ["## 真实视频端到端（App 模拟器 vs Python）", "",

@@ -1,0 +1,223 @@
+# App 流水线在 GolfDB 上的基准：App 自己的解码 + MediaPipe（内测设置，只检测 1 人）出关键点，
+# 阶段用 GolfDB 标注，判定用同一套算法（Swift/Python 已逐段一致），算 P0 三项并和 Python 并排。
+# GolfDB 视频运行时从官方 Google Drive 下载，不进仓库、不上传为 artifact（只上传关键点和结果）。
+# App 模拟器跑 400 段约 3 小时：App 侧代码没变时，在 tools/e2e/golfdb_reuse_app_run.txt 填上一次的 run id
+# 复用它的关键点；改了 App 的解码 / MediaPipe 设置就清空这个文件重跑。
+# Python 侧同理：tools/e2e/golfdb_reuse_py_run.txt 填 run id 复用它的 golfdb-python 产物（改了 Python 算法就清空）。
+name: GolfDB App 基准
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/golfdb-app.yml
+      - CoachMe/Services/**
+      - CoachMeTests/GolfDBAppPipelineTests.swift
+      - tools/e2e/golfdb_*.py
+      - tools/benchmark/impact_check.py
+      - tools/split/swing_split.py
+      - tools/e2e/golfdb_reuse_app_run.txt
+      - tools/e2e/golfdb_reuse_py_run.txt
+      - tools/e2e/refusal_diff.py
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: GolfDB 沿目标线前 N 段
+        default: "400"
+
+concurrency:
+  group: golfdb-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LIMIT: ${{ github.event.inputs.limit || '400' }}
+
+jobs:
+  app:
+    name: App 流水线出关键点（模拟器）
+    runs-on: macos-15
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - name: 复用上一次的 App 关键点？（tools/e2e/golfdb_reuse_app_run.txt 填 run id）
+        id: reuse
+        run: echo "id=$(cat tools/e2e/golfdb_reuse_app_run.txt 2>/dev/null | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - name: GolfDB（缓存）
+        if: steps.reuse.outputs.id == ''
+        uses: actions/cache@v4
+        with:
+          path: golfdb
+          key: golfdb-videos160-v1-${{ runner.os }}
+      - name: 下载 GolfDB（缓存未命中时）
+        if: steps.reuse.outputs.id == ''
+        run: |
+          if [ ! -f golfdb/data/golfDB.pkl ]; then
+            pip3 install --quiet --break-system-packages gdown 2>/dev/null || pip3 install --quiet gdown
+            mkdir -p golfdb/data
+            python3 -m gdown 1uBwRxFxW04EqG87VCoX3l6vXeV5T5JYJ -O golfdb/videos_160.zip
+            unzip -q golfdb/videos_160.zip -d golfdb/data/
+            rm golfdb/videos_160.zip
+            curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+          fi
+          ls golfdb/data | head; ls golfdb/data/videos_160 | wc -l
+      - name: 选片
+        if: steps.reuse.outputs.id == ''
+        run: |
+          pip3 install --quiet --break-system-packages pandas 2>/dev/null || pip3 install --quiet pandas
+          python3 tools/e2e/golfdb_prepare.py golfdb/data --limit "$LIMIT" --out golfdb-clips
+      - if: steps.reuse.outputs.id == ''
+        run: brew install xcodegen
+      - if: steps.reuse.outputs.id == ''
+        run: bash tools/download-model.sh heavy
+      - if: steps.reuse.outputs.id == ''
+        run: |
+          xcodegen generate
+          pod install --repo-update
+      - name: 选模拟器
+        if: steps.reuse.outputs.id == ''
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devs = json.load(sys.stdin)["devices"]
+          c = [x for k, v in devs.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")]
+          print(c[-1]["udid"])')
+          echo "SIM=$UDID" >> "$GITHUB_ENV"
+      - name: App 跑 GolfDB
+        if: steps.reuse.outputs.id == ''
+        timeout-minutes: 290
+        run: |
+          set -o pipefail
+          TEST_RUNNER_COACHME_GOLFDB_DIR="$PWD/golfdb-clips" \
+          TEST_RUNNER_COACHME_GOLFDB_OUT="$PWD/golfdb-app" \
+          xcodebuild test \
+            -workspace CoachMe.xcworkspace -scheme CoachMe \
+            -destination "id=$SIM" \
+            -only-testing:CoachMeTests/GolfDBAppPipelineTests \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            2>&1 | tee xcodebuild.log | grep -E "error:|GOLFDB|Test Case .*(passed|failed)|\*\* (BUILD|TEST)"
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.reuse.outputs.id == ''
+        with:
+          name: golfdb-app-landmarks
+          path: golfdb-app/
+
+  python:
+    name: Python 流水线（对照）
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - name: 复用上一次的 Python 结果？（tools/e2e/golfdb_reuse_py_run.txt 填 run id）
+        id: reuse
+        run: echo "id=$(cat tools/e2e/golfdb_reuse_py_run.txt 2>/dev/null | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - if: steps.reuse.outputs.id == ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: GolfDB（缓存）
+        if: steps.reuse.outputs.id == ''
+        uses: actions/cache@v4
+        with:
+          path: golfdb
+          key: golfdb-videos160-v1-${{ runner.os }}
+      - name: 下载 GolfDB（缓存未命中时）
+        if: steps.reuse.outputs.id == ''
+        run: |
+          if [ ! -f golfdb/data/golfDB.pkl ]; then
+            pip3 install --quiet --break-system-packages gdown 2>/dev/null || pip3 install --quiet gdown
+            mkdir -p golfdb/data
+            python3 -m gdown 1uBwRxFxW04EqG87VCoX3l6vXeV5T5JYJ -O golfdb/videos_160.zip
+            unzip -q golfdb/videos_160.zip -d golfdb/data/
+            rm golfdb/videos_160.zip
+            curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+          fi
+          ls golfdb/data | head; ls golfdb/data/videos_160 | wc -l
+      - if: steps.reuse.outputs.id == ''
+        run: |
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
+          bash tools/download-model.sh heavy
+      - name: run_path（GolfDB 标注阶段）
+        if: steps.reuse.outputs.id == ''
+        run: python tools/faults/run_path.py --golfdb golfdb/data --limit "$LIMIT" --out report_py | tail -5
+      - name: 击球帧交叉核对（SwingNet / 双手高度规则 / 混合），自动阶段下的 P0
+        if: steps.reuse.outputs.id == ''
+        run: |
+          set -o pipefail
+          python tools/benchmark/impact_check.py --golfdb golfdb/data --limit "$LIMIT" \
+            --landmarks report_py/landmarks --out impact | tee -a "$GITHUB_STEP_SUMMARY"
+          for m in swingnet hybrid; do
+            echo; echo "### 自动阶段（$m）"
+            python tools/e2e/golfdb_app_metrics.py report impact/results_$m.json --holdout-from 200 || true
+          done | sed 's/App 流水线/Python（自动阶段）/' | tee -a "$GITHUB_STEP_SUMMARY"
+      - if: steps.reuse.outputs.id == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: golfdb-python
+          path: |
+            report_py/results.json
+            impact/
+
+  report:
+    name: P0 三项（App vs Python）
+    needs: [app, python]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read     # 复用上一次 run 的 App 关键点 artifact
+      contents: read
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: GolfDB（缓存）
+        uses: actions/cache@v4
+        with:
+          path: golfdb
+          key: golfdb-videos160-v1-${{ runner.os }}
+      - name: 下载 GolfDB（缓存未命中时）
+        run: |
+          if [ ! -f golfdb/data/golfDB.pkl ]; then
+            pip3 install --quiet --break-system-packages gdown 2>/dev/null || pip3 install --quiet gdown
+            mkdir -p golfdb/data
+            python3 -m gdown 1uBwRxFxW04EqG87VCoX3l6vXeV5T5JYJ -O golfdb/videos_160.zip
+            unzip -q golfdb/videos_160.zip -d golfdb/data/
+            rm golfdb/videos_160.zip
+            curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+          fi
+          ls golfdb/data | head; ls golfdb/data/videos_160 | wc -l
+      - id: reuse
+        run: echo "id=$(cat tools/e2e/golfdb_reuse_app_run.txt 2>/dev/null | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - id: reuse_py
+        run: echo "id=$(cat tools/e2e/golfdb_reuse_py_run.txt 2>/dev/null | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: golfdb-app-landmarks
+          path: golfdb-app
+          run-id: ${{ steps.reuse.outputs.id || github.run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: golfdb-python
+          path: .          # 产物里本身带 report_py/ 和 impact/ 两级目录
+          run-id: ${{ steps.reuse_py.outputs.id || github.run_id }}
+          github-token: ${{ github.token }}
+        continue-on-error: true
+      - name: App 关键点 → 同一套判定
+        run: |
+          set -o pipefail
+          bash tools/download-model.sh heavy
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas
+          python tools/e2e/golfdb_app_metrics.py cache golfdb-app report_app
+          # 只算 App 跑完的那些段（--cached-only：没有关键点缓存的段跳过，不会跑 Python MediaPipe）
+          python tools/faults/run_path.py --golfdb golfdb/data --limit "$LIMIT" --out report_app --cached-only | tail -3
+      - name: 写入 job summary
+        run: |
+          set -o pipefail
+          python tools/e2e/golfdb_app_metrics.py report report_app/results.json report_py/results.json \
+            --holdout-from 200 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 自动阶段比标注阶段多拒判的段（Python）
+        if: always() && hashFiles('impact/results_swingnet.json') != ''
+        run: |
+          python tools/e2e/refusal_diff.py report_py/results.json impact/results_swingnet.json | tee -a "$GITHUB_STEP_SUMMARY"
+          echo; python tools/e2e/refusal_diff.py report_py/results.json impact/results_hybrid.json | head -8

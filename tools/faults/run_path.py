@@ -35,6 +35,7 @@ from path_fault import DEFAULT_CALIBRATION, MAX_LINE_WIDTH, analyze  # noqa: E40
 
 def read_video(path: Path):
     cap = cv2.VideoCapture(str(path))
+    cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 1)  # iPhone portrait clips carry rotation metadata; OpenCV ignores it by default
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     frames = []
     while True:
@@ -105,6 +106,8 @@ def main():
     p.add_argument("--model", type=Path, default=ROOT / "CoachMe" / "Resources" / "pose_landmarker_heavy.task")
     p.add_argument("--out", type=Path, default=Path("path_fault_report"))
     p.add_argument("--phases", help="manual address,top,impact frame numbers for a single --video")
+    p.add_argument("--cached-only", action="store_true",
+                   help="skip clips without a landmark cache in <out>/landmarks (e.g. landmarks from the App)")
     p.add_argument("--calibration", type=Path, help="calibration.json from calibrate.py")
     p.add_argument("--max-line-width", type=float, default=MAX_LINE_WIDTH,
                    help="refuse clips whose shoulder/hip line at address is wider than this (torso lengths)")
@@ -135,7 +138,7 @@ def main():
 
     results = []
     for n, (name, path, phases, extra) in enumerate(jobs, 1):
-        if not path.exists():
+        if not path.exists() or (a.cached_only and not (cache / f"{name}.npy").exists()):
             continue
         frames, fps = read_video(path)
         phases = phases or swingnet_phases(path, a.backend)

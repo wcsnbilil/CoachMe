@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 import AVFoundation
 import Darwin
 import CoachMeCore
@@ -24,6 +25,22 @@ final class EndToEndVideoTests: XCTestCase {
         var error: String?
     }
 
+    /// Every layer of the chain, for tools/e2e/layers.py: decoded size and timestamps, per-frame
+    /// landmarks (normalised x, y, visibility), SwingNet probabilities and the phase frames.
+    struct Layers: Codable {
+        var name: String
+        var width: Double
+        var height: Double
+        var nominalFPS: Double?
+        var timestamps: [Double]
+        var personCounts: [Int]
+        var landmarks: [[[Double]]]
+        var probabilities: [[Double]]
+        var phases: [Int]?
+        /// The phases came from the person-crop rerun (main SwingNet pass found none).
+        var usedPersonCrop: Bool
+    }
+
     func testEveryClipRunsEndToEnd() async throws {
         let env = ProcessInfo.processInfo.environment
         guard let dir = env["COACHME_E2E_DIR"], !dir.isEmpty else {
@@ -37,7 +54,11 @@ final class EndToEndVideoTests: XCTestCase {
         XCTAssertFalse(clips.isEmpty, "\(dir) 里没有视频")
 
         for url in clips {
-            let r = await run(url)
+            let r = await run(url, out: out)
+            if let pattern = env["COACHME_E2E_DUMP_FRAMES"], !pattern.isEmpty,
+               url.lastPathComponent.contains(pattern) {
+                try await Self.dumpFrames(url, to: out.appendingPathComponent("frames/" + url.deletingPathExtension().lastPathComponent))
+            }
             let data = try JSONEncoder().encode(r)
             try data.write(to: out.appendingPathComponent(url.deletingPathExtension().lastPathComponent + ".json"))
             print("E2E \(r.name) frames=\(r.frames) verdict=\(r.verdict) refusal=\(r.refusal ?? "-") "
@@ -47,14 +68,15 @@ final class EndToEndVideoTests: XCTestCase {
         }
     }
 
-    private func run(_ url: URL) async -> ClipResult {
+    private func run(_ url: URL, out: URL?) async -> ClipResult {
         let name = url.deletingPathExtension().lastPathComponent
         let asset = AVURLAsset(url: url)
         let sampler = PeakMemorySampler()
         sampler.start()
         let started = Date()
         do {
-            let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(), phaseDetector: SwingNetPhaseDetector())
+            let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: BetaAnalysisRunner.betaNumPoses),
+                                         phaseDetector: SwingNetPhaseDetector())
             let frames = try await analyzer.analyse(asset: asset, timeRange: nil) { _ in }
             let keyframes = await analyzer.keyframes
             let size = try await BetaAnalysisRunner.presentedSize(asset)
@@ -67,6 +89,19 @@ final class EndToEndVideoTests: XCTestCase {
                 return frames.indices.min { abs(frames[$0].timestampSeconds - t) < abs(frames[$1].timestampSeconds - t) }
             }
             let phases = [index(.address), index(.top), index(.impact)]
+            if let out {
+                let fps = try? await asset.loadTracks(withMediaType: .video).first?.load(.nominalFrameRate)
+                let layers = Layers(
+                    name: name, width: size.width, height: size.height, nominalFPS: fps.map { Double($0) },
+                    timestamps: frames.map(\.timestampSeconds), personCounts: frames.map(\.detectedPersonCount),
+                    landmarks: frames.map { f in
+                        f.imageLandmarks.map { l in [Self.r4(l.position.x), Self.r4(l.position.y), Self.r4(l.visibility ?? 1)] }
+                    },
+                    probabilities: await analyzer.phaseProbabilities.map { $0.map(Self.r4) },
+                    phases: phases.contains(nil) ? nil : phases.compactMap { $0 },
+                    usedPersonCrop: (await analyzer.phaseDetectionNote ?? "").contains("人物增强"))
+                try? JSONEncoder().encode(layers).write(to: out.appendingPathComponent(name + ".layers.json"))
+            }
             return ClipResult(name: name, video: try? await BetaAnalysisRunner.videoInfo(asset), frames: frames.count,
                               phases: phases.contains(nil) ? nil : phases.compactMap { $0 },
                               verdict: evidence.verdict.rawValue,
@@ -78,6 +113,36 @@ final class EndToEndVideoTests: XCTestCase {
                               error: String(describing: error))
         }
     }
+}
+
+extension EndToEndVideoTests {
+    /// Every frame exactly as the App's pose detector receives it (same reader settings), as
+    /// lossless PNG, so tools/e2e/pose_on_frames.py can run Python MediaPipe on App pixels.
+    static func dumpFrames(_ url: URL, to dir: URL) async throws {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let reader = VideoAssetReader(asset: AVURLAsset(url: url))
+        try await reader.start(timeRange: nil, maxDimension: 4096)
+        defer { reader.cancel() }
+        var i = 0
+        while let frame = try reader.nextFrame() {
+            let b = frame.pixelBuffer
+            CVPixelBufferLockBaseAddress(b, .readOnly)
+            let w = CVPixelBufferGetWidth(b), h = CVPixelBufferGetHeight(b)
+            let ctx = CGContext(data: CVPixelBufferGetBaseAddress(b), width: w, height: h, bitsPerComponent: 8,
+                                bytesPerRow: CVPixelBufferGetBytesPerRow(b),
+                                space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue
+                                    | CGImageAlphaInfo.noneSkipFirst.rawValue)
+            let image = ctx?.makeImage()
+            CVPixelBufferUnlockBaseAddress(b, .readOnly)
+            if let image, let png = UIImage(cgImage: image).pngData() {
+                try png.write(to: dir.appendingPathComponent(String(format: "%05d.png", i)))
+            }
+            i += 1
+        }
+    }
+
+    nonisolated static func r4(_ v: Double) -> Double { (v * 10000).rounded() / 10000 }
 }
 
 /// Samples the process footprint every 50 ms; `stop()` returns the peak in MB.

@@ -45,4 +45,11 @@ Step "club4_sample" {
     Py @("$w\club4.py", "$bench\hd_swings\seg_p0", "$bench\hd_swings\seg_p1", "--out", "$bench\club4_sample", "--limit", "12") "club4.log"
 }
 
+# 5. club 4-point pseudo labels, all swings, gated (club4b.py plan B): down-the-line clips first, then the rest.
+#    Resumable per swing (<name>.club4.json); progress in progress\club4b.json.
+Step "club4b_all" {
+    Py @("$w\club4b.py", "$bench\hd_swings\seg_p0", "$bench\hd_swings\seg_p1", "$bench\hd_swings\seg_p2", "$bench\hd_swings\seg_p3",
+         "--out", "$bench\club4b_all", "--keep", "$bench\hd_swings\keep.jsonl", "--progress", "$bench\progress\club4b.json") "club4b.log"
+}
+
 Set-Content "$bench\jobs.done" (Get-Date -Format s); Log "== all done"

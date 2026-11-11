@@ -1,4 +1,4 @@
-# claude/preflight @ 5263fd9
+# claude/preflight @ 9038ca6
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

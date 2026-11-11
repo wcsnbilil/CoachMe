@@ -57,14 +57,65 @@ jobs:
             grep -E "SwingPathParityTests.*(passed|failed|skipped)" swift-test.log | tail -2
           } | tee -a "$GITHUB_STEP_SUMMARY" || true
 
+  e2e-fixtures:
+    name: 端到端视频（格式矩阵）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: ffmpeg
+        run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - name: 从仓库里的测试片段生成格式矩阵
+        run: bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
+      # TODO(真实片段)：Niko 的片段放在私有仓库后，在这里用 secrets.FIXTURES_TOKEN 拉取到 e2e-videos/，
+      # 并对每段再跑一次 make_variants.sh 生成 H.264 版本。公开仓库不放视频。
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e2e-videos
+          path: e2e-videos/
+          retention-days: 7
+
+  e2e-python:
+    name: 端到端 Python 参照（MediaPipe + SwingNet + 路径判定）
+    needs: e2e-fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-videos
+          path: e2e-videos
+      - name: 依赖和模型
+        run: |
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
+          bash tools/download-model.sh heavy
+      - name: Python 整条链路
+        run: |
+          args=()
+          for f in e2e-videos/*.mp4 e2e-videos/*.mov; do [ -f "$f" ] && args+=(--video "$f"); done
+          python tools/faults/run_path.py "${args[@]}" --out e2e-python
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e2e-python
+          path: e2e-python/results.json
+
   app:
     name: App 编译 + 模拟器测试（不签名）
+    needs: e2e-fixtures
     runs-on: macos-15
     permissions:
       contents: write   # 只用来把截图推到 ci-screenshots 分支
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-videos
+          path: e2e-videos
       - name: 安装 XcodeGen
         run: brew install xcodegen
       - name: 下载 MediaPipe 模型
@@ -88,6 +139,8 @@ jobs:
           set -o pipefail
           mkdir -p "$PWD/screenshots"
           TEST_RUNNER_COACHME_SCREENSHOT_DIR="$PWD/screenshots" \
+          TEST_RUNNER_COACHME_E2E_DIR="$PWD/e2e-videos" \
+          TEST_RUNNER_COACHME_E2E_OUT="$PWD/e2e-app" \
           xcodebuild test \
             -workspace CoachMe.xcworkspace -scheme CoachMe \
             -destination "id=$SIM" \
@@ -102,6 +155,13 @@ jobs:
             grep -E "Executed [0-9]+ tests" xcodebuild.log | tail -1
             grep -E "Test Case .*failed" xcodebuild.log | head -20
           } | tee -a "$GITHUB_STEP_SUMMARY" || true
+      - name: 上传 App 端到端结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-app
+          path: e2e-app/
+          if-no-files-found: warn
       - name: 截图推到 ci-screenshots 分支（不用下载 zip，手机上就能看）
         if: always() && hashFiles('screenshots/*.png') != ''
         env:
@@ -143,3 +203,25 @@ jobs:
           path: |
             xcodebuild.log
             TestResults.xcresult
+
+  e2e-report:
+    name: 端到端对比（App vs Python）
+    needs: [app, e2e-python]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-app
+          path: e2e-app
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-python
+          path: e2e-python
+        continue-on-error: true
+      - name: 写入 job summary
+        run: |
+          set -o pipefail
+          python3 tools/e2e/compare.py e2e-app e2e-python/results.json | tee -a "$GITHUB_STEP_SUMMARY"

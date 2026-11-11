@@ -1,0 +1,76 @@
+"""Compare App (simulator) and Python end-to-end results on the same clips.
+
+  python tools/e2e/compare.py <app json dir> <python results.json> [--offset-tol 0.05]
+
+Writes a Markdown report to stdout (CI appends it to the job summary). The
+whole chain is compared: verdict first, then offset and phase frames. MediaPipe
+differs between iOS and Python, so differences are listed, not forced to zero.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ZH = {"路径在职业范围内": "withinProRange", "外下过度": "overTheTop", "内下过度": "tooInside", "无法判断": "cannotJudge"}
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("app_dir", type=Path)
+    p.add_argument("python_results", type=Path)
+    p.add_argument("--offset-tol", type=float, default=0.05)
+    p.add_argument("--phase-tol", type=int, default=3, help="frames")
+    a = p.parse_args()
+    app = {f.stem: json.loads(f.read_text()) for f in sorted(a.app_dir.glob("*.json"))}
+    py = {r["name"]: r for r in json.loads(a.python_results.read_text(encoding="utf-8"))} if a.python_results.exists() else {}
+
+    out = ["## 真实视频端到端（App 模拟器 vs Python）", "",
+           "模拟器上的耗时和内存只作参考，真机会不同。合成格式（`-dup`）是重复帧，不是真实慢动作。", "",
+           "| 片段 | 格式 | 帧数 | App 结论 | Python 结论 | 一致 | App offset | Py offset | App 阶段帧 | Py 阶段帧 | 耗时 ms | 峰值内存 MB |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    diffs, agree, total = [], 0, 0
+    for name in sorted(set(app) | set(py)):
+        ar, pr = app.get(name), py.get(name)
+        fmt = name.split("__", 1)[1] if "__" in name else ""
+        av = ar["verdict"] if ar else "—"
+        pv = ZH.get(pr["verdict"], pr["verdict"]) if pr else "—"
+        ao, po = (ar or {}).get("offset"), (pr or {}).get("offset")
+        aph, pph = (ar or {}).get("phases"), (pr or {}).get("phases")
+        same = ar is not None and pr is not None and av == pv
+        if ar and pr:
+            total += 1
+            agree += same
+        notes = []
+        if not ar:
+            notes.append("App 没有结果")
+        if not pr:
+            notes.append("Python 没有结果")
+        if ar and ar.get("error"):
+            notes.append(f"App 出错：{ar['error']}")
+        if ar and pr and av != pv:
+            notes.append(f"结论不同：App {av}（{ar.get('refusal') or ''}）/ Python {pv}（{pr.get('reason', '')}）")
+        if ao is not None and po is not None and abs(ao - po) > a.offset_tol:
+            notes.append(f"offset 差 {ao - po:+.3f}")
+        if aph and pph and max(abs(x - y) for x, y in zip(aph, pph)) > a.phase_tol:
+            notes.append(f"阶段帧差 App {aph} / Py {list(pph)}")
+        if notes:
+            diffs.append(f"- `{name}`：" + "；".join(notes))
+        video = (ar or {}).get("video") or {}
+        frames = (ar or {}).get("frames", "—")
+        f = lambda v: "—" if v is None else f"{v:+.3f}"
+        out.append(f"| `{name.split('__')[0]}` | {fmt} {video.get('codec', '')} {video.get('width', '')}×{video.get('height', '')} "
+                   f"{video.get('frameRate', 0):.0f}fps | {frames} | {av} | {pv} | {'✅' if same else '❌'} | {f(ao)} | {f(po)} | "
+                   f"{aph or '—'} | {list(pph) if pph else '—'} | {(ar or {}).get('analysisMs', '—')} | "
+                   f"{(ar or {}).get('peakMemoryMB', 0):.0f} |")
+    out += ["", f"**结论一致 {agree}/{total}**（offset 容差 ±{a.offset_tol}，阶段帧容差 ±{a.phase_tol}）", ""]
+    out += ["### 差异", ""] + (diffs or ["无"])
+    print("\n".join(out))
+    missing_app = [n for n in py if n not in app]
+    errors = [n for n, r in app.items() if r.get("error")]
+    sys.exit(1 if errors or missing_app else 0)
+
+
+if __name__ == "__main__":
+    main()

@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - tools/robustness/**
+      - '!tools/robustness/window_*.py'  # 裁切窗口一致性有自己的工作流（window-crop.yml）
       - tools/faults/run_path.py
       - tools/faults/path_fault.py
       - .github/workflows/robustness.yml

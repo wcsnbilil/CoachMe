@@ -140,4 +140,5 @@ def early_setup(landmarks: np.ndarray, address: int, top: int, impact: int, min_
         body, torso = b2, t2
     cam = path_fault.camera_check(body, torso)
     widest = max((v for v in cam.values() if np.isfinite(v)), default=np.nan)
-    return "机位偏离目标线（肩/髋线太宽）" if widest > path_fault.MAX_LINE_WIDTH else None
+    # same cut as analyze(): just past the limit is judged with "camera slightly off", not refused
+    return "机位偏离目标线（肩/髋线太宽）" if widest > path_fault.MAX_LINE_WIDTH * (1 + path_fault.LOW_CAMERA_MARGIN) else None

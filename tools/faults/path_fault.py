@@ -91,6 +91,21 @@ MAX_DOWNSWING_GAP = 0.25
 # already had a verdict changed (GolfDB 400, 2026-11-08).
 MIN_FILLED_GAP = 3
 
+# Soft wording near the limits (tools/robustness, PR #16: GolfDB 400 under re-encode / scale /
+# crop / brightness, hard flips 7.5% -> 2.0%, soft wording 13.5%). The verdict rules above stay;
+# these only decide how sure the report sounds, and keep a result that sits on a limit from
+# flipping between an answer and a refusal.
+# Offset this close to the outside / inside threshold (torso lengths): "near the boundary".
+NEAR_BOUNDARY = 0.05
+# Downswing gap within this many frames of its limit, either side: "tracking not steady".
+# A share of the downswing, so 60/120/240 fps clips get the same margin in time: 1 frame of the
+# median real-time GolfDB downswing (8 frames at 30 fps), and never less than 1 frame.
+LOW_TRACKING_FRACTION = 1 / 8
+LOW_TRACKING_MIN_FRAMES = 1.0
+# Shoulder / hip line within this share of MAX_LINE_WIDTH, either side: "camera slightly off".
+LOW_CAMERA_MARGIN = 0.05
+CONFIDENCE = ("normal", "near_boundary", "low_tracking", "low_camera")
+
 
 def _odd(n: float, lo: int = 3) -> int:
     k = max(lo, int(round(n)))
@@ -346,12 +361,14 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     jumped = int((seen & ~ok)[span].sum())
     # How close each tracking gate came to refusing (diagnostics only; the rules are the lines below).
     gap, gap_allowed = longest_gap(ok[top:impact + 1]), max(MIN_FILLED_GAP, MAX_DOWNSWING_GAP * (impact - top))
+    gap_margin = max(LOW_TRACKING_MIN_FRAMES, LOW_TRACKING_FRACTION * (impact - top))
     gates = {"ok_frac": round(float(ok[span].mean()), 3), "downswing_gap": int(gap),
              "downswing_gap_allowed": round(float(gap_allowed), 2)}
     if ok[span].mean() < 0.7:
         return {"verdict": "无法判断", "reason": "关键点跳动太多", "jump_frames": jumped, "gates": gates}
-    if gap > gap_allowed:
+    if gap > gap_allowed + gap_margin:
         return {"verdict": "无法判断", "reason": "下杆有一段双手追踪丢失或乱跳", "jump_frames": jumped, "gates": gates}
+    low_tracking = gap > gap_allowed - gap_margin  # within the margin on either side of the limit
     hands = _smooth(raw, k)
 
     given_address = address
@@ -367,9 +384,11 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
 
     cam = camera_check(body, torso)
     widest = max((v for v in cam.values() if np.isfinite(v)), default=np.nan)
-    if widest > max_line_width:
+    if widest > max_line_width * (1 + LOW_CAMERA_MARGIN):
         return {"verdict": "无法判断", "reason": "机位偏离目标线（肩/髋线太宽）", "camera": cam,
                 "torso_px": round(torso, 1), "address_used": int(address), "gates": gates}
+
+    low_camera = bool(widest > max_line_width * (1 - LOW_CAMERA_MARGIN))
 
     side, votes = detect_side(body, hands, address, top)
     if side == 0:
@@ -415,6 +434,9 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     offset = float(np.median([d[1] for d in down]))
     back = float(np.median(up)) if up else None
     verdict = classify(offset, cal)
+    confidence = ("low_tracking" if low_tracking else "low_camera" if low_camera
+                  else "near_boundary" if min(abs(offset - cal["outside"]), abs(offset - cal["inside"])) <= NEAR_BOUNDARY
+                  else "normal")
     caution = []
     # Only worth saying when it changes the answer: on GolfDB 12% of pro swings
     # sit wholly on one side, mostly a style, not a camera problem.
@@ -423,6 +445,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
         caution.append("上下杆整条轨迹都在参考线同一侧，可能是机位或俯拍让参考线偏了")
     return {
         "verdict": verdict,
+        "confidence": confidence,  # how sure the report sounds (CONFIDENCE); the verdict is unchanged
         "offset": round(offset, 3),  # downswing hands vs the address line: + = outside (over the top)
         "backswing_offset": round(back, 3) if back is not None else None,  # + = takeaway outside, - = inside
         "loop": round(float(np.median(loop)), 3) if loop else None,  # v2 measure: downswing minus backswing

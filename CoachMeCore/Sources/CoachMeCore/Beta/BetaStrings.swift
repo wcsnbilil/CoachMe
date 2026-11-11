@@ -96,6 +96,41 @@ public struct BetaStrings: Sendable {
             return t("这段视频无法可靠判断。", "This video can't be judged reliably.")
         }
     }
+    // MARK: Soft wording (SwingPathAnalyzer.Confidence)
+    /// Shown instead of the verdict title when the offset sits next to a threshold.
+    public func nearBoundaryTitle(outside: Bool) -> String {
+        outside ? t("接近外下边界", "Close to over the top") : t("接近内下边界", "Close to too far inside")
+    }
+    public func nearBoundaryNote(outside: Bool) -> String {
+        outside
+            ? t("这一杆手的路线接近外下的边界，结果可能来回变。建议多拍几杆，看多数结果。",
+                "This swing's hand path is close to the over-the-top line, so the result may go either way. Film a few more swings and go by what most of them show.")
+            : t("这一杆手的路线接近内下的边界，结果可能来回变。建议多拍几杆，看多数结果。",
+                "This swing's hand path is close to the too-far-inside line, so the result may go either way. Film a few more swings and go by what most of them show.")
+    }
+    public var lowConfidenceTitle: String { t("结果仅供参考", "Treat this result as a rough guide") }
+    public var lowTrackingNote: String {
+        t("这段视频下杆时手的追踪不太稳定，下面的结果仅供参考。可以换个光线、穿和背景对比明显的衣服再拍一次。",
+          "Hand tracking wasn't steady during the downswing in this video, so treat the result below as a rough guide. Try again in different light, wearing clothes that stand out from the background.")
+    }
+    public var lowCameraNote: String {
+        t("机位离后方正中稍有偏差，下面的结果仅供参考。下次把手机放在你身后、对准目标再拍。",
+          "The camera is slightly off from directly behind you, so treat the result below as a rough guide. Next time, put the phone right behind you, pointing at the target.")
+    }
+    /// The headline the report and the records list show: near_boundary replaces the verdict title.
+    public func headline(_ v: SwingPathAnalyzer.Verdict, confidence: SwingPathAnalyzer.Confidence?, nearOutside: Bool) -> String {
+        v != .cannotJudge && confidence == .nearBoundary ? nearBoundaryTitle(outside: nearOutside) : verdictTitle(v)
+    }
+    /// The note for a soft state, nil for normal. Soft states get this filming advice, never a practice tip.
+    public func confidenceNote(_ c: SwingPathAnalyzer.Confidence?, nearOutside: Bool) -> String? {
+        switch c {
+        case .nearBoundary: return nearBoundaryNote(outside: nearOutside)
+        case .lowTracking: return lowTrackingNote
+        case .lowCamera: return lowCameraNote
+        case .normal, nil: return nil
+        }
+    }
+
     public var evidenceTitle: String { t("画面依据", "What we measured") }
     public var legendHands: String { t("下杆双手路线", "Hands on the downswing") }
     public var legendRange: String { t("职业球员范围", "Pro range") }

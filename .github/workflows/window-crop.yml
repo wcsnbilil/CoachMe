@@ -1,4 +1,4 @@
-# 裁出单杆窗口再分析 vs 整段分析（tools/robustness/window_crop.py、window_report.py）：GolfDB 沿目标线前 400 段，标注阶段。
+# 裁出单杆窗口再分析 vs 整段分析（tools/window/window_crop.py、window_report.py）：GolfDB 沿目标线前 400 段，标注阶段。
 # 先整段跑一次姿态（关键点只放在本次运行的 Actions 缓存里给后面的 job 用，不上传成 artifact），再按各种窗口裁切重跑。
 # 只上传 results.json（数值和结论）；GolfDB 视频只在运行时下载、走缓存，不提交、不上传。
 name: 裁切窗口一致性
@@ -6,8 +6,8 @@ name: 裁切窗口一致性
 on:
   pull_request:
     paths:
-      - tools/robustness/window_crop.py
-      - tools/robustness/window_report.py
+      - tools/window/window_crop.py
+      - tools/window/window_report.py
       - tools/split/swing_split.py
       - .github/workflows/window-crop.yml
   workflow_dispatch:
@@ -57,7 +57,7 @@ jobs:
           bash tools/download-model.sh heavy
       - name: 整段姿态 + 判定
         run: |
-          python -W ignore tools/robustness/window_crop.py --golfdb golfdb/data --limit "$LIMIT" --variant whole --out out | tail -3
+          python -W ignore tools/window/window_crop.py --golfdb golfdb/data --limit "$LIMIT" --variant whole --out out | tail -3
           mkdir -p res && cp out/results.json res/whole.json
       - name: 关键点留给本次运行的其他 job（Actions 缓存，不是 artifact）
         uses: actions/cache/save@v4
@@ -97,7 +97,7 @@ jobs:
           fail-on-cache-miss: true
       - name: window_crop --variant ${{ matrix.variant }}
         run: |
-          python -W ignore tools/robustness/window_crop.py --golfdb golfdb/data --limit "$LIMIT" \
+          python -W ignore tools/window/window_crop.py --golfdb golfdb/data --limit "$LIMIT" \
             --variant "${{ matrix.variant }}" --whole out/landmarks --out cut | tail -3
           mkdir -p res && cp cut/results.json "res/${{ matrix.variant }}.json"
       - uses: actions/upload-artifact@v4
@@ -125,6 +125,6 @@ jobs:
         run: |
           pip install --quiet numpy
           ls res
-          python tools/robustness/window_report.py res/whole.json \
+          python tools/window/window_report.py res/whole.json \
             res/joined.json res/app.json res/split.json res/lead0.5.json res/lead0.25.json res/lead0.json \
             "res/lead0+warm15.json" "res/lead0+warm30.json" | tee -a "$GITHUB_STEP_SUMMARY"

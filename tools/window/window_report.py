@@ -1,6 +1,6 @@
 """Report for window_crop.py: how often cutting the swing out of the clip changes what the user reads.
 
-  python tools/robustness/window_report.py whole.json app.json [split.json lead0.5.json ...] [--title ...]
+  python tools/window/window_report.py whole.json app.json [split.json lead0.5.json ...] [--title ...]
 
 For each variant vs the whole clip: flips over all clips and over the clips that were really cut,
 split into judged<->judged and judged<->refused, plus the hard flips as the app now words them

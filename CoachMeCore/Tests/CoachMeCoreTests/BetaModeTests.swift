@@ -162,6 +162,26 @@ final class BetaModeTests: XCTestCase {
         XCTAssertTrue(RefusalGuidance(refusal: .wristsNotVisible, language: .zh).reason.contains("手腕可见帧太少"))
     }
 
+    /// The hand path can look clean while the club comes over the top (Niko's clips), so no beta
+    /// text may tell the user the swing is fine.
+    func testBetaWordingNeverSaysTheSwingIsFine() {
+        let banned = ["范围内", "没问题", "正常", "within range", "within the range", "no problem", "normal", "nothing wrong"]
+        for lang in [BetaLanguage.zh, .en] {
+            let s = BetaStrings(lang)
+            var texts = [s.evidenceNote, s.uncertainty, s.reportTitle]
+            for v in [SwingPathAnalyzer.Verdict.withinProRange, .overTheTop, .tooInside, .cannotJudge] {
+                texts += [s.verdictTitle(v), s.verdictSummary(v, leftHanded: false),
+                          s.verdictSummary(v, leftHanded: true), s.practicePlaceholder(v)]
+            }
+            for text in texts {
+                for word in banned {
+                    XCTAssertFalse(text.lowercased().contains(word), "\(lang)：「\(text)」含有「\(word)」")
+                }
+            }
+        }
+        XCTAssertTrue(BetaStrings(.zh).verdictSummary(.withinProRange, leftHanded: false).contains("看不到球杆的路线"))
+    }
+
     func testStringsDifferByLanguageAndAreNonEmpty() {
         let zh = BetaStrings(.zh), en = BetaStrings(.en)
         XCTAssertEqual(zh.guideItems.count, 5)

@@ -1,4 +1,4 @@
-# claude/robustness @ 90db76a
+# claude/robustness @ 0d3612d
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

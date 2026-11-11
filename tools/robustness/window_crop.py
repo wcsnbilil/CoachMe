@@ -15,6 +15,13 @@ thing on GolfDB: the whole clip vs a cut, same pixels, same labelled phases (shi
                          not analysed): the fix to try if cuts flip too often. Parts combine with "+":
                          lead0.25+warm30 = cut 0.25 s before address, tracker starts 30 frames earlier
 
+  --variant joined       the app's real path: GolfDB clips (same speed: real-time or slow motion)
+                         joined 4 at a time into one > 8 s video, each clip held still for 1.5-3 s
+                         before and 1-2 s after (a range session with pauses). A 15 fps scout pass
+                         over the whole joined video, swing_split.find_swings + windows(single=True)
+                         as BetaAnalysisRunner.swingWindows, then a fresh tracker on each window.
+                         Each swing is compared with its own clip analysed whole.
+
 A clip whose window is the whole clip keeps the whole-clip landmarks (MediaPipe is deterministic on
 the same frames, PR #15), so only real cuts are re-run. For every cut clip the per-frame distance
 between the cut's and the whole clip's hands / shoulders (torso lengths) is kept, to see whether the
@@ -92,6 +99,68 @@ def torso_px(lm: np.ndarray, f: int) -> float | None:
     return d if np.isfinite(d) and d > 1 else None
 
 
+SCOUT_FPS = 15.0  # BetaAnalysisRunner.scoutFramesPerSecond
+SPLIT_MIN_S = 8.0  # BetaAnalysisRunner.splitMinimumSeconds
+
+
+def joined_results(jobs, model: Path, whole_dir: Path | None, group: int = 4, seed: int = 7) -> list[dict]:
+    import random
+    rng = random.Random(seed)
+    out = []
+    for slow in (0, 1):
+        clips = [j for j in jobs if j[3].get("slow") == slow and j[1].exists()]
+        for g in range(0, len(clips), group):
+            part = clips[g:g + group]
+            frames, spans = [], []
+            fps = None
+            for name, path, phases, extra in part:
+                fr, f = read_video(path)
+                fps = fps or f
+                pre, post = int(rng.uniform(1.5, 3.0) * fps), int(rng.uniform(1.0, 2.0) * fps)
+                off = len(frames) + pre
+                frames += [fr[0]] * pre + fr + [fr[-1]] * post
+                spans.append((name, phases, extra, off, len(fr)))
+            n = len(frames)
+            step = max(1, int(round(fps / SCOUT_FPS)))
+            sfps = fps / step
+            scout = pose_landmarks(frames[::step], sfps, model)
+            found = swing_split.find_swings(scout, sfps)
+            wins = swing_split.windows(found, len(scout), sfps, single=True)
+            # scout frames -> video frames, like swingWindows (timestamps)
+            vwins = [(s0 * step, min(n, e0 * step)) for s0, e0 in wins]
+            info = dict(joined_frames=n, joined_seconds=round(n / fps, 1), swings_found=len(found),
+                        swings_joined=len(part))
+            for name, phases, extra, off, length in spans:
+                ad, top, imp = (p + off for p in phases)
+                # the window whose swing top is nearest this clip's labelled top
+                best = None
+                for (s0, e0), sw in zip(vwins, found):
+                    d = abs(sw[1] * step - top)
+                    if s0 <= ad and imp < e0 and (best is None or d < best[0]):
+                        best = (d, s0, e0)
+                if n / fps <= SPLIT_MIN_S:
+                    r = {"verdict": "skip", "reason": "拼起来不到 8 秒，App 不会切"}
+                elif best is None:
+                    r = {"verdict": "skip", "reason": "切分没有找到包住这一杆的窗口"}
+                else:
+                    _, s0, e0 = best
+                    lm = pose_landmarks(frames[s0:e0], fps, model)
+                    r = analyze(lm, ad - s0, top - s0, imp - s0)
+                    r.update(window=[s0 - off, e0 - off], cut=True)
+                    if whole_dir and (whole_dir / f"{name}.npy").exists():
+                        wl = np.load(whole_dir / f"{name}.npy").astype(float)
+                        lo, hi = max(s0, off), min(e0, off + length)
+                        r["warm"] = [None] * (lo - s0) + warm_diff(lm[lo - s0:hi - s0], wl[lo - off:hi - off])
+                        r["torso_px_whole"] = torso_px(wl, phases[0])
+                r = {kk: v for kk, v in r.items() if kk != "hands"}
+                r.update(name=name, phases=list(phases), perturb="joined", frames=length, fps=round(fps, 3),
+                         **info, **extra)
+                out.append(r)
+                print(f"joined {name}: {r['verdict']} {r.get('offset', '')} {r.get('reason', '')} "
+                      f"window={r.get('window')} found={len(found)}/{len(part)}", flush=True)
+    return out
+
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -109,6 +178,9 @@ def main():
         lmdir.mkdir(exist_ok=True)
     results = []
     jobs = list(golfdb_jobs(a.golfdb, a.limit))
+    if a.variant == "joined":
+        results = joined_results(jobs, a.model, a.whole)
+        jobs = []
     for k, (name, path, phases, extra) in enumerate(jobs, 1):
         if not path.exists():
             continue

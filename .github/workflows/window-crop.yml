@@ -78,9 +78,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # joined = GolfDB 片段 4 段一组拼成超过 8 秒的视频，走 App 的真实路径（15 fps 粗扫 → 切分 → 窗口）；
         # app = App 的窗口（准备前 1 秒、击球后 1.5 秒）；split = 切分算法找到的那一杆的窗口；
         # leadX = 准备前只留 X 秒（压力测试）；+warmN = 追踪器多看 N 帧预热、不参与判定（候选修法）
-        variant: [app, split, lead0.5, lead0.25, lead0, lead0+warm15, lead0+warm30]
+        variant: [joined, app, split, lead0.5, lead0.25, lead0, lead0+warm15, lead0+warm30]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -125,5 +126,5 @@ jobs:
           pip install --quiet numpy
           ls res
           python tools/robustness/window_report.py res/whole.json \
-            res/app.json res/split.json res/lead0.5.json res/lead0.25.json res/lead0.json \
+            res/joined.json res/app.json res/split.json res/lead0.5.json res/lead0.25.json res/lead0.json \
             "res/lead0+warm15.json" "res/lead0+warm30.json" | tee -a "$GITHUB_STEP_SUMMARY"

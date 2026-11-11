@@ -41,7 +41,8 @@ def main():
     base = {r["name"]: r for r in json.loads(a.whole.read_text(encoding="utf-8"))}
     out = [f"## {a.title}", "",
            f"基线（整段）{len(base)} 段，其中拒判 {sum(r['verdict'] == REFUSED for r in base.values())}。"
-           f"门槛：裁切造成的硬翻转 ≤ {GOAL:.0%}。硬翻转 = 两次都是确定的说法（结论或拒判，不含软说法）且不同。", "",
+           f"门槛：裁切造成的硬翻转 ≤ {GOAL:.0%}，以 joined（拼成超过 8 秒的多杆视频，走 App 的切分路径）和 app 两组为准；"
+           "lead*/warm* 是压力测试，只用来找根因。硬翻转 = 两次都是确定的说法（结论或拒判，不含软说法）且不同。", "",
            "| 窗口 | 比较 | 真的裁了 | 判定之间 | 给结论↔拒判 | 合计 | 硬翻转（现在的说法） | 只看裁了的：合计 | 只看裁了的：硬翻转 |",
            "|---|---|---|---|---|---|---|---|---|"]
     flipped, warm = [], {}
@@ -73,8 +74,10 @@ def main():
                 ch += h
             if changed or h:
                 flipped.append((v, r, b, h))
-        skipped = sum(1 for r in json.loads(p.read_text(encoding="utf-8")) if r["verdict"] == "skip")
-        out.append(f"| {v} | {n}{f'（另 {skipped} 段窗口没包住标注挥杆）' if skipped else ''} | {len(cut)} | {pct(jj, n)} | "
+        from collections import Counter
+        skipped = Counter(r.get("reason", "") for r in json.loads(p.read_text(encoding="utf-8")) if r["verdict"] == "skip")
+        skip_txt = "；".join(f"{k} {c}" for k, c in skipped.items())
+        out.append(f"| {v} | {n}{f'（跳过：{skip_txt}）' if skipped else ''} | {len(cut)} | {pct(jj, n)} | "
                    f"{pct(jr, n)} | {pct(jj + jr, n)} | **{pct(hard, n)}** | {pct(cj, len(cut))} | {pct(ch, len(cut))} |")
         for r in cut:
             t = r.get("torso_px_whole") or base[r["name"]].get("torso_px")

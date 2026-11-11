@@ -84,8 +84,28 @@ jobs:
       - uses: actions/checkout@v4
       - name: ffmpeg
         run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - name: ffmpeg 版本
+        id: ff
+        run: |
+          echo "cores=$(nproc) $(grep -m1 "model name" /proc/cpuinfo)"; ffmpeg -version | head -1
+          echo "ver=$(ffmpeg -version | head -1 | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
+      # 同一份脚本 + 同一个源片段 + 同一个 ffmpeg 版本 → 直接用上次转好的文件，每次跑的输入逐字节相同。
+      # 不能每次重转：同一 ffmpeg 版本在不同 CPU 的 runner 上（EPYC 7763 / 9V74 / Xeon 8370C）转出的竖拍片段不一样，
+      # 单线程 + bitexact 缩放也消不掉；而这几段的结论对压缩的细微差别很敏感。
+      - name: 转好的视频（缓存）
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: e2e-videos
+          key: e2e-videos-${{ hashFiles('tools/e2e/make_variants.sh', 'CoachMeTests/Fixtures/swing3s.mp4') }}-ffmpeg-${{ steps.ff.outputs.ver }}
       - name: 从仓库里的测试片段生成格式矩阵
-        run: bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
+      - name: 视频哈希
+        run: |
+          (cd e2e-videos && sha256sum * | sed 's/^/SHA /')
+          { echo "### 端到端视频哈希（缓存命中：${{ steps.cache.outputs.cache-hit == 'true' && '是' || '否，新转' }}）"; echo '```'; (cd e2e-videos && sha256sum * | cut -c1-12,65-); echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # TODO(真实片段)：Niko 的片段放在私有仓库后，在这里用 secrets.FIXTURES_TOKEN 拉取到 e2e-videos/，
       # 并对每段再跑一次 make_variants.sh 生成 H.264 版本。公开仓库不放视频。
       - uses: actions/upload-artifact@v4
@@ -162,12 +182,15 @@ jobs:
           TEST_RUNNER_COACHME_E2E_DIR="$PWD/e2e-videos" \
           TEST_RUNNER_COACHME_E2E_OUT="$PWD/e2e-app" \
           TEST_RUNNER_COACHME_E2E_DUMP_FRAMES="h264_portrait_30" \
+          TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" \
+          TEST_RUNNER_COACHME_DETERMINISM_RUNS=2 \
+          TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=0 \
           xcodebuild test \
             -workspace CoachMe.xcworkspace -scheme CoachMe \
             -destination "id=$SIM" \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            2>&1 | tee xcodebuild.log | grep -E "^E2E |error:|warning: .*CoachMe|Test Case .*(passed|failed|skipped)|Executed|\*\* (BUILD|TEST)"
+            2>&1 | tee xcodebuild.log | grep -E "^E2E |^DET .*run=|error:|warning: .*CoachMe|Test Case .*(passed|failed|skipped)|Executed|\*\* (BUILD|TEST)"
       - name: 测试统计
         if: always()
         run: |

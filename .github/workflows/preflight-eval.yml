@@ -1,0 +1,110 @@
+# 快速预检 vs 完整分析的拒判一致率（tools/preflight/preflight_eval.py），GolfDB 沿目标线前 400 段的关键点。
+# 不重跑 MediaPipe：App 关键点复用 golfdb-app run 42505130299，Python 关键点复用 run 42569334440，
+# SwingNet 自动阶段复用 run 42544083210 的 impact/results_swingnet.json。只下载标注表，不下载视频。
+name: 快速预检一致率
+
+on:
+  push:
+    branches: [claude/preflight]
+    paths:
+      - tools/preflight/**
+      - tools/faults/path_fault.py
+      - tools/split/swing_split.py
+      - .github/workflows/preflight-eval.yml
+  pull_request:
+    paths:
+      - tools/preflight/**
+      - tools/faults/path_fault.py
+      - tools/split/swing_split.py
+      - .github/workflows/preflight-eval.yml
+  workflow_dispatch:
+
+concurrency:
+  group: preflight-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  eval:
+    name: 预检一致率（${{ matrix.side }} 关键点）
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [App, Python]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: GolfDB 标注表
+        run: |
+          mkdir -p golfdb/data
+          curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+      - uses: actions/download-artifact@v4
+        with:
+          name: golfdb-python
+          path: .
+          run-id: 42544083210
+          github-token: ${{ github.token }}
+      - if: matrix.side == 'Python'
+        uses: actions/download-artifact@v4
+        with:
+          name: golfdb-python-landmarks
+          path: lm/landmarks
+          run-id: 42569334440
+          github-token: ${{ github.token }}
+      - if: matrix.side == 'App'
+        uses: actions/download-artifact@v4
+        with:
+          name: golfdb-app-landmarks
+          path: golfdb-app
+          run-id: 42505130299
+          github-token: ${{ github.token }}
+      - name: 关键点
+        run: |
+          pip install --quiet numpy pandas
+          if [ "${{ matrix.side }}" = App ]; then python tools/e2e/golfdb_app_metrics.py cache golfdb-app lm; fi
+          ls lm/landmarks | wc -l
+      - name: 预检 vs 完整分析
+        run: |
+          set -o pipefail
+          python -W ignore tools/preflight/preflight_eval.py --golfdb golfdb/data --swingnet impact/results_swingnet.json \
+            --landmarks ${{ matrix.side }}=lm/landmarks ${{ matrix.side == 'Python' && '--report-only' || '' }} | tee -a "$GITHUB_STEP_SUMMARY"
+
+  faceon:
+    name: 正面机位能否被快速检查拦下（GolfDB face-on，MediaPipe）
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: GolfDB（缓存）
+        uses: actions/cache@v4
+        with:
+          path: golfdb
+          key: golfdb-videos160-v1-${{ runner.os }}
+      - name: 下载 GolfDB（缓存未命中时；只在本次运行里用，不上传）
+        run: |
+          if [ ! -f golfdb/data/golfDB.pkl ]; then
+            pip3 install --quiet gdown
+            mkdir -p golfdb/data
+            python3 -m gdown 1uBwRxFxW04EqG87VCoX3l6vXeV5T5JYJ -O golfdb/videos_160.zip
+            unzip -q golfdb/videos_160.zip -d golfdb/data/
+            rm golfdb/videos_160.zip
+            curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+          fi
+      - name: 依赖和模型
+        run: |
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas
+          bash tools/download-model.sh heavy
+      - name: 正面片段
+        run: |
+          set -o pipefail
+          python -W ignore tools/preflight/faceon_eval.py --golfdb golfdb/data --limit 40 | tee -a "$GITHUB_STEP_SUMMARY"

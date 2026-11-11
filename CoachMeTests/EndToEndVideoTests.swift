@@ -30,6 +30,15 @@ final class EndToEndVideoTests: XCTestCase {
         var scoutMs: Int?
         var windowSeconds: [Double]?
         var phaseOffset: Int?
+        /// Retake checks (Preflight): the quick layer's answer ("ok" or its reason) and time; the set-up
+        /// rules at the top ("ok", a refusal, or nil when not reached) with the frame and time they ran at.
+        /// The run never stops early here, so the final verdict can be compared with both.
+        var quick: String?
+        var quickMs: Int?
+        var quickWidth: Double?
+        var early: String?
+        var earlyAtFrame: Int?
+        var earlyMs: Int?
     }
 
     /// Every layer of the chain, for tools/e2e/layers.py: decoded size and timestamps, per-frame
@@ -70,6 +79,8 @@ final class EndToEndVideoTests: XCTestCase {
             try data.write(to: out.appendingPathComponent(url.deletingPathExtension().lastPathComponent + ".json"))
             print("E2E \(r.name) frames=\(r.frames) swings=\(r.swingsFound.map(String.init) ?? "-") "
                   + "window=\(r.windowSeconds.map { "\($0)" } ?? "-") scoutMs=\(r.scoutMs.map(String.init) ?? "-") "
+                  + "quick=\(r.quick ?? "-")/\(r.quickMs.map(String.init) ?? "-")ms "
+                  + "early=\(r.early ?? "-")@\(r.earlyAtFrame.map(String.init) ?? "-")/\(r.earlyMs.map(String.init) ?? "-")ms "
                   + "verdict=\(r.verdict) refusal=\(r.refusal ?? "-") "
                   + "ms=\(r.analysisMs) peakMB=\(String(format: "%.0f", r.peakMemoryMB)) \(r.error ?? "")")
             XCTAssertNil(r.error, "\(r.name) 没跑通：\(r.error ?? "")")
@@ -88,10 +99,24 @@ final class EndToEndVideoTests: XCTestCase {
                                          phaseDetector: SwingNetPhaseDetector())
             // Same path as BetaAnalysisRunner.analyse: a long clip is cut down to its last swing first.
             let duration = try await asset.load(.duration).seconds
-            let selection = try await BetaAnalysisRunner.selectSwing(asset: asset, duration: duration)
-            let frames = try await analyzer.analyse(asset: asset, timeRange: selection?.range) { _ in }
-            let keyframes = await analyzer.keyframes
             let size = try await BetaAnalysisRunner.presentedSize(asset)
+            let quick = try await BetaAnalysisRunner.quickCheck(asset: asset, duration: duration, size: size)
+            let quickMs = Int(Date().timeIntervalSince(started) * 1000)
+            let selection = try await BetaAnalysisRunner.selectSwing(asset: asset, duration: duration)
+            let phased = try await analyzer.phases(asset: asset, timeRange: selection?.range) { _ in }
+            let early = BetaAnalysisRunner.EarlyCheck(phases: phased, size: size)
+            let probe = EarlyProbe()
+            let frames = try await analyzer.analyse(
+                asset: asset, timeRange: selection?.range,
+                knownKeyframes: phased.keyframes.isEmpty ? nil : phased.keyframes,
+                earlyStop: early.stop.map { stop in
+                    (stop.at, { frames in
+                        _ = stop.check(frames)
+                        probe.ran(at: frames.count, refused: early.refusal?.rawValue, ms: Int(Date().timeIntervalSince(started) * 1000))
+                        return false  // never stop here: the final verdict is compared with the early one
+                    })
+                }) { _ in }
+            let keyframes = await analyzer.keyframes
             let evidence = BetaAnalysisRunner.pathEvidence(frames: frames, keyframes: keyframes,
                                                            imageWidth: size.width, imageHeight: size.height)
             let ms = Int(Date().timeIntervalSince(started) * 1000)
@@ -122,13 +147,24 @@ final class EndToEndVideoTests: XCTestCase {
                               swingsFound: duration > BetaAnalysisRunner.splitMinimumSeconds ? (selection?.windows.count ?? 0) : nil,
                               swingChosen: selection.map { $0.chosen + 1 }, scoutMs: selection?.scoutMilliseconds,
                               windowSeconds: selection.map { [Self.r4($0.windows[$0.chosen].lowerBound), Self.r4($0.windows[$0.chosen].upperBound)] },
-                              phaseOffset: selection.flatMap { s in fps.map { Int((s.windows[s.chosen].lowerBound * Double($0)).rounded()) } })
+                              phaseOffset: selection.flatMap { s in fps.map { Int((s.windows[s.chosen].lowerBound * Double($0)).rounded()) } },
+                              quick: quick.reason?.rawValue ?? "ok", quickMs: quickMs, quickWidth: quick.width.map(Self.r4),
+                              early: probe.atFrame == nil ? nil : (probe.refusal ?? "ok"), earlyAtFrame: probe.atFrame,
+                              earlyMs: probe.ms)
         } catch {
             return ClipResult(name: name, video: nil, frames: 0, phases: nil, verdict: "error", refusal: nil, offset: nil,
                               analysisMs: Int(Date().timeIntervalSince(started) * 1000), peakMemoryMB: sampler.stop(),
                               error: String(describing: error))
         }
     }
+}
+
+/// What the early set-up check said during a run, and when.
+final class EarlyProbe: @unchecked Sendable {
+    private(set) var atFrame: Int?
+    private(set) var refusal: String?
+    private(set) var ms: Int?
+    func ran(at frame: Int, refused: String?, ms: Int) { atFrame = frame; refusal = refused; self.ms = ms }
 }
 
 extension EndToEndVideoTests {

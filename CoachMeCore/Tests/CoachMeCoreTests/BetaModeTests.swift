@@ -226,18 +226,19 @@ final class BetaModeTests: XCTestCase {
         XCTAssertNil(PathEvidence.swingNotFound(imageWidth: 1, imageHeight: 1).rangeBand())
     }
 
-    // MARK: Log schema 2
+    // MARK: Log schema 2 (video, timing, device) and 3 (swings found / chosen)
 
     func testExportCarriesVideoTimingRefusalAndDevice() throws {
         let t0 = Date(timeIntervalSince1970: 1_800_000_000)
         let video = VideoInfo(durationSeconds: 3.2104, width: 1080, height: 1920, frameRate: 239.87, codec: "HEVC")
         let rec = BetaRecord(createdAt: t0, appVersion: "0.1.0", build: "9", verdict: .cannotJudge,
                              refusal: .downswingGap, offset: nil, swingID: UUID(), evidence: nil,
-                             video: video, analysisMilliseconds: 8421, deviceModel: "iPhone15,2")
+                             video: video, analysisMilliseconds: 8421, deviceModel: "iPhone15,2",
+                             swingsFound: 4, swingChosen: 4)
         let data = try BetaExport(records: [rec], appVersion: "0.1.0", build: "9", deviceModel: "iPhone15,2", now: t0).jsonData()
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(Set(root.keys), Set(BetaExport.requiredRootKeys))
-        XCTAssertEqual(root["schema"] as? Int, 2)
+        XCTAssertEqual(root["schema"] as? Int, 3)
         XCTAssertEqual(root["deviceModel"] as? String, "iPhone15,2")
         let e = try XCTUnwrap((root["records"] as? [[String: Any]])?.first)
         XCTAssertEqual(Set(e.keys), Set(BetaExport.requiredEntryKeys))
@@ -248,6 +249,8 @@ final class BetaModeTests: XCTestCase {
         XCTAssertEqual(e["videoCodec"] as? String, "HEVC")
         XCTAssertEqual(e["videoOrientation"] as? String, "portrait")
         XCTAssertEqual(e["analysisMs"] as? Int, 8421)
+        XCTAssertEqual(e["swingsFound"] as? Int, 4)
+        XCTAssertEqual(e["swingChosen"] as? Int, 4)
         XCTAssertEqual(e["refusalReason"] as? String, "downswingGap")
         XCTAssertEqual(e["refusalCategory"] as? String, "trackingLost")
         XCTAssertEqual(e["deviceModel"] as? String, "iPhone15,2")
@@ -288,6 +291,7 @@ final class BetaModeTests: XCTestCase {
             XCTAssertEqual(Set(e.keys), Set(BetaExport.requiredEntryKeys))
             XCTAssertTrue(e["videoCodec"] is NSNull)
             XCTAssertTrue(e["analysisMs"] is NSNull)
+            XCTAssertTrue(e["swingsFound"] is NSNull)
             XCTAssertTrue(e["deviceModel"] is NSNull)
         }
         XCTAssertEqual(entries[1]["refusalCategory"] as? String, "cameraOffLine")

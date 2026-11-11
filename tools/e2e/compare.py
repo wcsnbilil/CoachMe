@@ -27,9 +27,9 @@ def main():
     py = {r["name"]: r for r in json.loads(a.python_results.read_text(encoding="utf-8"))} if a.python_results.exists() else {}
 
     out = ["## 真实视频端到端（App 模拟器 vs Python）", "",
-           "模拟器上的耗时和内存只作参考，真机会不同。合成格式（`-dup`）是重复帧，不是真实慢动作。", "",
-           "| 片段 | 格式 | 帧数 | App 结论 | Python 结论 | 一致 | App offset | Py offset | App 阶段帧 | Py 阶段帧 | 耗时 ms | 峰值内存 MB |",
-           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+           "模拟器上的耗时和内存只作参考，真机会不同。超过 8 秒的视频先低帧率找出每一杆，只完整分析最后一杆；耗时含这一步。合成格式（`-dup`）是重复帧，不是真实慢动作。", "",
+           "| 片段 | 格式 | 分析帧数 | 挥杆次数（选第几杆） | App 结论 | Python 结论 | 一致 | App offset | Py offset | App 阶段帧 | Py 阶段帧 | 耗时 ms | 峰值内存 MB |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     diffs, agree, total = [], 0, 0
     for name in sorted(set(app) | set(py)):
         ar, pr = app.get(name), py.get(name)
@@ -38,6 +38,11 @@ def main():
         pv = ZH.get(pr["verdict"], pr["verdict"]) if pr else "—"
         ao, po = (ar or {}).get("offset"), (pr or {}).get("offset")
         aph, pph = (ar or {}).get("phases"), (pr or {}).get("phases")
+        # a long clip is cut down to one swing first: phases are relative to that window's first frame
+        aoff, poff = (ar or {}).get("phaseOffset") or 0, (pr or {}).get("phaseOffset") or 0
+        aph = [x + aoff for x in aph] if aph else aph
+        pph = [x + poff for x in pph] if pph else pph
+        asw, psw = (ar or {}).get("swingsFound"), (pr or {}).get("swingsFound")
         same = ar is not None and pr is not None and av == pv
         if ar and pr:
             total += 1
@@ -55,13 +60,15 @@ def main():
             notes.append(f"offset 差 {ao - po:+.3f}")
         if aph and pph and max(abs(x - y) for x, y in zip(aph, pph)) > a.phase_tol:
             notes.append(f"阶段帧差 App {aph} / Py {list(pph)}")
+        if asw != psw:
+            notes.append(f"找到的挥杆次数不同：App {asw} / Python {psw}")
         if notes:
             diffs.append(f"- `{name}`：" + "；".join(notes))
         video = (ar or {}).get("video") or {}
         frames = (ar or {}).get("frames", "—")
         f = lambda v: "—" if v is None else f"{v:+.3f}"
         out.append(f"| `{name.split('__')[0]}` | {fmt} {video.get('codec', '')} {video.get('width', '')}×{video.get('height', '')} "
-                   f"{video.get('frameRate', 0):.0f}fps | {frames} | {av} | {pv} | {'✅' if same else '❌'} | {f(ao)} | {f(po)} | "
+                   f"{video.get('frameRate', 0):.0f}fps | {frames} | {'整段' if asw is None else f"{asw}（{(ar or {}).get('swingChosen') or '—'}）"} | {av} | {pv} | {'✅' if same else '❌'} | {f(ao)} | {f(po)} | "
                    f"{aph or '—'} | {list(pph) if pph else '—'} | {(ar or {}).get('analysisMs', '—')} | "
                    f"{(ar or {}).get('peakMemoryMB', 0):.0f} |")
     out += ["", f"**结论一致 {agree}/{total}**（offset 容差 ±{a.offset_tol}，阶段帧容差 ±{a.phase_tol}）", ""]

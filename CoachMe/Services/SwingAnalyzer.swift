@@ -166,6 +166,52 @@ actor SwingAnalyzer {
         return frames
     }
 
+    /// Quick first pass over a long clip: pose only (no SwingNet), small frames, about
+    /// `framesPerSecond` of them, enough for SwingSplitter to find where each swing is.
+    /// Timestamps are the video's own, so a window found here can be passed to `analyse`.
+    func scout(asset: AVAsset, framesPerSecond: Double = 15,
+               onProgress: @Sendable @escaping (AnalysisProgress) -> Void) async throws -> [PoseFrame] {
+        try detector.prepare()
+        detector.reset()
+        let reader = VideoAssetReader(asset: asset)
+        do { try await reader.start(timeRange: nil, maxDimension: 720) }
+        catch let error as VideoReaderError { throw AnalysisError.video(error) }
+        defer { reader.cancel() }
+        let duration = (try? await asset.load(.duration).seconds) ?? 0
+        let estimated = max(1, Int(duration * framesPerSecond))
+        // a few ms of slack: 30 fps timestamps are not exact multiples of 1/30
+        let step = 1 / framesPerSecond - 0.004
+        var frames: [PoseFrame] = []
+        var lastKept = -Double.infinity
+        var lastProgress = Date.distantPast
+        while true {
+            if Task.isCancelled { throw AnalysisError.cancelled }
+            let decoded: DecodedFrame?
+            do { decoded = try reader.nextFrame() }
+            catch let error as VideoReaderError { throw AnalysisError.video(error) }
+            guard let decoded else { break }
+            guard decoded.timestampSeconds - lastKept >= step else { continue }
+            lastKept = decoded.timestampSeconds
+            let result: PoseDetectionResult
+            do {
+                result = try autoreleasepool {
+                    try detector.detect(pixelBuffer: decoded.pixelBuffer,
+                                        timestampMilliseconds: Int((decoded.timestampSeconds * 1000).rounded()))
+                }
+            } catch let error as PoseDetectorError { throw AnalysisError.detector(error) }
+            frames.append(PoseFrame(timestampSeconds: decoded.timestampSeconds,
+                                    imageLandmarks: result.imageLandmarks,
+                                    worldLandmarks: result.worldLandmarks,
+                                    detectedPersonCount: result.personCount))
+            if Date().timeIntervalSince(lastProgress) >= 0.1 {
+                lastProgress = Date()
+                onProgress(AnalysisProgress(framesProcessed: frames.count, estimatedTotalFrames: estimated,
+                                            currentTimestampSeconds: decoded.timestampSeconds, stage: "正在找出每一次挥杆…"))
+            }
+        }
+        return frames
+    }
+
     private static func estimateFrameCount(asset: AVAsset,
                                            timeRange: CMTimeRange?,
                                            fallbackFPS: Float) async -> Int {

@@ -4,7 +4,7 @@
 
 For each video: OpenCV decode (size, fps, timestamps) -> MediaPipe heavy (VIDEO mode, one pose,
 timestamps i*1000/fps, exactly as run_path.py) -> SwingNet (NumPy port, 64-frame chunks) ->
-path_fault.analyze. Like the App, a SwingNet pass that finds nothing is rerun on a crop around the
+path_fault.analyze. Like the App, a clip over 8 s is first cut down to its last swing (select_swing), and a SwingNet pass that finds nothing is rerun on a crop around the
 person (tools/benchmark/person_crop.py). Writes <out>/<name>.layers.json (same keys as the App's) and <out>/results.json
 in run_path.py's format for compare.py.
 """
@@ -21,7 +21,41 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "faults"))
 sys.path.insert(0, str(ROOT / "tools" / "benchmark"))
+sys.path.insert(0, str(ROOT / "tools" / "split"))
 from path_fault import analyze  # noqa: E402
+import swing_split  # noqa: E402
+
+# Same numbers as BetaAnalysisRunner: clips longer than this are split first, on a ~15 fps sample.
+SPLIT_MIN_SECONDS = 8.0
+SCOUT_FPS = 15.0
+
+
+def select_swing(px: np.ndarray, stamps: list[float]):
+    """The App's first pass (BetaAnalysisRunner.selectSwing): sample ~15 fps, find the swings, take the
+    last one's padded window. -> (first frame, end frame, swings found, chosen) on the full-rate
+    frames, or None = analyse whole. The App runs MediaPipe again on the sampled small frames; here
+    the full-rate landmarks are sampled, which is the same motion."""
+    if not stamps or stamps[-1] <= SPLIT_MIN_SECONDS:
+        return None
+    keep, last = [], -np.inf
+    for i, t in enumerate(stamps):
+        if t - last >= 1 / SCOUT_FPS - 0.004:
+            keep.append(i)
+            last = t
+    if len(keep) < 10:
+        return None
+    t = np.array(stamps)[keep]
+    steps = np.diff(t)
+    steps = steps[steps > 0]
+    fps = 1 / float(np.median(steps)) if len(steps) else 30.0
+    swings = swing_split.find_swings(px[keep], fps)
+    wins = swing_split.windows(swings, len(keep), fps, single=True)
+    if not wins:
+        return None, len(swings)
+    a, b = wins[-1]
+    start, end = t[a], min(stamps[-1], t[min(b, len(keep)) - 1] + 1 / fps)
+    inside = [i for i, x in enumerate(stamps) if start - 1e-6 <= x <= end + 1e-6]
+    return (inside[0], inside[-1] + 1, len(wins), len(wins)), len(swings)
 
 
 def r4(v: float) -> float:
@@ -59,17 +93,18 @@ def pose(frames, fps, model: Path) -> list[list[list[float]]]:
     return out
 
 
-def swingnet(path: Path, landmarks):
-    """Main pass on the whole frame; when it finds no phases, the App's person-crop rerun."""
+def swingnet(path: Path, landmarks, lo: int = 0, hi: int | None = None):
+    """Main pass on the whole frame; when it finds no phases, the App's person-crop rerun.
+    lo:hi = the frames of the chosen swing (phases are relative to lo)."""
     from golfdb_eval import load_model, probabilities, read_frames
     from person_crop import estimate, phases_from_probs, read_frames_cropped
     model = load_model("numpy")
-    probs = probabilities(model, read_frames(path))
+    probs = probabilities(model, read_frames(path)[lo:hi])
     phases, crop = phases_from_probs(probs), None
     if phases is None:
-        crop = estimate(landmarks)
+        crop = estimate(landmarks[lo:hi])
         if crop is not None:
-            phases = phases_from_probs(probabilities(model, read_frames_cropped(path, crop)))
+            phases = phases_from_probs(probabilities(model, read_frames_cropped(path, crop)[lo:hi]))
     return [[r4(v) for v in row] for row in probs], phases, crop
 
 
@@ -94,19 +129,27 @@ def main():
         frames, fps, stamps = decode(v)
         h, w = frames[0].shape[:2]
         lms = pose(frames, fps, a.model)
-        probs, phases, crop = swingnet(v, lms)
-        layers = dict(name=v.stem, width=w, height=h, nominalFPS=fps, timestamps=[r4(t) for t in stamps],
-                      personCounts=[1 if f else 0 for f in lms], landmarks=lms, probabilities=probs, phases=phases,
-                      personCrop=crop)
+        px = pixels(lms, w, h)
+        sel = select_swing(px, stamps)
+        found = None
+        if sel is not None:
+            sel, found = sel
+        lo, hi = (sel[0], sel[1]) if sel else (0, len(frames))
+        probs, phases, crop = swingnet(v, lms, lo, hi)
+        layers = dict(name=v.stem, width=w, height=h, nominalFPS=fps, timestamps=[r4(t) for t in stamps[lo:hi]],
+                      personCounts=[1 if f else 0 for f in lms[lo:hi]], landmarks=lms[lo:hi], probabilities=probs,
+                      phases=phases, personCrop=crop)
         (a.out / f"{v.stem}.layers.json").write_text(json.dumps(layers), encoding="utf-8")
         if phases is None:
             r = {"verdict": "无法判断", "reason": "没有识别出挥杆阶段"}
         else:
-            r = analyze(pixels(lms, w, h), *phases)
+            r = analyze(px[lo:hi], *phases)
         r = {k: val for k, val in r.items() if k not in ("hands", "ref_line")}
-        r.update(name=v.stem, phases=phases)
+        r.update(name=v.stem, phases=phases, phaseOffset=lo, swingsFound=found,
+                 swingChosen=sel[3] if sel else None,
+                 windowSeconds=[r4(stamps[lo]), r4(stamps[hi - 1])] if sel else None)
         results.append(r)
-        print(f"{v.stem}: {w}x{h} {fps:.2f}fps {len(frames)} frames, phases {phases}"
+        print(f"{v.stem}: {w}x{h} {fps:.2f}fps {len(frames)} frames, swings {found}, window {lo}:{hi}, phases {phases}"
               f"{' (person crop)' if crop else ''}, {r['verdict']} {r.get('reason', '')}",
               flush=True)
     (a.out / "results.json").write_text(json.dumps(results, ensure_ascii=False, indent=1, default=float),

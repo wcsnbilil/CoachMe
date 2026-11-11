@@ -165,14 +165,24 @@ final class BetaModeTests: XCTestCase {
     /// The hand path can look clean while the club comes over the top (Niko's clips), so no beta
     /// text may tell the user the swing is fine.
     func testBetaWordingNeverSaysTheSwingIsFine() {
-        let banned = ["范围内", "没问题", "正常", "within range", "within the range", "no problem", "normal", "nothing wrong"]
+        let banned = ["范围内", "没问题", "正常", "within range", "within the range", "in range", "no problem", "normal", "nothing wrong"]
         for lang in [BetaLanguage.zh, .en] {
             let s = BetaStrings(lang)
             var texts = [s.evidenceNote, s.uncertainty, s.reportTitle]
             for v in [SwingPathAnalyzer.Verdict.withinProRange, .overTheTop, .tooInside, .cannotJudge] {
                 texts += [s.verdictTitle(v), s.verdictSummary(v, leftHanded: false),
                           s.verdictSummary(v, leftHanded: true), s.practicePlaceholder(v)]
+                // The three soft wordings (near boundary, low tracking, low camera) and every headline they produce.
+                for c in [SwingPathAnalyzer.Confidence?.none] + SwingPathAnalyzer.Confidence.allCases.map(Optional.some) {
+                    for outside in [true, false] {
+                        texts.append(s.headline(v, confidence: c, nearOutside: outside))
+                        if let note = s.confidenceNote(c, nearOutside: outside) { texts.append(note) }
+                    }
+                }
             }
+            texts += [s.nearBoundaryTitle(outside: true), s.nearBoundaryTitle(outside: false),
+                      s.nearBoundaryNote(outside: true), s.nearBoundaryNote(outside: false),
+                      s.lowConfidenceTitle, s.lowTrackingNote, s.lowCameraNote]
             for text in texts {
                 for word in banned {
                     XCTAssertFalse(text.lowercased().contains(word), "\(lang)：「\(text)」含有「\(word)」")
@@ -339,21 +349,6 @@ final class BetaModeTests: XCTestCase {
         XCTAssertEqual(zh.headline(.tooInside, confidence: .nearBoundary, nearOutside: false), "接近内下边界")
         XCTAssertEqual(zh.headline(.overTheTop, confidence: .lowTracking, nearOutside: true), zh.verdictTitle(.overTheTop))
         XCTAssertEqual(zh.headline(.cannotJudge, confidence: .nearBoundary, nearOutside: true), zh.verdictTitle(.cannotJudge))
-    }
-
-    /// The soft wording never reassures: no "in range", "no problem", "normal" in either language.
-    func testSoftWordingNeverSaysInRangeOrFine() {
-        let banned = ["范围内", "没问题", "正常", "within range", "in range", "no problem", "normal", "fine", "nothing wrong"]
-        for s in [BetaStrings(.zh), BetaStrings(.en)] {
-            let texts = [s.nearBoundaryTitle(outside: true), s.nearBoundaryTitle(outside: false),
-                         s.nearBoundaryNote(outside: true), s.nearBoundaryNote(outside: false),
-                         s.lowConfidenceTitle, s.lowTrackingNote, s.lowCameraNote]
-            for text in texts {
-                for word in banned {
-                    XCTAssertFalse(text.lowercased().contains(word), "软说法里不能出现「\(word)」：\(text)")
-                }
-            }
-        }
     }
 
     /// Soft states show filming advice, never a practice tip (the report hides the tip when isSoft).

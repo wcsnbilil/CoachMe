@@ -45,6 +45,19 @@ enum BetaMode {
 
     static var appVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?" }
     static var build: String { Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?" }
+
+    /// Hardware model identifier ("iPhone15,2"); on the simulator, the simulated model.
+    static var deviceModel: String {
+        if let sim = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"], !sim.isEmpty {
+            return "Simulator " + sim
+        }
+        var info = utsname()
+        uname(&info)
+        let machine = withUnsafeBytes(of: &info.machine) { raw in
+            String(decoding: raw.prefix { $0 != 0 }, as: UTF8.self)
+        }
+        return machine.isEmpty ? "unknown" : machine
+    }
 }
 
 /// Which root the app shows.

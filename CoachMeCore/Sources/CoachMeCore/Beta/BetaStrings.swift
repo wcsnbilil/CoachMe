@@ -67,7 +67,9 @@ public struct BetaStrings: Sendable {
     public var reportTitle: String { t("下杆路径", "Downswing path") }
     public func verdictTitle(_ v: SwingPathAnalyzer.Verdict) -> String {
         switch v {
-        case .withinProRange: return t("范围内", "Within range")
+        // Hands only: a club path fault can hide behind a clean hand path (Niko's two clips, 2026-11-08),
+        // so this verdict never says "within range" / "no problem" in the beta.
+        case .withinProRange: return t("未见明显外下或内下", "No clear over-the-top or inside")
         case .overTheTop:     return t("外下过度", "Over the top")
         case .tooInside:      return t("内下过度", "Too far inside")
         case .cannotJudge:    return t("无法判断", "Can't judge")
@@ -76,8 +78,8 @@ public struct BetaStrings: Sendable {
     public func verdictSummary(_ v: SwingPathAnalyzer.Verdict, leftHanded: Bool) -> String {
         switch v {
         case .withinProRange:
-            return t("下杆时双手的路线在职业球员的范围内。",
-                     "Your hands come down inside the range pro golfers use.")
+            return t("这一杆从手的路线上没看出明显外下或内下。注意：目前只看手，看不到球杆的路线，杆身外下可能看不出来。",
+                     "From the path of the hands, this swing shows no clear over-the-top or inside move. Note: only the hands are tracked, not the club, so an over-the-top club path may not show up.")
         case .overTheTop:
             return leftHanded
                 ? t("下杆时双手从外侧下来，这常和左曲或拉右球有关；球怎么飞还取决于杆面。",
@@ -133,8 +135,8 @@ public struct BetaStrings: Sendable {
     public var legendHands: String { t("下杆双手路线", "Hands on the downswing") }
     public var legendRange: String { t("职业球员范围", "Pro range") }
     public var legendReference: String { t("准备姿势参考线（手→肩）", "Address line (hands → shoulders)") }
-    public var evidenceNote: String { t("背景是下杆中段的画面。路线落在绿色带内 = 范围内；偏向球一侧 = 外下；偏向身体一侧 = 内下。",
-                                         "The background is mid-downswing. Inside the green band = within range; toward the ball = over the top; toward the body = too far inside.") }
+    public var evidenceNote: String { t("背景是下杆中段的画面。手的路线落在绿色带里 = 没看出明显偏差；偏向球一侧 = 外下；偏向身体一侧 = 内下。",
+                                         "The background is mid-downswing. Hands inside the green band = no clear fault seen; toward the ball = over the top; toward the body = too far inside.") }
     public var uncertainty: String { t("参照职业球员的路径范围，对业余球手的准确度正在测试中。",
                                         "Compared with the range pro golfers use. Accuracy for amateur golfers is still being tested.") }
     public var practiceTitle: String { t("练习建议", "Practice tip") }

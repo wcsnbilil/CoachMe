@@ -1,4 +1,4 @@
-# claude/soft-wording @ 992d9d5
+# claude/soft-wording @ 753b330
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

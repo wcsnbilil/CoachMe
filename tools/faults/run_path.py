@@ -47,6 +47,36 @@ def read_video(path: Path):
     return frames, fps
 
 
+PERTURBATIONS = ("none", "reencode", "scale0.9", "scale1.1", "crop2", "bright+5", "bright-5")
+
+
+def perturb(path: Path, frames, fps, kind: str):
+    """Slight changes a real user's clip goes through (re-export, other phone, other crop, other exposure).
+    Used by tools/robustness to measure how often the verdict flips; never in the app's own pipeline."""
+    if kind == "none":
+        return frames, fps
+    if kind == "reencode":  # same footage, different bitrate/encoder settings (one thread: reproducible)
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "re.mp4"
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(path), "-c:v", "libx264", "-preset", "medium",
+                            "-crf", "28", "-threads", "1", "-pix_fmt", "yuv420p", "-an", str(out)], check=True)
+            return read_video(out)[0], fps  # keep the original frame rate (ffmpeg may round the time base)
+    if kind.startswith("scale"):
+        f = float(kind[5:])
+        return [cv2.resize(img, None, fx=f, fy=f, interpolation=cv2.INTER_AREA if f < 1 else cv2.INTER_LINEAR)
+                for img in frames], fps
+    if kind == "crop2":  # 2% off every edge, kept at the cropped size
+        h, w = frames[0].shape[:2]
+        dy, dx = max(1, round(h * 0.02)), max(1, round(w * 0.02))
+        return [img[dy:h - dy, dx:w - dx].copy() for img in frames], fps
+    if kind.startswith("bright"):
+        g = 1 + float(kind[6:]) / 100
+        return [cv2.convertScaleAbs(img, alpha=g, beta=0) for img in frames], fps
+    raise ValueError(kind)
+
+
 def pose_landmarks(frames, fps, model: Path) -> np.ndarray:
     import mediapipe as mp
     from mediapipe.tasks import python as mpp
@@ -109,6 +139,9 @@ def main():
     p.add_argument("--cached-only", action="store_true",
                    help="skip clips without a landmark cache in <out>/landmarks (e.g. landmarks from the App)")
     p.add_argument("--calibration", type=Path, help="calibration.json from calibrate.py")
+    p.add_argument("--perturb", choices=PERTURBATIONS, default="none",
+                   help="slightly change each clip before pose detection (robustness test; labelled phases unchanged)")
+    p.add_argument("--no-sheet", action="store_true", help="skip the contact-sheet images (CI: no frames leave the run)")
     p.add_argument("--max-line-width", type=float, default=MAX_LINE_WIDTH,
                    help="refuse clips whose shoulder/hip line at address is wider than this (torso lengths)")
     p.add_argument("--min-ref-angle", type=float, default=0.0,
@@ -141,6 +174,7 @@ def main():
         if not path.exists() or (a.cached_only and not (cache / f"{name}.npy").exists()):
             continue
         frames, fps = read_video(path)
+        frames, fps = perturb(path, frames, fps, a.perturb)
         phases = phases or swingnet_phases(path, a.backend)
         if phases is None:
             r = {"verdict": "无法判断", "reason": "没有识别出挥杆阶段"}
@@ -153,8 +187,9 @@ def main():
                 np.save(npy, lms)
             r = analyze(lms, *phases, calibration=cal, max_line_width=a.max_line_width,
                          min_ref_angle=a.min_ref_angle)
-            cv2.imwrite(str(a.out / f"{name}.jpg"), draw(frames, r, *phases, name))
-        r.update(name=name, phases=phases, **extra)
+            if not a.no_sheet:
+                cv2.imwrite(str(a.out / f"{name}.jpg"), draw(frames, r, *phases, name))
+        r.update(name=name, phases=phases, perturb=a.perturb, **extra)
         results.append(r)
         print(f"{n}/{len(jobs)} {name}: {r['verdict']} {r.get('offset', '')} {r.get('reason', '')}", flush=True)
 

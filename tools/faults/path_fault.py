@@ -344,10 +344,14 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     raw = despike(raw, torso)
     ok = np.isfinite(raw).all(axis=1)
     jumped = int((seen & ~ok)[span].sum())
+    # How close each tracking gate came to refusing (diagnostics only; the rules are the lines below).
+    gap, gap_allowed = longest_gap(ok[top:impact + 1]), max(MIN_FILLED_GAP, MAX_DOWNSWING_GAP * (impact - top))
+    gates = {"ok_frac": round(float(ok[span].mean()), 3), "downswing_gap": int(gap),
+             "downswing_gap_allowed": round(float(gap_allowed), 2)}
     if ok[span].mean() < 0.7:
-        return {"verdict": "无法判断", "reason": "关键点跳动太多", "jump_frames": jumped}
-    if longest_gap(ok[top:impact + 1]) > max(MIN_FILLED_GAP, MAX_DOWNSWING_GAP * (impact - top)):
-        return {"verdict": "无法判断", "reason": "下杆有一段双手追踪丢失或乱跳", "jump_frames": jumped}
+        return {"verdict": "无法判断", "reason": "关键点跳动太多", "jump_frames": jumped, "gates": gates}
+    if gap > gap_allowed:
+        return {"verdict": "无法判断", "reason": "下杆有一段双手追踪丢失或乱跳", "jump_frames": jumped, "gates": gates}
     hands = _smooth(raw, k)
 
     given_address = address
@@ -365,7 +369,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     widest = max((v for v in cam.values() if np.isfinite(v)), default=np.nan)
     if widest > max_line_width:
         return {"verdict": "无法判断", "reason": "机位偏离目标线（肩/髋线太宽）", "camera": cam,
-                "torso_px": round(torso, 1), "address_used": int(address)}
+                "torso_px": round(torso, 1), "address_used": int(address), "gates": gates}
 
     side, votes = detect_side(body, hands, address, top)
     if side == 0:
@@ -434,6 +438,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
         "smooth_frames": k,
         "dropped_frames": int((~ok[span]).sum()),
         "jump_frames": jumped,
+        "gates": gates,
         "calibration": cal.get("source", "file"),
         "hands": hands.tolist(),
     }

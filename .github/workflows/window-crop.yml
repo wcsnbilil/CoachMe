@@ -109,7 +109,7 @@ jobs:
   report:
     name: 裁切翻转率
     needs: cut
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

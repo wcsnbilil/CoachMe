@@ -202,7 +202,8 @@ def main():
             else:
                 start, end, tr = w
                 if (tr, end) == (0, n) and whole is not None:
-                    lm, cut = whole, False
+                    # the tracker sees the whole clip: same landmarks as the whole run, from the cut's start
+                    lm, cut = whole[start:], start > 0
                 else:
                     full = pose_landmarks(frames[tr:end], fps, a.model)
                     lm, cut = full[start - tr:], True

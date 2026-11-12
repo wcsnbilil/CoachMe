@@ -52,4 +52,22 @@ Step "club4b_all" {
          "--out", "$bench\club4b_all", "--keep", "$bench\hd_swings\keep.jsonl", "--progress", "$bench\progress\club4b.json") "club4b.log"
 }
 
+# 6. re-split + re-analyze from the cached keypoints (no MediaPipe): new swing_split, lead-in frames before the
+#    address (hd_split.py as hd_pipeline.py at claude/camera-res a12272f). New folders seg2_p*; seg_p* is kept.
+$code = "$bench\camres_wt"   # worktree at claude/camera-res a12272f: tools\split, tools\faults
+Step "resplit_analyze" {
+    $ps = 0..3 | ForEach-Object {
+        Start-Process -FilePath $py -ArgumentList "`"$w\hd_split.py`" `"$bench\hd_swings\seg_list$_.txt`" --out `"$bench\hd_swings\seg2_p$_`" --code `"$code`" --landmarks `"$bench\hd_swings\seg_p$_\landmarks`"" `
+            -WindowStyle Hidden -PassThru -RedirectStandardOutput "$bench\resplit_p$_.log" -RedirectStandardError "$bench\resplit_p$_.err"
+    }
+    $ps | Wait-Process
+    return (@($ps | Where-Object { $_.ExitCode -ne 0 }).Count -eq 0)
+}
+
+# 7. club 4-point labels again on the re-split swings.
+Step "club4b_all2" {
+    Py @("$w\club4b.py", "$bench\hd_swings\seg2_p0", "$bench\hd_swings\seg2_p1", "$bench\hd_swings\seg2_p2", "$bench\hd_swings\seg2_p3",
+         "--out", "$bench\club4b_all2", "--keep", "$bench\hd_swings\keep.jsonl", "--progress", "$bench\progress\club4b2.json") "club4b2.log"
+}
+
 Set-Content "$bench\jobs.done" (Get-Date -Format s); Log "== all done"

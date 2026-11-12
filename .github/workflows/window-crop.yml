@@ -1,0 +1,130 @@
+# 裁出单杆窗口再分析 vs 整段分析（tools/window/window_crop.py、window_report.py）：GolfDB 沿目标线前 400 段，标注阶段。
+# 先整段跑一次姿态（关键点只放在本次运行的 Actions 缓存里给后面的 job 用，不上传成 artifact），再按各种窗口裁切重跑。
+# 只上传 results.json（数值和结论）；GolfDB 视频只在运行时下载、走缓存，不提交、不上传。
+name: 裁切窗口一致性
+
+on:
+  pull_request:
+    paths:
+      - tools/window/window_crop.py
+      - tools/window/window_report.py
+      - tools/split/swing_split.py
+      - .github/workflows/window-crop.yml
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: GolfDB 沿目标线前几段
+        default: "400"
+
+concurrency:
+  group: window-crop-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LIMIT: ${{ github.event.inputs.limit || '400' }}
+
+jobs:
+  whole:
+    name: 整段（基线）
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - &golfdb
+        name: GolfDB（缓存）
+        uses: actions/cache@v4
+        with:
+          path: golfdb
+          key: golfdb-videos160-v1-${{ runner.os }}
+      - &download
+        name: 下载 GolfDB（缓存未命中时；只在本次运行里用，不上传）
+        run: |
+          if [ ! -f golfdb/data/golfDB.pkl ]; then
+            pip3 install --quiet gdown
+            mkdir -p golfdb/data
+            python3 -m gdown 1uBwRxFxW04EqG87VCoX3l6vXeV5T5JYJ -O golfdb/videos_160.zip
+            unzip -q golfdb/videos_160.zip -d golfdb/data/
+            rm golfdb/videos_160.zip
+            curl -fsSL -o golfdb/data/golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+          fi
+      - &deps
+        name: 依赖和模型
+        run: |
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas
+          bash tools/download-model.sh heavy
+      - name: 整段姿态 + 判定
+        run: |
+          python -W ignore tools/window/window_crop.py --golfdb golfdb/data --limit "$LIMIT" --variant whole --out out | tail -3
+          mkdir -p res && cp out/results.json res/whole.json
+      - name: 关键点留给本次运行的其他 job（Actions 缓存，不是 artifact）
+        uses: actions/cache/save@v4
+        with:
+          path: out/landmarks
+          key: window-whole-${{ github.run_id }}-${{ github.run_attempt }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: window-whole
+          path: res/
+          retention-days: 14
+
+  cut:
+    name: 裁切（${{ matrix.variant }}）
+    needs: whole
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        # joined = GolfDB 片段 4 段一组拼成超过 8 秒的视频，走 App 的真实路径（15 fps 粗扫 → 切分 → 窗口）；
+        # app = App 的窗口（准备前 1 秒、击球后 1.5 秒）；split = 切分算法找到的那一杆的窗口；
+        # leadX = 准备前只留 X 秒（压力测试）；+warmN = 追踪器多看 N 帧预热、不参与判定（候选修法）
+        variant: [joined, app, split, lead0.5, lead0.25, lead0, lead0+warm15, lead0+warm30]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - *golfdb
+      - *download
+      - *deps
+      - uses: actions/cache/restore@v4
+        with:
+          path: out/landmarks
+          key: window-whole-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
+      - name: window_crop --variant ${{ matrix.variant }}
+        run: |
+          python -W ignore tools/window/window_crop.py --golfdb golfdb/data --limit "$LIMIT" \
+            --variant "${{ matrix.variant }}" --whole out/landmarks --out cut | tail -3
+          mkdir -p res && cp cut/results.json "res/${{ matrix.variant }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: window-${{ matrix.variant }}
+          path: res/
+          retention-days: 14
+
+  report:
+    name: 裁切翻转率
+    needs: cut
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: window-*
+          path: res
+          merge-multiple: true
+      - name: 报告
+        run: |
+          pip install --quiet numpy
+          ls res
+          python tools/window/window_report.py res/whole.json \
+            res/joined.json res/app.json res/split.json res/lead0.5.json res/lead0.25.json res/lead0.json \
+            "res/lead0+warm15.json" "res/lead0+warm30.json" | tee -a "$GITHUB_STEP_SUMMARY"

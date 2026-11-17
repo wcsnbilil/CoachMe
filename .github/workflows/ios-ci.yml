@@ -1,8 +1,6 @@
 # 云端 Mac 自动编译 + 测试（GitHub 免费 macOS runner；公开仓库不计分钟）。
 #
-# TODO(TestFlight): 需要 Apple 开发者账号 + App Store Connect API key。
-#   之后在仓库 Secrets 里放 ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8 和签名证书，
-#   再加一个只在 main 上跑的 archive + altool/xcrun upload job。
+# TestFlight 上传在 testflight.yml（写好但未启用，等 Apple 开发者账号）。
 name: iOS CI
 
 on:
@@ -38,6 +36,13 @@ jobs:
           else
             echo "::warning::没有 $FIX，SwingPathParityTests 会被跳过"
           fi
+      - name: 内测版代码不引用 AI / 指标 / 3D 小人 / 骨架回放的界面
+        run: |
+          BANNED='ChatPanelView|AISettingsView|WorkbenchView|[^a-zA-Z]ReportView|AngleChartView|RuleListView|Skeleton3DView|SkeletonOverlay|VideoPlayerView|GolfAvatar|LLMChatService|AISettingsStore'
+          if grep -nE "$BANNED" CoachMe/Features/Beta/*.swift; then
+            echo "::error::内测版页面引用了不该可达的界面"; exit 1
+          fi
+          echo "内测版页面没有引用 AI、关节指标、3D 小人或骨架回放"
       - name: swift test
         run: |
           set -o pipefail
@@ -55,6 +60,8 @@ jobs:
   app:
     name: App 编译 + 模拟器测试（不签名）
     runs-on: macos-15
+    permissions:
+      contents: write   # 只用来把截图推到 ci-screenshots 分支
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -79,6 +86,8 @@ jobs:
       - name: xcodebuild test
         run: |
           set -o pipefail
+          mkdir -p "$PWD/screenshots"
+          TEST_RUNNER_COACHME_SCREENSHOT_DIR="$PWD/screenshots" \
           xcodebuild test \
             -workspace CoachMe.xcworkspace -scheme CoachMe \
             -destination "id=$SIM" \
@@ -93,6 +102,40 @@ jobs:
             grep -E "Executed [0-9]+ tests" xcodebuild.log | tail -1
             grep -E "Test Case .*failed" xcodebuild.log | head -20
           } | tee -a "$GITHUB_STEP_SUMMARY" || true
+      - name: 截图推到 ci-screenshots 分支（不用下载 zip，手机上就能看）
+        if: always() && hashFiles('screenshots/*.png') != ''
+        env:
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -e
+          DIR="${REF_NAME//\//-}"
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf "$RUNNER_TEMP/shots" && mkdir -p "$RUNNER_TEMP/shots" && cd "$RUNNER_TEMP/shots"
+          git init -q
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth 1 origin ci-screenshots; then git checkout -q -b ci-screenshots FETCH_HEAD; else git checkout -q --orphan ci-screenshots; fi
+          rm -rf "$DIR" && mkdir -p "$DIR"
+          cp "$GITHUB_WORKSPACE"/screenshots/*.png "$DIR/"
+          {
+            echo "# $REF_NAME @ ${SHA:0:7}"
+            for f in "$DIR"/*.png; do n=$(basename "$f"); echo; echo "## $n"; echo "<img src=\"$n\" width=\"300\">"; done
+          } > "$DIR/README.md"
+          git add -A "$DIR"
+          git commit -q -m "screenshots: $REF_NAME ${SHA:0:7}" || true
+          git push -q origin ci-screenshots
+          URL="https://github.com/${{ github.repository }}/tree/ci-screenshots/$DIR"
+          echo "### 内测版截图" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "截图：$URL"
+      - name: 内测版界面截图（中英，zip）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-screenshots
+          path: screenshots/*.png
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

@@ -5,12 +5,22 @@ import CoachMeCore
 @MainActor
 struct CoachMeApp: App {
     @State private var library = SwingLibrary()
+    private let root = AppRoot.choose(betaMode: BetaMode.isOn)
+
+    init() {
+        BetaMode.bootstrap()
+    }
 
     var body: some Scene {
         WindowGroup {
-            HomeView()
-                .environment(library)
-                .tint(CoachStyle.accent)
+            Group {
+                switch root {
+                case .beta: BetaRootView()        // TestFlight beta: downswing path only, offline
+                case .fullCoach: HomeView()       // full coach app (COACHME_BETA_MODE = NO)
+                }
+            }
+            .environment(library)
+            .tint(CoachStyle.accent)
         }
     }
 }

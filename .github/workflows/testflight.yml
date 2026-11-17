@@ -1,0 +1,92 @@
+# TestFlight 上传 —— 已写好，未启用。
+#
+# 启用步骤（拿到 Apple 开发者账号后）：
+#   1. App Store Connect → 用户和访问 → 集成 → App Store Connect API，新建一个 Admin 权限的 Key
+#      （云端管理的分发证书需要 Admin），下载 .p8。
+#   2. 仓库 Settings → Secrets and variables → Actions → Secrets：
+#        ASC_KEY_ID       Key ID
+#        ASC_ISSUER_ID    Issuer ID
+#        ASC_KEY_P8       .p8 文件全文（含 BEGIN/END 行）
+#        APPLE_TEAM_ID    开发者团队 ID（10 位）
+#   3. 同一页 Variables：TESTFLIGHT_ENABLED = true
+#   4. 在 App Store Connect 里先建好 App（Bundle ID com.coachme.app，或改 project.yml 里的 ID）。
+#   之后在 Actions 页手动点 Run workflow；build 号 = 运行编号，版本号来自 project.yml 的 MARKETING_VERSION。
+name: TestFlight
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    if: ${{ vars.TESTFLIGHT_ENABLED == 'true' }}
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 检查密钥
+        run: |
+          for v in ASC_KEY_ID ASC_ISSUER_ID APPLE_TEAM_ID; do
+            [ -n "${!v}" ] || { echo "::error::缺少 secret $v"; exit 1; }
+          done
+      - name: 写入 API Key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          [ -n "$ASC_KEY_P8" ] || { echo "::error::缺少 secret ASC_KEY_P8"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+      - name: 准备工程
+        run: |
+          brew install xcodegen
+          bash tools/download-model.sh heavy
+          xcodegen generate
+          pod install --repo-update
+      - name: Archive（内测模式，build 号 = 运行编号）
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -workspace CoachMe.xcworkspace -scheme CoachMe \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/CoachMe.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" COACHME_BETA_MODE=YES \
+            2>&1 | tee archive.log | grep -E "error:|\*\* ARCHIVE"
+      - name: 上传到 TestFlight
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/CoachMe.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            2>&1 | tee export.log | grep -E "error:|Upload|\*\* EXPORT"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: testflight-logs
+          path: |
+            archive.log
+            export.log

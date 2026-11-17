@@ -62,8 +62,10 @@ targets:
       path: CoachMe/Resources/Info.plist
       properties:
         CFBundleDisplayName: CoachMe
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        # YES = TestFlight beta (downswing path only, no AI, no network). NO = full coach app.
+        CoachMeBetaMode: "$(COACHME_BETA_MODE)"
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -76,6 +78,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.coachme.app
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"       # TestFlight workflow overrides with the run number
+        COACHME_BETA_MODE: "YES"
         TARGETED_DEVICE_FAMILY: "1"    # iPhone only in v1
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
 

@@ -1,7 +1,7 @@
 import XCTest
 import SceneKit
 import Metal
-import CoachMeCore
+import Model
 @testable import CoachMe
 
 final class AvatarRenderingTests:XCTestCase {

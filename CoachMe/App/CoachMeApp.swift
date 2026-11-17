@@ -1,5 +1,5 @@
 import SwiftUI
-import CoachMeCore
+import Diagnosis
 
 @main
 @MainActor

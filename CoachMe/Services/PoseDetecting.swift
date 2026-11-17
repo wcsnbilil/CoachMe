@@ -1,6 +1,6 @@
 import Foundation
 import CoreVideo
-import CoachMeCore
+import Model
 
 /// One detection result, already converted into CoachMeCore's model.
 public struct PoseDetectionResult {

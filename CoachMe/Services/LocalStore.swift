@@ -1,5 +1,6 @@
 import Foundation
-import CoachMeCore
+import Diagnosis
+import AICoach
 
 /// On-disk storage. Everything stays on the device; there is no account and no
 /// sync in version 1.

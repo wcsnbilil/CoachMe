@@ -1,7 +1,8 @@
 import Foundation
 import CoreVideo
 import MediaPipeTasksVision
-import CoachMeCore
+import Model
+import PoseDetection
 
 /// MediaPipe Pose Landmarker, running in `.video` mode.
 ///
@@ -96,9 +97,9 @@ final class MediaPipePoseDetector: PoseDetecting {
         }
 
         let personCount = result.landmarks.count
-        let poses: [[CoachMeCore.Landmark]] = result.landmarks.map { pose in
+        let poses: [[Model.Landmark]] = result.landmarks.map { pose in
             pose.map { point in
-                CoachMeCore.Landmark(Double(point.x), Double(point.y), Double(point.z),
+                Model.Landmark(Double(point.x), Double(point.y), Double(point.z),
                                      visibility: point.visibility?.doubleValue,
                                      presence: point.presence?.doubleValue)
             }
@@ -113,11 +114,11 @@ final class MediaPipePoseDetector: PoseDetecting {
         // refuses every metric for the frame.
         let imageLandmarks = poses[pick]
 
-        var worldLandmarks: [CoachMeCore.Landmark]?
+        var worldLandmarks: [Model.Landmark]?
         if result.worldLandmarks.indices.contains(pick) {
             let world = result.worldLandmarks[pick]
             worldLandmarks = world.map { point in
-                CoachMeCore.Landmark(Double(point.x), Double(point.y), Double(point.z),
+                Model.Landmark(Double(point.x), Double(point.y), Double(point.z),
                          visibility: point.visibility?.doubleValue,
                          presence: point.presence?.doubleValue)
             }

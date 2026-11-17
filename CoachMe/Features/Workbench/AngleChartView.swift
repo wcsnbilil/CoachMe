@@ -1,6 +1,7 @@
 import SwiftUI
 import Charts
-import CoachMeCore
+import Model
+import Diagnosis
 
 /// Angle-vs-time chart sharing the video's clock.
 ///

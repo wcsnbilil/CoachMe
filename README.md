@@ -150,15 +150,14 @@ math independently. They do not replace an app build or runtime test.
 
 ```text
 CoachMeCore/                 Pure Swift logic; no SwiftUI, AVFoundation, or MediaPipe
-  Sources/
-    Model/                   Landmarks, frames, swing phases, and keyframes
-    Geometry/                Vectors, angles, and the torso coordinate frame
-    Metrics/                 Metric catalogue and calculators
-    Quality/                 Visibility gates and per-frame quality
-    Smoothing/               One Euro filter and pose-sequence smoothing
-    Rules/                   Coach rules and the evaluation engine
-    Chat/                    Messages, conversations, context, and ChatService
-  Tests/                     Core regression tests
+  Sources/                   One SwiftPM target per module; arrows are the only allowed imports
+    Model/                   Landmarks, frames, swing phases, keyframes, geometry (no dependencies)
+    PoseDetection/           Person tracking, One Euro and display smoothing        -> Model
+    PhaseSegmentation/       SwingNet event selection, person crop                  -> Model
+    Diagnosis/               Swing path, metrics, coach rules, quality gates        -> Model
+    AICoach/                 Messages, conversations, context, LLM chat service     -> Model, Diagnosis
+    Avatar/                  3D avatar bone pose                                    -> Model
+  Tests/                     One test target per module
 
 CoachMe/                     iOS app target
 CoachMeTests/                iOS regression and integration tests

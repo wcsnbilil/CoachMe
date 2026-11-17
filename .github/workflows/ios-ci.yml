@@ -1,0 +1,298 @@
+# 云端 Mac 自动编译 + 测试（GitHub 免费 macOS runner；公开仓库不计分钟）。
+#
+# TestFlight 上传在 testflight.yml（写好但未启用，等 Apple 开发者账号）。
+name: iOS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: CoachMeCore 测试 + Swift/Python 一致性
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Python 合成测试（tools/faults）
+        run: |
+          pip install --quiet numpy
+          python tools/faults/test_path_fault.py
+      - name: 用当前 Python 重算一致性对照数据
+        run: |
+          FIX=tools/faults/fixtures/path_parity.json
+          if [ -f "$FIX" ]; then
+            # GolfDB clips plus synthetic swings on both sides of every soft-wording limit
+            python tools/faults/refresh_parity.py "$FIX" tools/faults/fixtures/path_parity_synthetic.json \
+              --out "$RUNNER_TEMP/path_parity.json" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "COACHME_PATH_PARITY=$RUNNER_TEMP/path_parity.json" >> "$GITHUB_ENV"
+          else
+            echo "::warning::没有 $FIX，SwingPathParityTests 会被跳过"
+          fi
+      - name: 多次挥杆切分：拼接序列上的次数准确率 + Swift 对照数据
+        run: |
+          FIX=tools/faults/fixtures/path_parity.json
+          if [ -f "$FIX" ]; then
+            python -W ignore tools/split/make_split_parity.py "$FIX" --out "$RUNNER_TEMP/split_parity.json" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "COACHME_SPLIT_PARITY=$RUNNER_TEMP/split_parity.json" >> "$GITHUB_ENV"
+            { echo; echo "### 试挥 / 空挥（已知限制，只报告）"; echo; python -W ignore tools/split/practice_swings.py "$FIX"; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::没有 $FIX，SwingSplitParityTests 会被跳过"
+          fi
+      - name: 快速预检：Swift 对照数据
+        run: |
+          FIX=tools/faults/fixtures/path_parity.json
+          if [ -f "$FIX" ]; then
+            python -W ignore tools/preflight/make_preflight_parity.py "$FIX" --out "$RUNNER_TEMP/preflight_parity.json"
+            echo "COACHME_PREFLIGHT_PARITY=$RUNNER_TEMP/preflight_parity.json" >> "$GITHUB_ENV"
+          else
+            echo "::warning::没有 $FIX，PreflightParityTests 会被跳过"
+          fi
+      - name: 内测版代码不引用 AI / 指标 / 3D 小人 / 骨架回放的界面
+        run: |
+          BANNED='ChatPanelView|AISettingsView|WorkbenchView|[^a-zA-Z]ReportView|AngleChartView|RuleListView|Skeleton3DView|SkeletonOverlay|VideoPlayerView|GolfAvatar|LLMChatService|AISettingsStore'
+          if grep -nE "$BANNED" CoachMe/Features/Beta/*.swift; then
+            echo "::error::内测版页面引用了不该可达的界面"; exit 1
+          fi
+          echo "内测版页面没有引用 AI、关节指标、3D 小人或骨架回放"
+      - name: swift test
+        run: |
+          set -o pipefail
+          swift --version
+          swift test --package-path CoachMeCore 2>&1 | tee swift-test.log
+      - name: 测试统计
+        if: always()
+        run: |
+          {
+            echo "### CoachMeCore"
+            grep -E "Executed [0-9]+ tests" swift-test.log | tail -1
+            grep -E "(SwingPathParityTests|SwingSplitParityTests|PreflightParityTests).*(passed|failed|skipped)" swift-test.log | tail -6
+          } | tee -a "$GITHUB_STEP_SUMMARY" || true
+
+  e2e-fixtures:
+    name: 端到端视频（格式矩阵）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: ffmpeg
+        run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - name: ffmpeg 版本
+        id: ff
+        run: |
+          echo "cores=$(nproc) $(grep -m1 "model name" /proc/cpuinfo)"; ffmpeg -version | head -1
+          echo "ver=$(ffmpeg -version | head -1 | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
+      # 同一份脚本 + 同一个源片段 + 同一个 ffmpeg 版本 → 直接用上次转好的文件，每次跑的输入逐字节相同。
+      # 不能每次重转：同一 ffmpeg 版本在不同 CPU 的 runner 上（EPYC 7763 / 9V74 / Xeon 8370C）转出的竖拍片段不一样，
+      # 单线程 + bitexact 缩放也消不掉；而这几段的结论对压缩的细微差别很敏感。
+      - name: 转好的视频（缓存）
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: e2e-videos
+          key: e2e-videos-${{ hashFiles('tools/e2e/make_variants.sh', 'CoachMeTests/Fixtures/swing3s.mp4') }}-ffmpeg-${{ steps.ff.outputs.ver }}
+      - name: 从仓库里的测试片段生成格式矩阵
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos
+      - name: 视频哈希
+        run: |
+          (cd e2e-videos && sha256sum * | sed 's/^/SHA /')
+          { echo "### 端到端视频哈希（缓存命中：${{ steps.cache.outputs.cache-hit == 'true' && '是' || '否，新转' }}）"; echo '```'; (cd e2e-videos && sha256sum * | cut -c1-12,65-); echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      # TODO(真实片段)：Niko 的片段放在私有仓库后，在这里用 secrets.FIXTURES_TOKEN 拉取到 e2e-videos/，
+      # 并对每段再跑一次 make_variants.sh 生成 H.264 版本。公开仓库不放视频。
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e2e-videos
+          path: e2e-videos/
+          retention-days: 7
+
+  e2e-python:
+    name: 端到端 Python 参照（MediaPipe + SwingNet + 路径判定）
+    needs: e2e-fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-videos
+          path: e2e-videos
+      - name: 依赖和模型
+        run: |
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy pandas coremltools
+          bash tools/download-model.sh heavy
+      - name: 竖拍旋转元数据（Python 读出来要和 App 一样是正的）
+        run: python tools/e2e/test_rotation.py
+      - name: Python 整条链路（保留每一层：解码、关键点、SwingNet、判定）
+        run: |
+          shopt -s nullglob
+          python tools/e2e/python_layers.py e2e-videos/*.mp4 e2e-videos/*.mov --out e2e-python
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e2e-python
+          path: e2e-python/
+
+  app:
+    name: App 编译 + 模拟器测试（不签名）
+    needs: e2e-fixtures
+    runs-on: macos-15
+    permissions:
+      contents: write   # 只用来把截图推到 ci-screenshots 分支
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-videos
+          path: e2e-videos
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+      - name: 下载 MediaPipe 模型
+        run: bash tools/download-model.sh heavy
+      - name: xcodegen + pod install
+        run: |
+          xcodebuild -version
+          xcodegen generate
+          pod install --repo-update
+      - name: 选模拟器
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devs = json.load(sys.stdin)["devices"]
+          c = [x for k, v in devs.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")]
+          print(c[-1]["udid"])')
+          echo "SIM=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl list devices available | grep "$UDID"
+      - name: xcodebuild test
+        run: |
+          set -o pipefail
+          mkdir -p "$PWD/screenshots"
+          TEST_RUNNER_COACHME_SCREENSHOT_DIR="$PWD/screenshots" \
+          TEST_RUNNER_COACHME_E2E_DIR="$PWD/e2e-videos" \
+          TEST_RUNNER_COACHME_E2E_OUT="$PWD/e2e-app" \
+          TEST_RUNNER_COACHME_E2E_DUMP_FRAMES="h264_portrait_30" \
+          TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" \
+          TEST_RUNNER_COACHME_DETERMINISM_RUNS=2 \
+          TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=0 \
+          xcodebuild test \
+            -workspace CoachMe.xcworkspace -scheme CoachMe \
+            -destination "id=$SIM" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            2>&1 | tee xcodebuild.log | grep -E "^E2E |^DET .*run=|error:|warning: .*CoachMe|Test Case .*(passed|failed|skipped)|Executed|\*\* (BUILD|TEST)"
+      - name: 测试统计
+        if: always()
+        run: |
+          {
+            echo "### App (simulator)"
+            grep -E "Executed [0-9]+ tests" xcodebuild.log | tail -1
+            grep -E "Test Case .*failed" xcodebuild.log | head -20
+          } | tee -a "$GITHUB_STEP_SUMMARY" || true
+      - name: 上传 App 端到端结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-app
+          path: e2e-app/
+          if-no-files-found: warn
+      - name: 截图推到 ci-screenshots 分支（不用下载 zip，手机上就能看）
+        if: always() && hashFiles('screenshots/*.png') != ''
+        env:
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -e
+          DIR="${REF_NAME//\//-}"
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf "$RUNNER_TEMP/shots" && mkdir -p "$RUNNER_TEMP/shots" && cd "$RUNNER_TEMP/shots"
+          git init -q
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth 1 origin ci-screenshots; then git checkout -q -b ci-screenshots FETCH_HEAD; else git checkout -q --orphan ci-screenshots; fi
+          rm -rf "$DIR" && mkdir -p "$DIR"
+          cp "$GITHUB_WORKSPACE"/screenshots/*.png "$DIR/"
+          {
+            echo "# $REF_NAME @ ${SHA:0:7}"
+            for f in "$DIR"/*.png; do n=$(basename "$f"); echo; echo "## $n"; echo "<img src=\"$n\" width=\"300\">"; done
+          } > "$DIR/README.md"
+          git add -A "$DIR"
+          git commit -q -m "screenshots: $REF_NAME ${SHA:0:7}" || true
+          git push -q origin ci-screenshots
+          URL="https://github.com/${{ github.repository }}/tree/ci-screenshots/$DIR"
+          echo "### 内测版截图" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "截图：$URL"
+      - name: 内测版界面截图（中英，zip）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-screenshots
+          path: screenshots/*.png
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: xcodebuild-logs
+          path: |
+            xcodebuild.log
+            TestResults.xcresult
+
+  e2e-report:
+    name: 端到端对比（App vs Python）
+    needs: [app, e2e-python]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-app
+          path: e2e-app
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-python
+          path: e2e-python
+        continue-on-error: true
+      - name: 写入 job summary
+        run: |
+          set -o pipefail
+          python3 tools/e2e/compare.py e2e-app e2e-python/results.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-python@v5
+        if: always()
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        if: always()
+        with:
+          name: e2e-videos
+          path: e2e-videos
+      - name: 交叉实验：Python MediaPipe 跑 App 解码出来的像素
+        if: always()
+        continue-on-error: true
+        run: |
+          pip install --quiet mediapipe==0.10.21 opencv-python-headless numpy
+          bash tools/download-model.sh heavy
+          for d in e2e-app/frames/*/; do
+            n=$(basename "$d")
+            v=$(ls e2e-videos/"$n".* | head -1)
+            python tools/e2e/pose_on_frames.py "$d" "$v" --out e2e-cross
+          done
+      - name: 逐层对比（解码 → 关键点 → SwingNet → 判定）
+        if: always()
+        run: |
+          pip install --quiet numpy
+          python tools/e2e/layers.py e2e-app e2e-python --cross e2e-cross | tee -a "$GITHUB_STEP_SUMMARY"

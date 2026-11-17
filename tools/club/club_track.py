@@ -43,6 +43,7 @@ def hands_at(lm, f):
 
 def read_range(path: Path, lo: int, hi: int):
     cap = cv2.VideoCapture(str(path))
+    cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 1)  # iPhone portrait clips carry rotation metadata; OpenCV ignores it by default
     cap.set(cv2.CAP_PROP_POS_FRAMES, lo)
     out = []
     for _ in range(lo, hi + 1):

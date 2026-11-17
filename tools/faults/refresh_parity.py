@@ -23,10 +23,10 @@ from path_fault import analyze  # noqa: E402
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("fixture", type=Path)
+    p.add_argument("fixture", type=Path, nargs="+", help="one or more fixtures; the output joins them")
     p.add_argument("--out", type=Path, required=True)
     a = p.parse_args()
-    swings = json.loads(a.fixture.read_text(encoding="utf-8"))
+    swings = [s for f in a.fixture for s in json.loads(f.read_text(encoding="utf-8"))]
     changed = 0
     for s in swings:
         lms = np.array([[[np.nan if v is None else v for v in pt] for pt in fr] for fr in s["landmarks"]], dtype=float)
@@ -37,6 +37,7 @@ def main():
             "backswing_offset": res.get("backswing_offset"),
             "loop": res.get("loop"),
             "jump_frames": res.get("jump_frames"),
+            "confidence": res.get("confidence"),
         }
         if s.get("verdict") != new["verdict"]:
             changed += 1
@@ -45,7 +46,8 @@ def main():
     a.out.write_text(json.dumps(swings), encoding="utf-8")
     verdicts = {}
     for s in swings:
-        verdicts[s["verdict"]] = verdicts.get(s["verdict"], 0) + 1
+        key = s["verdict"] + (f"/{s['confidence']}" if s.get("confidence") else "")
+        verdicts[key] = verdicts.get(key, 0) + 1
     print(f"{len(swings)} swings, {changed} verdicts differ from the stored fixture; now {verdicts} -> {a.out}")
 
 

@@ -67,7 +67,9 @@ public struct BetaStrings: Sendable {
     public var reportTitle: String { t("下杆路径", "Downswing path") }
     public func verdictTitle(_ v: SwingPathAnalyzer.Verdict) -> String {
         switch v {
-        case .withinProRange: return t("范围内", "Within range")
+        // Hands only: a club path fault can hide behind a clean hand path (Niko's two clips, 2026-11-08),
+        // so this verdict never says "within range" / "no problem" in the beta.
+        case .withinProRange: return t("未见明显外下或内下", "No clear over-the-top or inside")
         case .overTheTop:     return t("外下过度", "Over the top")
         case .tooInside:      return t("内下过度", "Too far inside")
         case .cannotJudge:    return t("无法判断", "Can't judge")
@@ -76,8 +78,8 @@ public struct BetaStrings: Sendable {
     public func verdictSummary(_ v: SwingPathAnalyzer.Verdict, leftHanded: Bool) -> String {
         switch v {
         case .withinProRange:
-            return t("下杆时双手的路线在职业球员的范围内。",
-                     "Your hands come down inside the range pro golfers use.")
+            return t("这一杆从手的路线上没看出明显外下或内下。注意：目前只看手，看不到球杆的路线，杆身外下可能看不出来。",
+                     "From the path of the hands, this swing shows no clear over-the-top or inside move. Note: only the hands are tracked, not the club, so an over-the-top club path may not show up.")
         case .overTheTop:
             return leftHanded
                 ? t("下杆时双手从外侧下来，这常和左曲或拉右球有关；球怎么飞还取决于杆面。",
@@ -94,12 +96,47 @@ public struct BetaStrings: Sendable {
             return t("这段视频无法可靠判断。", "This video can't be judged reliably.")
         }
     }
+    // MARK: Soft wording (SwingPathAnalyzer.Confidence)
+    /// Shown instead of the verdict title when the offset sits next to a threshold.
+    public func nearBoundaryTitle(outside: Bool) -> String {
+        outside ? t("接近外下边界", "Close to over the top") : t("接近内下边界", "Close to too far inside")
+    }
+    public func nearBoundaryNote(outside: Bool) -> String {
+        outside
+            ? t("这一杆手的路线接近外下的边界，结果可能来回变。建议多拍几杆，看多数结果。",
+                "This swing's hand path is close to the over-the-top line, so the result may go either way. Film a few more swings and go by what most of them show.")
+            : t("这一杆手的路线接近内下的边界，结果可能来回变。建议多拍几杆，看多数结果。",
+                "This swing's hand path is close to the too-far-inside line, so the result may go either way. Film a few more swings and go by what most of them show.")
+    }
+    public var lowConfidenceTitle: String { t("结果仅供参考", "Treat this result as a rough guide") }
+    public var lowTrackingNote: String {
+        t("这段视频下杆时手的追踪不太稳定，下面的结果仅供参考。可以换个光线、穿和背景对比明显的衣服再拍一次。",
+          "Hand tracking wasn't steady during the downswing in this video, so treat the result below as a rough guide. Try again in different light, wearing clothes that stand out from the background.")
+    }
+    public var lowCameraNote: String {
+        t("机位离后方正中稍有偏差，下面的结果仅供参考。下次把手机放在你身后、对准目标再拍。",
+          "The camera is slightly off from directly behind you, so treat the result below as a rough guide. Next time, put the phone right behind you, pointing at the target.")
+    }
+    /// The headline the report and the records list show: near_boundary replaces the verdict title.
+    public func headline(_ v: SwingPathAnalyzer.Verdict, confidence: SwingPathAnalyzer.Confidence?, nearOutside: Bool) -> String {
+        v != .cannotJudge && confidence == .nearBoundary ? nearBoundaryTitle(outside: nearOutside) : verdictTitle(v)
+    }
+    /// The note for a soft state, nil for normal. Soft states get this filming advice, never a practice tip.
+    public func confidenceNote(_ c: SwingPathAnalyzer.Confidence?, nearOutside: Bool) -> String? {
+        switch c {
+        case .nearBoundary: return nearBoundaryNote(outside: nearOutside)
+        case .lowTracking: return lowTrackingNote
+        case .lowCamera: return lowCameraNote
+        case .normal, nil: return nil
+        }
+    }
+
     public var evidenceTitle: String { t("画面依据", "What we measured") }
     public var legendHands: String { t("下杆双手路线", "Hands on the downswing") }
     public var legendRange: String { t("职业球员范围", "Pro range") }
     public var legendReference: String { t("准备姿势参考线（手→肩）", "Address line (hands → shoulders)") }
-    public var evidenceNote: String { t("背景是下杆中段的画面。路线落在绿色带内 = 范围内；偏向球一侧 = 外下；偏向身体一侧 = 内下。",
-                                         "The background is mid-downswing. Inside the green band = within range; toward the ball = over the top; toward the body = too far inside.") }
+    public var evidenceNote: String { t("背景是下杆中段的画面。手的路线落在绿色带里 = 没看出明显偏差；偏向球一侧 = 外下；偏向身体一侧 = 内下。",
+                                         "The background is mid-downswing. Hands inside the green band = no clear fault seen; toward the ball = over the top; toward the body = too far inside.") }
     public var uncertainty: String { t("参照职业球员的路径范围，对业余球手的准确度正在测试中。",
                                         "Compared with the range pro golfers use. Accuracy for amateur golfers is still being tested.") }
     public var practiceTitle: String { t("练习建议", "Practice tip") }

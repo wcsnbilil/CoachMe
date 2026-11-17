@@ -43,6 +43,7 @@ def read_frames(path: Path) -> np.ndarray:
     """RGB, aspect-fit to 160 with ImageNet mean-colour border, normalized: [N,3,160,160]."""
     import cv2
     cap = cv2.VideoCapture(str(path))
+    cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 1)  # iPhone portrait clips carry rotation metadata; OpenCV ignores it by default
     out = []
     while True:
         ok, img = cap.read()

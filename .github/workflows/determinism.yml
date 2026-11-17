@@ -1,0 +1,142 @@
+# 同一视频多次运行结论是否相同（CoachMeTests/DeterminismTests + tools/e2e/determinism.py）。
+# 视频 = 仓库里的 swing3s 测试片段转出的格式矩阵（和 iOS CI 端到端同一批），不含第三方视频。
+# 两台 runner 各跑三个独立的测试进程：①不先快检 ②先快检（和 App 一样）③再不先快检；
+# 同一进程内每段跑 N 次。最后一个 job 跨进程、跨机器比较。
+name: 结论稳定性
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 同一进程内每段跑几次
+        default: "2"
+
+concurrency:
+  group: determinism-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fixtures:
+    # iOS CI 的端到端视频是在 ubuntu 上每次重新转码的：三台 ubuntu 各转一次，看文件是否逐字节相同。
+    name: 转码三次（ubuntu ${{ matrix.u }}）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        u: [u1, u2, u3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: ffmpeg
+        run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - name: 格式矩阵 + 哈希
+        run: |
+          echo "CPU: $(grep -m1 'model name' /proc/cpuinfo) avx512=$(grep -c -m1 avx512f /proc/cpuinfo || true)"
+          ffmpeg -version | head -1
+          bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos > /dev/null
+          (cd e2e-videos && sha256sum * | sed 's/^/SHA ${{ matrix.u }} /')
+          { echo "### ${{ matrix.u }} $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2)"; echo '```'; (cd e2e-videos && sha256sum * | cut -c1-12,65-); echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: videos-${{ matrix.u }}
+          path: e2e-videos/
+          retention-days: 3
+
+  repeat:
+    name: 同一视频跑多次（模拟器 ${{ matrix.machine }}）
+    needs: fixtures
+    runs-on: macos-15
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [m1, m2]
+    steps:
+      - uses: actions/checkout@v4
+      - name: 机器
+        run: |
+          sysctl -n machdep.cpu.brand_string hw.ncpu hw.physicalcpu hw.memsize || true
+          { echo "### ${{ matrix.machine }}"; echo; echo "\`$(sysctl -n machdep.cpu.brand_string) · $(sysctl -n hw.ncpu) 核\`"; } >> "$GITHUB_STEP_SUMMARY"
+      - name: ffmpeg + 格式矩阵
+        run: |
+          which ffmpeg || brew install ffmpeg
+          bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos > /dev/null
+          (cd e2e-videos && shasum -a 256 * | sed 's/^/SHA mac /')
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: videos-*
+          path: ubuntu-videos
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+      - name: 下载 MediaPipe 模型
+        run: bash tools/download-model.sh heavy
+      - name: xcodegen + pod install
+        run: |
+          xcodegen generate
+          pod install --repo-update
+      - name: 选模拟器
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devs = json.load(sys.stdin)["devices"]
+          c = [x for k, v in devs.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")]
+          print(c[-1]["udid"])')
+          echo "SIM=$UDID" >> "$GITHUB_ENV"
+      - name: 编译一次
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tail -3
+      - name: 三个独立进程
+        run: |
+          set -o pipefail
+          for p in 1 2 3; do
+            Q=0; L=1; [ $p = 2 ] && Q=1; [ $p != 1 ] && L=0
+            TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" \
+            TEST_RUNNER_COACHME_DETERMINISM_OUT="$PWD/det/p$p" \
+            TEST_RUNNER_COACHME_DETERMINISM_RUNS="${{ github.event.inputs.runs || '2' }}" \
+            TEST_RUNNER_COACHME_DETERMINISM_QUICK=$Q TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=$L \
+            xcodebuild test-without-building -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
+              -derivedDataPath dd -only-testing:CoachMeTests/DeterminismTests \
+              2>&1 | grep -E "^DET |Test Case .*(passed|failed)|\*\* TEST" || true
+          done
+      - name: 同一份代码、三份 ubuntu 转出来的视频（iOS CI 用的就是 ubuntu 转的）
+        if: matrix.machine == 'm1'
+        run: |
+          for u in u1 u2 u3; do
+            TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/ubuntu-videos/videos-$u" \
+            TEST_RUNNER_COACHME_DETERMINISM_OUT="$PWD/det/$u" \
+            TEST_RUNNER_COACHME_DETERMINISM_RUNS=1 TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=0 \
+            xcodebuild test-without-building -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
+              -derivedDataPath dd -only-testing:CoachMeTests/DeterminismTests \
+              2>&1 | grep -E "^DET .*run=" | sed "s/^/[$u] /" || true
+          done
+      - name: 同一进程内
+        if: always()
+        run: |
+          pip3 install --quiet --break-system-packages numpy || pip3 install --quiet numpy
+          for p in 1 2 3; do python3 tools/e2e/determinism.py det/p$p | tee -a "$GITHUB_STEP_SUMMARY" || true; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: det-${{ matrix.machine }}
+          path: det/
+          retention-days: 7
+
+  compare:
+    name: 跨进程、跨机器比较
+    needs: repeat
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: det-*
+          path: det
+      - name: 比较
+        run: |
+          pip install --quiet numpy
+          python tools/e2e/determinism.py --across \
+            m1不快检=det/det-m1/p1 m1先快检=det/det-m1/p2 m1再不快检=det/det-m1/p3 \
+            m2不快检=det/det-m2/p1 m2先快检=det/det-m2/p2 | tee -a "$GITHUB_STEP_SUMMARY"

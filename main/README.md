@@ -1,4 +1,4 @@
-# main @ f997e7f
+# main @ d2a8ccd
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">
@@ -35,3 +35,21 @@
 
 ## 6_settings_zh.png
 <img src="6_settings_zh.png" width="300">
+
+## 7_near_boundary_en.png
+<img src="7_near_boundary_en.png" width="300">
+
+## 7_near_boundary_zh.png
+<img src="7_near_boundary_zh.png" width="300">
+
+## 8_low_tracking_en.png
+<img src="8_low_tracking_en.png" width="300">
+
+## 8_low_tracking_zh.png
+<img src="8_low_tracking_zh.png" width="300">
+
+## 9_low_camera_en.png
+<img src="9_low_camera_en.png" width="300">
+
+## 9_low_camera_zh.png
+<img src="9_low_camera_zh.png" width="300">

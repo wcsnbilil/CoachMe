@@ -11,8 +11,8 @@
 |---|---|---|---|
 | `CoachMe/`（App） | 22 个 Swift | ≈ 7 000 | SwiftUI，iOS 17+，XcodeGen 生成工程，CocoaPods 引入 MediaPipe |
 | `CoachMeCore/Sources` | 26 个 Swift | ≈ 3 300 | 单一 target，无第三方依赖 |
-| `CoachMeCore/Tests` | 12 个文件 | 116 个测试函数 | `swift test` 可在 macOS 跑 |
-| `CoachMeTests/`（App 测试） | 13 个文件 | 50 个测试函数 | 需模拟器 + MediaPipe 模型 |
+| `CoachMeCore/Tests` | 12 个文件 | 102 个测试函数 | `swift test` 可在 macOS 跑 |
+| `CoachMeTests/`（App 测试） | 12 个文件 | 38 个测试函数 | 需模拟器 + MediaPipe 模型 |
 | `tools/` | Python ≈ 2 900 行、Node 2 个、Shell/PS 若干 | | 算法原型、基准、一致性导出、环境脚本 |
 
 模型资源：MediaPipe `pose_landmarker_heavy.task`（不入库，脚本下载）、SwingNet 两段 CoreML（`SwingNetEncoder` / `SwingNetSequence`，入库）、`GolfAvatar.mesh.json`。
@@ -95,13 +95,13 @@ UI 层越过服务层、直接构造底层对象的位置（第 2 步分层要�
 
 没有覆盖率报告（CI 开了 `gatherCoverageData`，但没导出）。下面按“被哪个测试文件引用”统计，属粗略覆盖。
 
-### 4.1 CoachMeCore（116 个测试函数）
+### 4.1 CoachMeCore（102 个测试函数）
 
 | 有测试 | 无直接测试 |
 |---|---|
-| Geometry（19）、Smoothing / OneEuro（16）、RuleEngine（14+3）、SwingPathAnalyzer（21，含 22 杆 parity）、LLMChatService（11，请求构造与解码）、SwingNetEventSelector（7）、PoseDisplayCompleter（7）、AIFramePlan（5）、GolfAvatarPose（5）、PersonCrop / PoseTrackSelector（4）、PoseDisplaySmoother（4） | **`SwingMetricsCalculator`**（只在 App 端到端测试里被间接调用）、`QualityPolicy` / `FrameQuality`、`ChatModels` / `Conversation` 状态变化、`SwingAnalysisContext` 构造 |
+| Geometry（18）、Smoothing / OneEuro（15）、RuleEngine（13+2）、SwingPathAnalyzer（19，含 22 杆 parity）、LLMChatService（10，请求构造与解码）、SwingNetEventSelector（6）、PoseDisplayCompleter（6）、AIFramePlan（4）、GolfAvatarPose（4）、PersonCrop / PoseTrackSelector（2）、PoseDisplaySmoother（3） | **`SwingMetricsCalculator`**（只在 App 端到端测试里被间接调用）、`QualityPolicy` / `FrameQuality`、`ChatModels` / `Conversation` 状态变化、`SwingAnalysisContext` 构造 |
 
-### 4.2 App（50 个测试函数，需模拟器）
+### 4.2 App（38 个测试函数，需模拟器）
 
 覆盖：视频解码与旋转（`VideoPipelineTests`）、高帧率/慢动作时间映射、编解码错误、MediaPipe 加载与单图推理、SwingNet 单帧与归一化、端到端一条（`EndToEndJourneyTests`）、可用性逻辑 10 条、聊天框架 7 条、真实 DeepSeek（默认跳过）。
 
@@ -213,7 +213,7 @@ MediaPipe 和 SwingNet 推理本身在 actor 上（`SwingAnalyzer`、`SavedSwing
 
 | 文档 | 写的 | 实际 |
 |---|---|---|
-| `README*.md` 徽章 | Core tests 82 passed | 现有 116 个测试函数 |
+| `README*.md` 徽章 | Core tests 82 passed | 现有 102 个测试函数 |
 | `docs/LIMITATIONS.md` §三 | 动作阶段需教练手动标记；无 AI 回答 | 已有 SwingNet 自动阶段；已接 5 家 LLM |
 | `docs/LIMITATIONS.md` §五 | 自动识别动作阶段未做 | 已做 |
 | `MediaPipePoseDetector.swift` 顶部 | NOT YET COMPILED OR RUN | 已在真机跑通 |

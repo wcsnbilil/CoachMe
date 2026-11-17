@@ -24,10 +24,14 @@ public struct PathEvidence: Sendable, Codable, Equatable {
     public var calibration: SwingPathAnalyzer.Calibration
     /// Seconds into the video of the frame to draw on (mid-downswing).
     public var evidenceSeconds: Double?
+    /// How sure the report sounds; nil when refused or on records saved before it existed.
+    public var confidence: SwingPathAnalyzer.Confidence?
 
     public init(verdict: SwingPathAnalyzer.Verdict, refusal: SwingPathAnalyzer.Refusal?, offset: Double?, side: Int?,
                 imageWidth: Double, imageHeight: Double, downswing: [Point], referenceLine: [Point],
-                torsoPixels: Double?, calibration: SwingPathAnalyzer.Calibration = .golfDB, evidenceSeconds: Double?) {
+                torsoPixels: Double?, calibration: SwingPathAnalyzer.Calibration = .golfDB, evidenceSeconds: Double?,
+                confidence: SwingPathAnalyzer.Confidence? = nil) {
+        self.confidence = confidence
         self.verdict = verdict; self.refusal = refusal; self.offset = offset; self.side = side
         self.imageWidth = imageWidth; self.imageHeight = imageHeight
         self.downswing = downswing; self.referenceLine = referenceLine
@@ -52,10 +56,20 @@ public struct PathEvidence: Sendable, Codable, Equatable {
                   imageWidth: imageWidth, imageHeight: imageHeight, downswing: down,
                   referenceLine: r.referenceLine.map { Point(x: $0.x, y: $0.y) },
                   torsoPixels: r.torsoPixels, calibration: calibration,
-                  evidenceSeconds: frameSeconds.indices.contains(mid) ? frameSeconds[mid] : nil)
+                  evidenceSeconds: frameSeconds.indices.contains(mid) ? frameSeconds[mid] : nil,
+                  confidence: r.confidence)
     }
 
     public var isJudged: Bool { verdict != .cannotJudge }
+
+    /// A soft state: the report shows the note instead of a practice tip.
+    public var isSoft: Bool { confidence?.isSoft ?? false }
+
+    /// For near_boundary: true when the offset is nearer the over-the-top threshold than the inside one.
+    public var nearOutside: Bool {
+        guard let offset else { return true }
+        return abs(offset - calibration.outside) <= abs(offset - calibration.inside)
+    }
 
     /// x of the address line at image row y.
     public func referenceX(atY y: Double) -> Double? {

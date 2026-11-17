@@ -50,6 +50,7 @@ def main():
             "backswing_offset": res.get("backswing_offset"),
             "loop": res.get("loop"),
             "jump_frames": res.get("jump_frames"),
+            "confidence": res.get("confidence"),
         })
     a.out.write_text(json.dumps(out), encoding="utf-8")
     print(f"{len(out)} swings -> {a.out}")

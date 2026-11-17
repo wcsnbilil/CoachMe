@@ -68,6 +68,19 @@ public struct SwingPathAnalyzer: Sendable {
         }
     }
 
+    /// How sure the report sounds about a verdict (path_fault.CONFIDENCE). The verdict itself is
+    /// unchanged; the soft states keep a result that sits on a limit from flipping between an
+    /// answer and a refusal, or between two answers, when the same swing is filmed or exported
+    /// slightly differently (tools/robustness, PR #16). Raw values are what the test log exports.
+    public enum Confidence: String, Sendable, Codable, CaseIterable {
+        case normal
+        case nearBoundary = "near_boundary"  // offset within nearBoundary of a threshold
+        case lowTracking = "low_tracking"    // downswing gap within its margin of the limit, either side
+        case lowCamera = "low_camera"        // shoulder / hip line within lowCameraMargin of the limit
+
+        public var isSoft: Bool { self != .normal }
+    }
+
     public enum Refusal: String, Sendable, Codable {
         case phaseOrder              // 阶段顺序不对
         case torsoNotVisible         // 准备姿势躯干不可见
@@ -125,6 +138,8 @@ public struct SwingPathAnalyzer: Sendable {
         public var jumpFrames: Int = 0
         /// Torso length at address in pixels (offsets are in these units).
         public var torsoPixels: Double? = nil
+        /// nil when refused.
+        public var confidence: Confidence? = nil
 
         static func refused(_ r: Refusal) -> Result {
             Result(verdict: .cannotJudge, refusal: r, offset: nil, backswingOffset: nil, loop: nil, side: nil,
@@ -167,6 +182,14 @@ public struct SwingPathAnalyzer: Sendable {
     static let maxDownswingGap = 0.25
     /// A gap this short is always filled, however short the downswing (path_fault.MIN_FILLED_GAP).
     static let minFilledGap = 3.0
+
+    // Soft wording near the limits, same values as path_fault.py (see there for the numbers).
+    public static let nearBoundary = 0.05
+    /// Downswing-gap margin: this share of the downswing (1 frame of the median 8-frame real-time
+    /// GolfDB downswing), never less than lowTrackingMinFrames, so every frame rate gets the same margin in time.
+    public static let lowTrackingFraction = 1.0 / 8
+    public static let lowTrackingMinFrames = 1.0
+    public static let lowCameraMargin = 0.05
 
     public init(calibration: Calibration = .golfDB,
                 minVisibility: Double = 0.5,
@@ -250,9 +273,13 @@ public struct SwingPathAnalyzer: Sendable {
         if Double(span.filter { ok[$0] }.count) / Double(span.count) < 0.7 {
             var r = Result.refused(.trackingJumps); r.jumpFrames = jumped; return r
         }
-        if Double(Self.longestGap(Array(ok[top...impact]))) > max(Self.minFilledGap, Self.maxDownswingGap * Double(impact - top)) {
+        let gap = Double(Self.longestGap(Array(ok[top...impact])))
+        let gapAllowed = max(Self.minFilledGap, Self.maxDownswingGap * Double(impact - top))
+        let gapMargin = max(Self.lowTrackingMinFrames, Self.lowTrackingFraction * Double(impact - top))
+        if gap > gapAllowed + gapMargin {
             var r = Result.refused(.downswingGap); r.jumpFrames = jumped; return r
         }
+        let lowTracking = gap > gapAllowed - gapMargin  // within the margin on either side of the limit
 
         let xs = Self.smooth(raw.map(\.0), k: k)
         let ys = Self.smooth(raw.map(\.1), k: k)
@@ -267,12 +294,14 @@ public struct SwingPathAnalyzer: Sendable {
 
         let shoulderWidth = abs(body[J.lSh].0 - body[J.rSh].0) / torso
         let hipWidth = abs(body[J.lHip].0 - body[J.rHip].0) / torso
-        let widest = [shoulderWidth, hipWidth].filter(\.isFinite).max() ?? .nan
-        if widest > maxLineWidth {
+        // path_fault.camera_check rounds the widths to 3 decimals before comparing; so does this.
+        let widest = [shoulderWidth, hipWidth].filter(\.isFinite).max().map { ($0 * 1000).rounded(.toNearestOrEven) / 1000 } ?? .nan
+        if widest > maxLineWidth * (1 + Self.lowCameraMargin) {
             var r = Result.refused(.cameraOffAxis)
             r.shoulderWidth = shoulderWidth; r.hipWidth = hipWidth; r.addressFrame = address
             return r
         }
+        let lowCamera = widest > maxLineWidth * (1 - Self.lowCameraMargin)
 
         // Side: majority of four cues (hands, nose, shoulders vs hips at address;
         // hands move back toward the body at the top).
@@ -315,6 +344,9 @@ public struct SwingPathAnalyzer: Sendable {
         let back: Double? = up.isEmpty ? nil : Self.median(up)
         let verdict: Verdict = offset > calibration.outside ? .overTheTop
             : offset < calibration.inside ? .tooInside : .withinProRange
+        let confidence: Confidence = lowTracking ? .lowTracking : lowCamera ? .lowCamera
+            : min(abs(offset - calibration.outside), abs(offset - calibration.inside)) <= Self.nearBoundary ? .nearBoundary
+            : .normal
         var caution: [String] = []
         if verdict != .withinProRange, let back, abs(back) > 0.4, (back > 0) == (offset > 0) {
             caution.append("上下杆整条轨迹都在参考线同一侧，可能是机位或俯拍让参考线偏了")
@@ -325,7 +357,7 @@ public struct SwingPathAnalyzer: Sendable {
                       cautionZH: caution,
                       hands: zip(xs, ys).map { PathPoint(x: $0, y: $1) },
                       referenceLine: [PathPoint(x: h0.0, y: h0.1), PathPoint(x: shMid.0, y: shMid.1)],
-                      addressFrame: address, jumpFrames: jumped, torsoPixels: torso)
+                      addressFrame: address, jumpFrames: jumped, torsoPixels: torso, confidence: confidence)
     }
 
     // MARK: - Helpers (each mirrors a function in path_fault.py)

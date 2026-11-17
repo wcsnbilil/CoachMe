@@ -33,6 +33,7 @@ def pose_video(path: Path, model: Path, max_h: int = 540) -> tuple[np.ndarray, f
     from mediapipe.tasks import python as mpp
     from mediapipe.tasks.python import vision
     cap = cv2.VideoCapture(str(path))
+    cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 1)  # iPhone portrait clips carry rotation metadata; OpenCV ignores it by default
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     opts = vision.PoseLandmarkerOptions(base_options=mpp.BaseOptions(model_asset_path=str(model)),
                                         running_mode=vision.RunningMode.VIDEO, num_poses=1)

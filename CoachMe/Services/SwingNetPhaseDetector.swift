@@ -12,6 +12,8 @@ final class SwingNetPhaseDetector {
     private var features: [[Float]] = []
     private var timestamps: [Double] = []
     private var selector = SwingNetEventSelector()
+    /// Every softmax row fed to the selector, in frame order (for the App/Python layer comparison).
+    private(set) var probabilityLog: [[Double]] = []
 
     func prepare(bundle: Bundle = .main) throws {
         let configuration = MLModelConfiguration()
@@ -22,6 +24,7 @@ final class SwingNetPhaseDetector {
         features.removeAll(keepingCapacity: true)
         timestamps.removeAll(keepingCapacity: true)
         selector = SwingNetEventSelector()
+        probabilityLog.removeAll()
     }
 
     private static func load(_ name: String, bundle: Bundle,
@@ -68,7 +71,9 @@ final class SwingNetPhaseDetector {
             guard row.allSatisfy(\.isFinite), let maximum = row.max() else { throw DetectionError.invalidOutput }
             let exponents = row.map { exp($0 - maximum) }
             let total = exponents.reduce(0, +)
-            try selector.append(probabilities: exponents.map { $0 / total }, timestamp: timestamps[t])
+            let probabilities = exponents.map { $0 / total }
+            probabilityLog.append(probabilities)
+            try selector.append(probabilities: probabilities, timestamp: timestamps[t])
         }
         features.removeAll(keepingCapacity: true)
         timestamps.removeAll(keepingCapacity: true)

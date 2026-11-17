@@ -72,7 +72,8 @@ struct BetaRootView: View {
 
     static func writeExport(_ records: [BetaRecord]) -> URL? {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("coachme-test-log.json")
-        guard let data = try? BetaExport(records: records, appVersion: BetaMode.appVersion, build: BetaMode.build).jsonData(),
+        guard let data = try? BetaExport(records: records, appVersion: BetaMode.appVersion, build: BetaMode.build,
+                                          deviceModel: BetaMode.deviceModel).jsonData(),
               (try? data.write(to: url, options: .atomic)) != nil else { return nil }
         return url
     }
@@ -159,9 +160,11 @@ struct BetaRecordsView: View {
 
     private func row(_ record: BetaRecord) -> some View {
         HStack(spacing: 12) {
-            Circle().fill(record.verdict.betaColor).frame(width: 10, height: 10)
+            Circle().fill(record.confidence == .nearBoundary ? CoachStyle.pending : record.verdict.betaColor)
+                .frame(width: 10, height: 10)
             VStack(alignment: .leading, spacing: 3) {
-                Text(s.verdictTitle(record.verdict)).font(.body.weight(.semibold))
+                Text(s.headline(record.verdict, confidence: record.confidence,
+                                nearOutside: record.evidence?.nearOutside ?? true)).font(.body.weight(.semibold))
                     .foregroundStyle(CoachStyle.text)
                 Text(s.dateText(record.createdAt)).font(.caption).foregroundStyle(CoachStyle.textSecondary)
             }

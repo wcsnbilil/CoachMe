@@ -1,4 +1,4 @@
-# claude/window-crop @ 58f7302
+# claude/window-crop @ d7cbe1b
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

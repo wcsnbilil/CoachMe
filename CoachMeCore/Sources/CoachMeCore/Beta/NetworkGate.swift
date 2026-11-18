@@ -26,13 +26,16 @@ public final class NetworkGate: @unchecked Sendable {
 /// beta surfaces; this is what the tests assert against.
 public enum AppFeature: String, CaseIterable, Sendable {
     case shootingGuide, pathReport, refusalHelp, recordList, exportRecords, settingsVersion
+    /// 3D figure replayed from the filming camera only: no view switching, no angle numbers.
+    case avatarReplay
     case aiCoachChat, aiSettings, jointAngleMetrics, angleCurve, coachRules, keyframeWorkbench
-    /// Single-camera 3D depth is not trustworthy: no 3D avatar or skeleton playback in the beta.
+    /// Free-rotating 3D and the 2D skeleton playback: single-camera depth is not trustworthy from
+    /// another view, so the beta only has `avatarReplay`.
     case avatar3D, skeletonPlayback
 
     public var isBetaSurface: Bool {
         switch self {
-        case .shootingGuide, .pathReport, .refusalHelp, .recordList, .exportRecords, .settingsVersion: return true
+        case .shootingGuide, .pathReport, .refusalHelp, .recordList, .exportRecords, .settingsVersion, .avatarReplay: return true
         default: return false
         }
     }

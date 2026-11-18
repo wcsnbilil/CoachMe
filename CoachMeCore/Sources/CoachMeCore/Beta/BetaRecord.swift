@@ -31,6 +31,9 @@ public struct BetaRecord: Sendable, Codable, Identifiable, Equatable {
     /// Added in log schema 5: how sure the report sounded (normal / near_boundary / low_tracking /
     /// low_camera); nil when refused or saved before schema 5.
     public var confidence: SwingPathAnalyzer.Confidence?
+    /// Added in log schema 6: each time the tester opened the 3D replay for this analysis; nil on
+    /// records saved before it.
+    public var replayOpens: [Date]?
 
     public init(id: UUID = UUID(), createdAt: Date = Date(), appVersion: String, build: String,
                 verdict: SwingPathAnalyzer.Verdict, refusal: SwingPathAnalyzer.Refusal?, swingNotFound: Bool = false,
@@ -112,6 +115,8 @@ public struct BetaExport: Equatable, Sendable {
         public var preflight: String?
         public var preflightMs: Int?
         public var confidence: String?
+        /// When the tester opened the 3D replay of this analysis.
+        public var replay3DOpens: [String]
     }
     public var schema: Int
     public var exportedAt: String
@@ -124,14 +129,14 @@ public struct BetaExport: Equatable, Sendable {
     public static let requiredEntryKeys = [
         "time", "appVersion", "build", "deviceModel", "verdict", "refusalReason", "refusalCategory", "analysisMs",
         "videoDurationSeconds", "videoWidth", "videoHeight", "videoFrameRate", "videoCodec", "videoOrientation",
-        "swingsFound", "swingChosen", "preflight", "preflightMs", "confidence",
+        "swingsFound", "swingChosen", "preflight", "preflightMs", "confidence", "replay3DOpens",
     ]
     public static let requiredRootKeys = ["schema", "exportedAt", "appVersion", "build", "deviceModel", "recordCount", "records"]
 
     public init(records: [BetaRecord], appVersion: String, build: String, deviceModel: String? = nil, now: Date = Date()) {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime]
-        schema = 5
+        schema = 6
         exportedAt = f.string(from: now)
         self.appVersion = appVersion
         self.build = build
@@ -143,7 +148,8 @@ public struct BetaExport: Equatable, Sendable {
                   refusalCategory: $0.refusalCategory, analysisMs: $0.analysisMilliseconds, video: $0.video,
                   swingsFound: $0.swingsFound, swingChosen: $0.swingChosen,
                   preflight: $0.preflight, preflightMs: $0.preflightMilliseconds,
-                  confidence: $0.verdict == .cannotJudge ? nil : $0.confidence?.rawValue)
+                  confidence: $0.verdict == .cannotJudge ? nil : $0.confidence?.rawValue,
+                  replay3DOpens: ($0.replayOpens ?? []).sorted().map { f.string(from: $0) })
         }
     }
 
@@ -168,7 +174,7 @@ public struct BetaExport: Equatable, Sendable {
                 "videoCodec": Self.json(e.video?.codec), "videoOrientation": Self.json(e.video?.orientation),
                 "swingsFound": Self.json(e.swingsFound), "swingChosen": Self.json(e.swingChosen),
                 "preflight": Self.json(e.preflight), "preflightMs": Self.json(e.preflightMs),
-                "confidence": Self.json(e.confidence),
+                "confidence": Self.json(e.confidence), "replay3DOpens": e.replay3DOpens,
             ]
         }
         return try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
@@ -197,6 +203,15 @@ public final class BetaRecordStore: @unchecked Sendable {
         all.append(record)
         lock.lock(); defer { lock.unlock() }
         try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try JSONEncoder().encode(all).write(to: fileURL, options: .atomic)
+    }
+
+    /// Notes that the tester opened the 3D replay of the analysis made from this swing.
+    public func logReplayOpen(swingID: UUID, at date: Date = Date()) throws {
+        var all = load()
+        guard let i = all.firstIndex(where: { $0.swingID == swingID }) else { return }
+        all[i].replayOpens = (all[i].replayOpens ?? []) + [date]
+        lock.lock(); defer { lock.unlock() }
         try JSONEncoder().encode(all).write(to: fileURL, options: .atomic)
     }
 }

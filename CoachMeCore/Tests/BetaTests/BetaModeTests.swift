@@ -4,6 +4,7 @@ import XCTest
 @testable import AICoach
 @testable import AppPolicy
 @testable import Beta
+import DiagnosisTestSupport
 
 final class BetaModeTests: XCTestCase {
 
@@ -251,7 +252,7 @@ final class BetaModeTests: XCTestCase {
     // MARK: Evidence geometry
 
     func testEvidenceBandSurroundsReferenceLine() {
-        let s = SwingPathAnalyzerTests.makeSwing(loop: 0.6, frames: 60)
+        let s = SyntheticSwing.make(loop: 0.6, frames: 60)
         let r = SwingPathAnalyzer().analyze(landmarks: s.0, address: s.1, top: s.2, impact: s.3)
         XCTAssertEqual(r.verdict, .overTheTop)
         let torso = r.torsoPixels

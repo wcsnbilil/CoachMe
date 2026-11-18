@@ -21,9 +21,10 @@ let package = Package(
         .testTarget(name: "ModelTests", dependencies: ["Model", "Diagnosis"]),
         .testTarget(name: "PoseDetectionTests", dependencies: ["PoseDetection"]),
         .testTarget(name: "PhaseSegmentationTests", dependencies: ["PhaseSegmentation"]),
-        .testTarget(name: "DiagnosisTests", dependencies: ["Diagnosis"]),
+        .target(name: "DiagnosisTestSupport", dependencies: ["Diagnosis"], path: "Tests/DiagnosisTestSupport"),
+        .testTarget(name: "DiagnosisTests", dependencies: ["Diagnosis", "DiagnosisTestSupport"]),
         .testTarget(name: "AICoachTests", dependencies: ["AICoach"]),
         .testTarget(name: "AvatarTests", dependencies: ["Avatar"]),
-        .testTarget(name: "BetaTests", dependencies: ["Beta", "AppPolicy", "AICoach"])
+        .testTarget(name: "BetaTests", dependencies: ["Beta", "AppPolicy", "AICoach", "DiagnosisTestSupport"])
     ]
 )

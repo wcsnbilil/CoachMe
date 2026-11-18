@@ -173,6 +173,8 @@ public struct LLMChatService: ChatService {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
+                    // Beta build: no request may leave the device.
+                    if NetworkGate.shared.isOffline { throw ChatServiceError.transport("内测模式下不联网。") }
                     let request = try makeRequest(message: message, conversation: conversation, context: context, options: options)
                     let id = UUID()
                     continuation.yield(.started(messageID: id))

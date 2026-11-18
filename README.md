@@ -140,6 +140,7 @@ swift build --package-path CoachMeCore
 tools/no-xcode-testrunner/run.sh
 node tools/reference/verify_geometry.mjs
 node tools/reference/verify_rules.mjs
+python3 tools/reference/verify_comparison.py
 ```
 
 The Node scripts reproduce the Swift formulas and decision order to check the

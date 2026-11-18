@@ -147,17 +147,34 @@ public struct SwingAnalysisContext: Sendable, Codable, Equatable {
         self.comparison = comparison
     }
 
+    /// The same context with a comparison attached; every other field is kept.
+    public func withComparison(_ comparison: ComparisonSummary?) -> SwingAnalysisContext {
+        var copy = SwingAnalysisContext(
+            swingID: swingID, analysisVersion: analysisVersion, handedness: handedness,
+            club: club, cameraView: cameraView, markedPhases: markedPhases,
+            selectedPhase: selectedPhase, selectedTimestampSeconds: selectedTimestampSeconds,
+            readings: readings, quality: quality, comparison: comparison)
+        copy.analysisDetails = analysisDetails
+        return copy
+    }
+
     public struct ComparisonSummary: Sendable, Codable, Equatable {
         public let otherSwingID: UUID
         /// Phases present in both swings — the comparison is aligned on these,
         /// never on raw elapsed seconds.
         public let alignedPhases: [SwingPhase]
         public let deltas: [PhaseDelta]
+        /// Why some numbers may not be directly comparable (camera view,
+        /// handedness, club, metric definition). Travels with the data so the
+        /// model and the UI state the same caveats.
+        public let warningsZH: [String]
 
-        public init(otherSwingID: UUID, alignedPhases: [SwingPhase], deltas: [PhaseDelta]) {
+        public init(otherSwingID: UUID, alignedPhases: [SwingPhase], deltas: [PhaseDelta],
+                    warningsZH: [String] = []) {
             self.otherSwingID = otherSwingID
             self.alignedPhases = alignedPhases
             self.deltas = deltas
+            self.warningsZH = warningsZH
         }
 
         public struct PhaseDelta: Sendable, Codable, Equatable {

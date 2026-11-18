@@ -1,5 +1,5 @@
 import SwiftUI
-import Model
+import CoachMeCore
 
 @MainActor
 struct HomeView: View {

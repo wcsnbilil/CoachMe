@@ -1,5 +1,5 @@
 import XCTest
-import AICoach
+import CoachMeCore
 @testable import CoachMe
 
 /// Explicitly opt-in device verification. Ordinary test runs never call a paid API.

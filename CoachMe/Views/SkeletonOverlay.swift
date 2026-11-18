@@ -1,5 +1,5 @@
 import SwiftUI
-import Model
+import CoachMeCore
 
 /// Maps normalised landmark coordinates onto the rectangle the video actually
 /// occupies inside its view.

@@ -2,8 +2,7 @@ import Foundation
 import CoreML
 import CoreVideo
 import AVFoundation
-import Model
-import PhaseSegmentation
+import CoachMeCore
 
 /// The official SwingNet checkpoint, split into a frame encoder and a BiLSTM.
 /// Buffers at most 64 feature vectors. Frames must already be upright.

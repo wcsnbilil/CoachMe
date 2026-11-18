@@ -1,9 +1,6 @@
 import SwiftUI
 import AVFoundation
-import Model
-import PoseDetection
-import Diagnosis
-import AICoach
+import CoachMeCore
 
 /// Holds the analysis for one swing and keeps every panel on the same clock.
 ///

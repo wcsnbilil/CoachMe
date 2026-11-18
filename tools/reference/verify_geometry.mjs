@@ -1,7 +1,7 @@
 // Numerical reference for CoachMeCore's geometry.
 //
 // This file re-implements the exact formulas in
-// CoachMeCore/Sources/Model/Geometry/*.swift and runs them on fixed test
+// CoachMeCore/Sources/CoachMeCore/Geometry/*.swift and runs them on fixed test
 // vectors. It exists because the Swift toolchain is not available on this
 // machine: it proves the *formulas and expected numbers* are right, so the
 // Swift XCTest cases can assert against values that were actually computed

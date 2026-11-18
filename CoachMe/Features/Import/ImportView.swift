@@ -2,7 +2,7 @@ import SwiftUI
 import PhotosUI
 import AVFoundation
 import AVKit
-import Model
+import CoachMeCore
 
 /// Import + setup + run the analysis. Everything the analysis needs that cannot
 /// be inferred from pixels (handedness, club, camera view) is asked for here.
@@ -27,7 +27,7 @@ struct ImportView: View {
 
     @State private var handedness: Handedness = .rightHanded
     @State private var club: ClubType = .iron
-    @State private var cameraView: Model.CameraView = .faceOn
+    @State private var cameraView: CoachMeCore.CameraView = .faceOn
     /// Nothing in a video file says whether it was slowed down, and the smoothing
     /// cutoff has to match the footage's time base — see SmoothingParameters.
     @State private var isSlowMotion = false
@@ -296,7 +296,7 @@ struct ImportView: View {
                         Text("拍摄视角")
                         Spacer()
                         Picker("拍摄视角", selection: $cameraView) {
-                            ForEach(Model.CameraView.allCases, id: \.self) { Text($0.nameZH).tag($0) }
+                            ForEach(CoachMeCore.CameraView.allCases, id: \.self) { Text($0.nameZH).tag($0) }
                         }
                         .labelsHidden()
                         .tint(CoachStyle.textSecondary)

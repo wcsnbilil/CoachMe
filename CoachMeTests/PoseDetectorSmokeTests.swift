@@ -1,6 +1,6 @@
 import XCTest
 import CoreVideo
-import Model
+import CoachMeCore
 @testable import CoachMe
 
 /// Exercises the MediaPipe seam against the real SDK and the real bundled model.

@@ -1,8 +1,7 @@
 import XCTest
 import CoreVideo
 import UIKit
-import Model
-import Diagnosis
+import CoachMeCore
 @testable import CoachMe
 
 /// End-to-end over a real photograph: JPEG → MediaPipe → CoachMeCore metrics.

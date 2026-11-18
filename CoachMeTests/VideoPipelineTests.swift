@@ -1,7 +1,7 @@
 import XCTest
 import AVFoundation
 import CoreVideo
-import Model
+import CoachMeCore
 @testable import CoachMe
 
 /// The real video path: file → VideoAssetReader → MediaPipe → CoachMeCore.

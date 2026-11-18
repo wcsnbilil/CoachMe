@@ -15,7 +15,7 @@ build="$here/.scratch"
 rm -rf "$build"
 mkdir -p "$build/Sources/XCTest" "$build/Sources/RunTests"
 cp "$here/XCTestShim.swift" "$build/Sources/XCTest/XCTest.swift"
-cp "$core"/Tests/*/*.swift "$build/Sources/RunTests/"
+cp "$core/Tests/CoachMeCoreTests/"*.swift "$build/Sources/RunTests/"
 
 cat > "$build/Package.swift" <<'EOF'
 // swift-tools-version: 5.9

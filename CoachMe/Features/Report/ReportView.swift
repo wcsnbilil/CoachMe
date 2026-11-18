@@ -1,8 +1,6 @@
 import SwiftUI
 import AVFoundation
-import Model
-import Diagnosis
-import AICoach
+import CoachMeCore
 
 /// 当前值 → 动作阶段 → 教练参考范围 → 偏差 → 解释与建议。
 ///

@@ -1,7 +1,6 @@
 import SwiftUI
 import SceneKit
-import Model
-import Avatar
+import CoachMeCore
 import simd
 
 @MainActor

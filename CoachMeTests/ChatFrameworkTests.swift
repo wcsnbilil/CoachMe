@@ -1,5 +1,5 @@
 import XCTest
-import AICoach
+import CoachMeCore
 @testable import CoachMe
 
 /// Spec §12.4 — the chat framework must be real and swappable before any model

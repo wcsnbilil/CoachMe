@@ -1,7 +1,6 @@
 import SwiftUI
 import AVFoundation
-import Model
-import Diagnosis
+import CoachMeCore
 
 enum StageMode: Hashable { case flat, spatial }
 enum WorkbenchTab: Hashable { case readings, curve }

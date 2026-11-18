@@ -1,6 +1,6 @@
 import AVFoundation
 import UIKit
-import AICoach
+import CoachMeCore
 
 /// Original oriented frames, never skeleton renderings. Images stay in memory.
 @MainActor

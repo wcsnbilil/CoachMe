@@ -1,8 +1,6 @@
 import XCTest
 import AVFoundation
-import Model
-import Diagnosis
-import AICoach
+import CoachMeCore
 @testable import CoachMe
 
 /// The whole value path in one test: video → landmarks → keyframes → metrics →

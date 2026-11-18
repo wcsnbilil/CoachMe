@@ -1,4 +1,4 @@
-"""Same cases as CoachMeCore/Tests/PhaseSegmentationTests/SwingNetEventSelectorTests.swift.
+"""Same cases as CoachMeCore/Tests/CoachMeCoreTests/SwingNetEventSelectorTests.swift.
 
 Run: python3 -I tools/benchmark/test_app_selector.py
 """

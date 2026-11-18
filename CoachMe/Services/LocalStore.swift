@@ -43,11 +43,13 @@ final class LocalStore {
                           base.appendingPathComponent("chats")] {
             try? fm.createDirectory(at: directory, withIntermediateDirectories: true)
         }
-        // Analyses and videos are regenerable/user content but should not be
-        // uploaded to iCloud backups silently.
+        // The analysis cache is regenerable from the video, so keep it out of
+        // iCloud / device backups. Videos, swing records, rules and chats are
+        // user content and stay in the backup.
+        var analyses = base.appendingPathComponent("analyses", isDirectory: true)
         var resource = URLResourceValues()
-        resource.isExcludedFromBackup = false
-        _ = resource
+        resource.isExcludedFromBackup = true
+        try? analyses.setResourceValues(resource)
     }
 
     /// Only removes a new, uncommitted import owned by the caller.

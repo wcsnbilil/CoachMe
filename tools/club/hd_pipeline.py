@@ -135,6 +135,23 @@ def segment(lm: np.ndarray) -> list[tuple[int, int, int]]:
     return out
 
 
+LEAD_S = 1.0          # seconds of lead-in before the segment's address (as the app's swing window)
+SLOW_SWING_S = 2.0    # a longer address->impact is slow motion: lead-in stretched by duration / 1 s
+
+
+def video_fps(path: Path) -> float:
+    cap = cv2.VideoCapture(str(path))
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+    cap.release()
+    return fps
+
+
+def lead_frames(ad: int, imp: int, fps: float) -> int:
+    took = (imp - ad) / fps
+    slow = took if took > SLOW_SWING_S else 1.0
+    return max(30, int(round(LEAD_S * fps * slow)))
+
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -162,10 +179,18 @@ def main():
             print(f"{n}/{len(vids)} {v.stem}: 读不到视频帧", flush=True)
             continue
         segs = segment(lm)
+        fps = video_fps(v)
         for s, (ad, top, imp) in enumerate(segs):
-            r = analyze(lm[ad:imp + 1].copy(), 0, top - ad, imp - ad)
+            # Lead-in before the segment's address: that address is often already in the takeaway
+            # (the body has started to turn, so the camera check reads the shoulder line as too wide).
+            # With frames before it, analyze() walks back to the still address itself (still_address).
+            lo = max(ad - lead_frames(ad, imp, fps), segs[s - 1][2] + 1 if s else 0, 0)
+            r = analyze(lm[lo:imp + 1].copy(), ad - lo, top - lo, imp - lo)
             r = {k: val for k, val in r.items() if k != "hands"}
-            r.update(name=f"{v.stem}_s{s}", video=str(v.resolve()), lm=str(npy.resolve()), phases=[ad, top, imp])
+            if "address_used" in r:
+                r["address_used"] = int(r["address_used"]) + lo  # back to frames of the whole video
+            r.update(name=f"{v.stem}_s{s}", video=str(v.resolve()), lm=str(npy.resolve()), phases=[ad, top, imp],
+                     lead_start=lo)
             rows.append(r)
         print(f"{n}/{len(vids)} {v.stem}: {len(lm)} frames, {len(segs)} swings,",
               [r["verdict"] for r in rows if r["name"].startswith(v.stem + "_s")], flush=True)

@@ -1,5 +1,7 @@
 import SwiftUI
-import CoachMeCore
+import Model
+import Diagnosis
+import AICoach
 
 /// Multi-provider chat with local conversation history.
 @MainActor

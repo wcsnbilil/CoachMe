@@ -1,6 +1,8 @@
 import Foundation
 import AVFoundation
-import CoachMeCore
+import Model
+import Diagnosis
+import Beta
 
 /// Imports a video, finds the swing, runs the downswing path check and saves a
 /// BetaRecord. Same pipeline as ImportView, with the camera fixed to down-the-line

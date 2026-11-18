@@ -1,6 +1,6 @@
 """Retake checks before / during the analysis, with the full analysis's own refusal rules.
 
-Two layers (CoachMeCore/Sources/CoachMeCore/Beta/Preflight.swift is a line-by-line port):
+Two layers (CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift is a line-by-line port):
 
 1. quick(): right after import, on a dozen or so poses sampled across the clip (seconds).
    Only what the full analysis would certainly refuse, or cannot run on:

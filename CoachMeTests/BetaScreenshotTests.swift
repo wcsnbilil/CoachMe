@@ -1,6 +1,7 @@
 import XCTest
 import SwiftUI
-import CoachMeCore
+import Diagnosis
+import Beta
 @testable import CoachMe
 
 /// Renders the beta screens in both languages so they can be reviewed without

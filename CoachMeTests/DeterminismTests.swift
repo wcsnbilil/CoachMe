@@ -2,7 +2,7 @@ import XCTest
 import AVFoundation
 import CryptoKit
 @testable import CoachMe
-import CoachMeCore
+import Model
 
 /// Does the same video give the same answer every time? Skipped unless COACHME_DETERMINISM_DIR
 /// (TEST_RUNNER_COACHME_DETERMINISM_DIR) points at a folder of videos.

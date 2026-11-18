@@ -1,6 +1,8 @@
 import Foundation
 import SwiftUI
-import CoachMeCore
+import Diagnosis
+import AppPolicy
+import Beta
 
 /// The beta (TestFlight) build: one feature, no network, no AI.
 ///

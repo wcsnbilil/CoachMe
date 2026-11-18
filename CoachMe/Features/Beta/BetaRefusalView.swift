@@ -1,5 +1,6 @@
 import SwiftUI
-import CoachMeCore
+import Diagnosis
+import Beta
 
 /// When the path check refuses: the concrete reason and how to film again.
 @MainActor

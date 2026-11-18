@@ -1,6 +1,8 @@
 import Foundation
 import AVFoundation
-import CoachMeCore
+import Model
+import PhaseSegmentation
+import Diagnosis
 
 /// Progress reported while an analysis runs.
 struct AnalysisProgress: Equatable {

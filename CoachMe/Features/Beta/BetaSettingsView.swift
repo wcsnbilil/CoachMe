@@ -1,5 +1,5 @@
 import SwiftUI
-import CoachMeCore
+import Model
 
 @MainActor
 struct BetaSettingsView: View {

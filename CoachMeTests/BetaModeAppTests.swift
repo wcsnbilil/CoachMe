@@ -1,7 +1,9 @@
 import XCTest
 import AVFoundation
 import SwiftUI
-import CoachMeCore
+import AICoach
+import AppPolicy
+import Beta
 @testable import CoachMe
 
 /// Beta build acceptance: AI and the other metrics cannot be reached, nothing

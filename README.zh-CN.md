@@ -150,15 +150,16 @@ Node 脚本复刻 Swift 中的公式和判定顺序，用于独立核对数学�
 
 ```text
 CoachMeCore/                 纯 Swift 逻辑，不依赖 SwiftUI / AVFoundation / MediaPipe
-  Sources/
-    Model/                   关键点、帧、动作阶段、关键帧
-    Geometry/                向量、角度、躯干坐标系
-    Metrics/                 指标目录与计算器
-    Quality/                 可见度门槛与帧级质量
-    Smoothing/               One Euro 滤波与序列平滑
-    Rules/                   教练规则与判定引擎
-    Chat/                    消息、会话、分析上下文、ChatService 接口
-  Tests/                     核心回归测试
+  Sources/                   每个模块一个 SwiftPM target；箭头是唯一允许的依赖
+    Model/                   关键点、帧、动作阶段、关键帧、几何（无依赖）
+    AppPolicy/               联网开关与功能清单（无依赖）
+    PoseDetection/           人物跟踪、One Euro 与显示用平滑              -> Model
+    PhaseSegmentation/       SwingNet 事件选择、人物裁剪                  -> Model
+    Diagnosis/               下杆路径、指标、教练规则、多杆切分、快速预检 -> Model
+    AICoach/                 消息、分析上下文、两杆对比、LLM 聊天服务     -> Model、Diagnosis、AppPolicy
+    Avatar/                  三维人体骨骼姿态                             -> Model
+    Beta/                    内测版的测试记录、导出与文案                 -> Model、Diagnosis
+  Tests/                     每个模块一个测试 target
 
 CoachMe/                     iOS App 目标
 CoachMeTests/                iOS 回归与集成测试

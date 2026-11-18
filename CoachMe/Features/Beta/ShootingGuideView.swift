@@ -1,6 +1,6 @@
 import SwiftUI
 import PhotosUI
-import CoachMeCore
+import Model
 
 /// Shown before every import: how to film so the path check can work.
 @MainActor

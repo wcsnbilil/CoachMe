@@ -1,5 +1,6 @@
 import SwiftUI
-import CoachMeCore
+import Model
+import Diagnosis
 
 @MainActor
 struct RuleListView: View {
@@ -172,7 +173,7 @@ struct RuleEditorView: View {
     @State private var phases: Set<SwingPhase> = [.top]
     @State private var side: RuleSide = .leadArm
     @State private var clubs: Set<ClubType> = Set(ClubType.allCases)
-    @State private var views: Set<CoachMeCore.CameraView> = Set(CoachMeCore.CameraView.allCases)
+    @State private var views: Set<Model.CameraView> = Set(Model.CameraView.allCases)
     @State private var hasLower = true
     @State private var hasUpper = true
     @State private var lower: Double = 150
@@ -252,7 +253,7 @@ struct RuleEditorView: View {
                     }
                     Text("拍摄视角").font(.footnote).foregroundStyle(CoachStyle.textTertiary)
                     FlowLayout(spacing: 8) {
-                        ForEach(CoachMeCore.CameraView.allCases, id: \.self) { view in
+                        ForEach(Model.CameraView.allCases, id: \.self) { view in
                             ChoiceChip(title: view.nameZH, selected: views.contains(view)) {
                                 if views.contains(view) { views.remove(view) } else { views.insert(view) }
                             }
@@ -486,4 +487,4 @@ struct RuleEditorView: View {
 }
 
 extension ClubType: Identifiable { public var id: String { rawValue } }
-extension CoachMeCore.CameraView: Identifiable { public var id: String { rawValue } }
+extension Model.CameraView: Identifiable { public var id: String { rawValue } }

@@ -13,7 +13,7 @@ Rule (all lengths in torso units = median shoulder-mid to hip-mid distance):
 A clip with 0 or 1 swings found is analysed whole, exactly as before (no change for single swings).
 Below 30 fps the frame counts shrink with the rate: the app's first pass samples about 15 fps.
 
-CoachMeCore/Sources/CoachMeCore/Split/SwingSplitter.swift is a line-by-line port; CI checks both
+CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift is a line-by-line port; CI checks both
 give the same windows on tools/split/fixtures/split_parity.json.
 
 usage: python tools/split/swing_split.py landmarks.npy [--fps 30]

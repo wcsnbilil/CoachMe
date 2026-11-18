@@ -1,5 +1,6 @@
 import SwiftUI
-import CoachMeCore
+import Diagnosis
+import Beta
 
 /// The beta report says one thing: the downswing path verdict, with the frame
 /// it is based on, how sure we are, and a practice tip slot. When the result sits on a limit

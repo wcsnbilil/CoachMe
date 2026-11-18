@@ -1,7 +1,7 @@
 # 指标定义
 
 > 本文件是给人看的说明。**代码中的唯一事实来源是**
-> `CoachMeCore/Sources/CoachMeCore/Metrics/MetricCatalog.swift`。
+> `CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift`。
 > 两处若不一致，以代码为准，并请修正本文件。
 
 所有角度由算法计算，与大模型无关。每个指标都绑定一个 `definitionHash`；教练参考范围

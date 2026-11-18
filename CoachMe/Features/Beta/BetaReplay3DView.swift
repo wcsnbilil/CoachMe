@@ -1,5 +1,6 @@
 import SwiftUI
-import CoachMeCore
+import Model
+import PoseDetection
 
 /// The beta's 3D replay: the 3D figure seen only from the camera that filmed the swing.
 ///

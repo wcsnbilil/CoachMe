@@ -1,7 +1,7 @@
 """Reference implementation of CoachMeCore's SwingComparison.
 
 Written first in Python, then ported line for line to
-CoachMeCore/Sources/CoachMeCore/Chat/SwingComparison.swift. The Swift tests in
+CoachMeCore/Sources/AICoach/SwingComparison.swift. The Swift tests in
 SwingComparisonTests.swift use the same cases, so either side can be checked
 against the other.
 

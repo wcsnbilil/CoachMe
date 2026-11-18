@@ -3,6 +3,86 @@
 范围：`CoachMe/`（App）、`CoachMeCore/`（SwiftPM 包）、`CoachMeTests/`、`tools/`、CI、文档。
 本次只读、不改代码。所有结论都能在文中给出的文件里核对；标「推断」的是没运行验证的判断。
 
+> **本文第 1–8 节写于 main@8df800f，当时只看了 `main`。** 之后 13 个未合并的 PR 合入了 main，下面第 0 节是基于 main@ac8de39 的补充，凡与后文冲突处以第 0 节为准。
+
+---
+
+## 0. 补充（2026-11-18，基于 main@ac8de39）
+
+### 0.1 规模变化
+
+| 部分 | 摸底时 | 现在 |
+|---|---|---|
+| `CoachMe/`（App） | 22 个 Swift，≈ 7 000 行 | 31 个，≈ 8 500 行 |
+| `CoachMeCore/Sources` | 26 个，≈ 3 300 行 | 36 个，≈ 4 600 行 |
+| Core 测试函数 | 102 | 146 |
+| App 测试函数 | 38（12 个文件） | 49（18 个文件） |
+| `tools/` Python | ≈ 2 900 行 | 52 个文件，≈ 6 700 行 |
+| CI 工作流 | 1 个 | 7 个 |
+
+### 0.2 新增的模块
+
+| 新增 | 位置 | 说明 |
+|---|---|---|
+| 内测模式 | `CoachMe/Features/Beta/`（8 个文件）、Core 的 `Beta` target | 只看下杆路径、离线、中英双语；由 build setting `COACHME_BETA_MODE` 切换（默认开）。按产品决定是**临时形态**，上架的是完整版 |
+| 联网开关 | Core 的 `AppPolicy` target（`NetworkGate`、`AppFeature`） | 内测期间禁止任何网络请求；`LLMChatService` 发请求前检查 |
+| 多杆切分 | `Diagnosis/Split/SwingSplitter.swift`，Python 主版本 `tools/split/` | 超过 8 秒的视频先粗筛出每一杆，只分析最后一杆 |
+| 快速预检 | `Diagnosis/Preflight/Preflight.swift`，Python 主版本 `tools/preflight/` | 导入后提前拒判，规则与完整分析一致 |
+| 结论把握（软说法） | `SwingPathAnalyzer.Confidence` | 接近边界 / 追踪不稳 / 机位略偏 |
+| 原机位 3D 回放 | `PoseDetection/Smoothing/WorldDisplaySmoother.swift`、`BetaReplay3DView` | 三维只按拍摄机位回放 |
+| 两次挥杆对比 | `AICoach/SwingComparison.swift`、`ComparisonView` | |
+| 测试记录与导出 | `Beta/BetaRecord.swift` | 导出 schema 6，不含视频和关键点 |
+
+### 0.3 分层现状
+
+`CoachMeCore` 已拆成 8 个 SwiftPM target，依赖方向由 `Package.swift` 强制：
+
+```
+Model、AppPolicy（无依赖）
+PoseDetection / PhaseSegmentation / Diagnosis / Avatar → Model
+AICoach → Model、Diagnosis、AppPolicy
+Beta → Model、Diagnosis
+```
+
+App 侧的越界调用还在，并且多了一处：`Features/Beta/BetaAnalysisRunner.swift` 直接构造 `MediaPipePoseDetector`、`SwingNetPhaseDetector`、`SwingAnalyzer`、`SwingPathAnalyzer`，并用 `LocalStore.shared`（9 处）。第 3 节表格里的 8 处不变。UI 迁移排在回归基准和 CI 之后。
+
+### 0.4 第 4.3 节「没有任何自动门槛」已不成立
+
+现在已有这些自动检查（都在 `.github/workflows/`）：
+
+| 工作流 | 测什么 | 触发 | 是否有失败门槛 |
+|---|---|---|---|
+| `ios-ci.yml` | Core 测试、App 模拟器测试、三组 Swift/Python 一致性（路径 43 杆、切分 283 段、预检）、端到端格式矩阵、内测版不引用 AI 界面 | 每个 PR、push 到 main | 有 |
+| `golfdb-app.yml` | GolfDB 400 上 App 整条链路的阶段和判定 | 相关路径改动的 PR、手动 | 待第 4 步确认 |
+| `preflight-eval.yml` | GolfDB 400 预检与完整分析一致率 | 相关路径改动的 PR、手动 | 有（低于 95% 失败） |
+| `robustness.yml` | GolfDB 400 轻微扰动下的结论翻转率 | 相关路径改动的 PR、手动 | 只报告 |
+| `window-crop.yml` | GolfDB 400 裁切窗口前后结论是否一致 | 相关路径改动的 PR、手动 | 只报告 |
+| `determinism.yml` | 同一视频多次分析结论一致 | **每个 PR**（无路径过滤，两台 macOS 模拟器各约一小时）、手动 | 有 |
+| `testflight.yml` | 上传 TestFlight | 手动，未启用 | — |
+
+仍然缺的（第 4 步要补）：
+
+- **7 阶段切分准确率**没有入库的基准数字和门槛。
+- **外下/内下**没有逐杆快照，也没有把「实时/慢动作一致率」设成门槛。
+- **GolfDB 400 的关键点不在仓库里**：各工作流运行时下载视频、现跑 MediaPipe，靠 Actions 缓存复用。入库后回归测试才能在几分钟内跑完，且不依赖缓存是否还在。
+- Swift/Python 一致性的期望值仍然每次由当前 Python 重算（D2 不变）。
+
+### 0.5 CI 的新问题
+
+- `determinism.yml` 没有路径过滤，任何 PR 都会占两台 macOS 机器约一小时；这次合并期间 main 的 CI 因此排队近 40 分钟。
+- 几条 GolfDB 工作流有路径过滤，但只要 PR 的整体改动碰到相关路径就会全部触发。
+- 功能分支的 push 仍不触发 CI（D7 不变）。
+
+第 6 步的方向已定：PR 上只跑快速检查，重型流程在合入 main 后或每晚跑，可手动触发。
+
+### 0.6 第 5、6 节里需要更新的条目
+
+- 5.3 魔法数字：新增的 `SwingSplitter`、`Preflight`、软说法带宽（0.05、1/8、5%）同样是 Swift / Python 各写一份。
+- 5.4 多份实现：新增 `tools/split/swing_split.py` ↔ `SwingSplitter.swift`、`tools/preflight/preflight.py` ↔ `Preflight.swift`、`tools/reference/verify_comparison.py` ↔ `SwingComparison.swift`，前两对有 CI 一致性测试。
+- 6.1 文档不符：`LIMITATIONS.md` 已随 #2 同步，那几行不再成立；README 徽章的测试数仍是旧的。
+- D12 杆身跟踪：仍然只有 Python 原型（`tools/club/`），Swift 侧没有。
+- 第 7 节的三个问题已有决定：400 杆关键点入库；一致率以实时 vs 慢动作为门槛并存逐杆快照；阶段准确率按 GolfDB 论文口径。
+
 ---
 
 ## 1. 规模与技术栈

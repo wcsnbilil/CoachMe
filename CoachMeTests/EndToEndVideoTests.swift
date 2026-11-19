@@ -2,7 +2,8 @@ import XCTest
 import UIKit
 import AVFoundation
 import Darwin
-import CoachMeCore
+import Model
+import Beta
 @testable import CoachMe
 
 /// Real video through the whole beta chain: decode → MediaPipe → SwingNet →

@@ -1,6 +1,6 @@
 import SwiftUI
 import Security
-import CoachMeCore
+import AICoach
 
 @MainActor
 enum AISettingsStore {

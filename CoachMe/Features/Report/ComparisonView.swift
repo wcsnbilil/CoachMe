@@ -1,5 +1,7 @@
 import SwiftUI
-import CoachMeCore
+import Model
+import Diagnosis
+import AICoach
 
 /// Two swings side by side, aligned on the phases both have confirmed.
 ///

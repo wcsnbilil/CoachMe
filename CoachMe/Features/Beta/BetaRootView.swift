@@ -1,6 +1,8 @@
 import SwiftUI
 import PhotosUI
-import CoachMeCore
+import Diagnosis
+import AppPolicy
+import Beta
 
 /// Every screen the beta build can navigate to. Nothing here leads to the AI
 /// coach, the joint-angle metrics, the workbench or the coach rules.

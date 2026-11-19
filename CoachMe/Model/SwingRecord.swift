@@ -1,5 +1,7 @@
 import Foundation
-import CoachMeCore
+import Model
+import PoseDetection
+import Diagnosis
 
 /// Everything saved about one analysed swing.
 ///

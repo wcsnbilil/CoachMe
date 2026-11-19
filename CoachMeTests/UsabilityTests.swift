@@ -1,6 +1,7 @@
 import XCTest
 import AVFoundation
-import CoachMeCore
+import Model
+import AICoach
 @testable import CoachMe
 
 final class UsabilityTests: XCTestCase {

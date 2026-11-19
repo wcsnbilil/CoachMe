@@ -1,6 +1,6 @@
 import XCTest
 import AVFoundation
-import CoachMeCore
+import Model
 @testable import CoachMe
 
 /// GolfDB through the App's own decode + MediaPipe (beta settings), for the App-pipeline baseline.

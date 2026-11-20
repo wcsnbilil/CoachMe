@@ -1,0 +1,4 @@
+@MainActor
+final class SwingAnalyzerOnMain {
+    func run(_ score: Double) -> Bool { score > 0.37 }
+}

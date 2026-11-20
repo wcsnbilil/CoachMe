@@ -1,0 +1,3872 @@
+[
+ {
+  "text": "        generator.maximumSize = CGSize(width: 1280, height: 1280)",
+  "violation": {
+   "location": {
+    "character": 47,
+    "file": "CoachMe/Services/AIKeyframeImages.swift",
+    "line": 11
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        generator.maximumSize = CGSize(width: 1280, height: 1280)",
+  "violation": {
+   "location": {
+    "character": 61,
+    "file": "CoachMe/Services/AIKeyframeImages.swift",
+    "line": 11
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let frame = try await generator.image(at: CMTime(seconds: time, preferredTimescale: 60000))",
+  "violation": {
+   "location": {
+    "character": 97,
+    "file": "CoachMe/Services/AIKeyframeImages.swift",
+    "line": 22
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            guard let jpeg = UIImage(cgImage: frame.image).jpegData(compressionQuality: 0.8) else {",
+  "violation": {
+   "location": {
+    "character": 89,
+    "file": "CoachMe/Services/AIKeyframeImages.swift",
+    "line": 23
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            try await reader.start(timeRange: timeRange, maxDimension: phaseDetector == nil && knownKeyframes == nil ? 720 : 4096)",
+  "violation": {
+   "location": {
+    "character": 120,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 88
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            try await reader.start(timeRange: timeRange, maxDimension: phaseDetector == nil && knownKeyframes == nil ? 720 : 4096)",
+  "violation": {
+   "location": {
+    "character": 126,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 88
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        frames.reserveCapacity(max(estimatedTotal, 16))",
+  "violation": {
+   "location": {
+    "character": 52,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 99
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let milliseconds = Int((decoded.timestampSeconds * 1000).rounded())",
+  "violation": {
+   "location": {
+    "character": 64,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 116
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            if Date().timeIntervalSince(lastProgress) >= 0.1 || processed == estimatedTotal {",
+  "violation": {
+   "location": {
+    "character": 58,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 149
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        do { try await reader.start(timeRange: timeRange, maxDimension: 4096) }",
+  "violation": {
+   "location": {
+    "character": 73,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 195
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            if Date().timeIntervalSince(lastProgress) >= 0.1 {",
+  "violation": {
+   "location": {
+    "character": 58,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 212
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        do { try await reader.start(timeRange: nil, maxDimension: 720) }",
+  "violation": {
+   "location": {
+    "character": 67,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 229
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            guard frame.timestampSeconds >= targets[next] - 0.001 || decoded == nil else { continue }",
+  "violation": {
+   "location": {
+    "character": 61,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 244
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                        timestampMilliseconds: Int((frame.timestampSeconds * 1000).rounded()))",
+  "violation": {
+   "location": {
+    "character": 94,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 249
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        do { try await reader.start(timeRange: nil, maxDimension: 720) }",
+  "violation": {
+   "location": {
+    "character": 67,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 269
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let step = 1 / framesPerSecond - 0.004",
+  "violation": {
+   "location": {
+    "character": 42,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 275
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                        timestampMilliseconds: Int((decoded.timestampSeconds * 1000).rounded()))",
+  "violation": {
+   "location": {
+    "character": 96,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 291
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            if Date().timeIntervalSince(lastProgress) >= 0.1 {",
+  "violation": {
+   "location": {
+    "character": 58,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 298
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let fps = fallbackFPS > 0 ? Double(fallbackFPS) : 30",
+  "violation": {
+   "location": {
+    "character": 59,
+    "file": "CoachMe/Services/SwingAnalyzer.swift",
+    "line": 316
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "              vector.count == 1280 else { throw DetectionError.invalidOutput }",
+  "violation": {
+   "location": {
+    "character": 31,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 46
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        features.append((0..<1280).map { vector[$0].floatValue })",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 47
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if features.count == 64 { try flush() }",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 49
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let input = try MLMultiArray(shape: [1, NSNumber(value: features.count), 1280], dataType: .float32)",
+  "violation": {
+   "location": {
+    "character": 82,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 62
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            for j in 0..<1280 { input[t * 1280 + j] = NSNumber(value: features[t][j]) }",
+  "violation": {
+   "location": {
+    "character": 26,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 64
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            for j in 0..<1280 { input[t * 1280 + j] = NSNumber(value: features[t][j]) }",
+  "violation": {
+   "location": {
+    "character": 43,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 64
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "              logits.count == features.count * 9 else { throw DetectionError.invalidOutput }",
+  "violation": {
+   "location": {
+    "character": 48,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 69
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let row = (0..<9).map { logits[[0, NSNumber(value: t), NSNumber(value: $0)]].doubleValue }",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 71
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let scale = 160.0 / Double(max(cropWidth, cropHeight))",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 102
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let left = (160 - w) / 2, top = (160 - h) / 2",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 104
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let left = (160 - w) / 2, top = (160 - h) / 2",
+  "violation": {
+   "location": {
+    "character": 32,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 104
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let left = (160 - w) / 2, top = (160 - h) / 2",
+  "violation": {
+   "location": {
+    "character": 42,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 104
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let left = (160 - w) / 2, top = (160 - h) / 2",
+  "violation": {
+   "location": {
+    "character": 53,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 104
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let means: [Float] = [0.485, 0.456, 0.406]",
+  "violation": {
+   "location": {
+    "character": 31,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 105
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let means: [Float] = [0.485, 0.456, 0.406]",
+  "violation": {
+   "location": {
+    "character": 38,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 105
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let means: [Float] = [0.485, 0.456, 0.406]",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 105
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let stds: [Float] = [0.229, 0.224, 0.225]",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 106
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let stds: [Float] = [0.229, 0.224, 0.225]",
+  "violation": {
+   "location": {
+    "character": 37,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 106
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let stds: [Float] = [0.229, 0.224, 0.225]",
+  "violation": {
+   "location": {
+    "character": 44,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 106
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let padding: [Float] = [124, 116, 104] // OpenCV's rounded mean-colour border.",
+  "violation": {
+   "location": {
+    "character": 33,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 107
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let padding: [Float] = [124, 116, 104] // OpenCV's rounded mean-colour border.",
+  "violation": {
+   "location": {
+    "character": 38,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 107
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let padding: [Float] = [124, 116, 104] // OpenCV's rounded mean-colour border.",
+  "violation": {
+   "location": {
+    "character": 43,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 107
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let result = try MLMultiArray(shape: [1, 3, 160, 160], dataType: .float32)",
+  "violation": {
+   "location": {
+    "character": 50,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 108
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let result = try MLMultiArray(shape: [1, 3, 160, 160], dataType: .float32)",
+  "violation": {
+   "location": {
+    "character": 53,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 108
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let result = try MLMultiArray(shape: [1, 3, 160, 160], dataType: .float32)",
+  "violation": {
+   "location": {
+    "character": 58,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 108
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        for channel in 0..<3 {",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 110
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let value = (padding[channel] / 255 - means[channel]) / stds[channel]",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 111
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            for i in 0..<(160 * 160) { dst[channel * 160 * 160 + i] = value }",
+  "violation": {
+   "location": {
+    "character": 27,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 112
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            for i in 0..<(160 * 160) { dst[channel * 160 * 160 + i] = value }",
+  "violation": {
+   "location": {
+    "character": 33,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 112
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            for i in 0..<(160 * 160) { dst[channel * 160 * 160 + i] = value }",
+  "violation": {
+   "location": {
+    "character": 54,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 112
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            for i in 0..<(160 * 160) { dst[channel * 160 * 160 + i] = value }",
+  "violation": {
+   "location": {
+    "character": 60,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 112
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let sy = max(0, min(Double(height - 1), Double(oy) + (Double(y) + 0.5) * Double(cropHeight) / Double(h) - 0.5))",
+  "violation": {
+   "location": {
+    "character": 79,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 115
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let sy = max(0, min(Double(height - 1), Double(oy) + (Double(y) + 0.5) * Double(cropHeight) / Double(h) - 0.5))",
+  "violation": {
+   "location": {
+    "character": 119,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 115
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let sx = max(0, min(Double(width - 1), Double(ox) + (Double(x) + 0.5) * Double(cropWidth) / Double(w) - 0.5))",
+  "violation": {
+   "location": {
+    "character": 82,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 118
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let sx = max(0, min(Double(width - 1), Double(ox) + (Double(x) + 0.5) * Double(cropWidth) / Double(w) - 0.5))",
+  "violation": {
+   "location": {
+    "character": 121,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 118
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                for channel in 0..<3 {",
+  "violation": {
+   "location": {
+    "character": 36,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 120
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let bgra = 2 - channel",
+  "violation": {
+   "location": {
+    "character": 32,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 121
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let a = Float(bytes[y0 * stride + x0 * 4 + bgra])",
+  "violation": {
+   "location": {
+    "character": 60,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 122
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let b = Float(bytes[y0 * stride + x1 * 4 + bgra])",
+  "violation": {
+   "location": {
+    "character": 60,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 123
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let c = Float(bytes[y1 * stride + x0 * 4 + bgra])",
+  "violation": {
+   "location": {
+    "character": 60,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 124
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let d = Float(bytes[y1 * stride + x1 * 4 + bgra])",
+  "violation": {
+   "location": {
+    "character": 60,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 125
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    dst[channel * 25600 + (y + top) * 160 + x + left] = (value / 255 - means[channel]) / stds[channel]",
+  "violation": {
+   "location": {
+    "character": 35,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 127
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    dst[channel * 25600 + (y + top) * 160 + x + left] = (value / 255 - means[channel]) / stds[channel]",
+  "violation": {
+   "location": {
+    "character": 55,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 127
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    dst[channel * 25600 + (y + top) * 160 + x + left] = (value / 255 - means[channel]) / stds[channel]",
+  "violation": {
+   "location": {
+    "character": 82,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 127
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let range = end.map { CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 600), end: CMTime(seconds: $0, preferredTimescale: 600)) }",
+  "violation": {
+   "location": {
+    "character": 93,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 155
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let range = end.map { CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 600), end: CMTime(seconds: $0, preferredTimescale: 600)) }",
+  "violation": {
+   "location": {
+    "character": 144,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 155
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        try await reader.start(timeRange: range, maxDimension: 4096)",
+  "violation": {
+   "location": {
+    "character": 64,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 156
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            if Date().timeIntervalSince(lastProgress) >= 0.1 {",
+  "violation": {
+   "location": {
+    "character": 58,
+    "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
+    "line": 166
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard size.width >= 2, size.height >= 2 else {",
+  "violation": {
+   "location": {
+    "character": 29,
+    "file": "CoachMe/Services/VideoAssetReader.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard size.width >= 2, size.height >= 2 else {",
+  "violation": {
+   "location": {
+    "character": 47,
+    "file": "CoachMe/Services/VideoAssetReader.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return CGFloat(i % 2 == 0 ? i : i - 1)",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMe/Services/VideoAssetReader.swift",
+    "line": 198
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        public static let golfDB = Calibration(outside: 0.142, inside: -0.516, source: \"golfdb_dtl_first200_v3d\")",
+  "violation": {
+   "location": {
+    "character": 57,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        public static let golfDB = Calibration(outside: 0.142, inside: -0.516, source: \"golfdb_dtl_first200_v3d\")",
+  "violation": {
+   "location": {
+    "character": 73,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    public static let lowTrackingFraction = 1.0 / 8",
+  "violation": {
+   "location": {
+    "character": 51,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 191
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            (0..<33).map { i in",
+  "violation": {
+   "location": {
+    "character": 18,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 218
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let k = Self.oddWindow(Double(impact - address) / 20)",
+  "violation": {
+   "location": {
+    "character": 59,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 242
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = max(2, k / 2)",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 243
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = max(2, k / 2)",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 243
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard visible >= 0.7 else { return .refused(.wristsNotVisible) }",
+  "violation": {
+   "location": {
+    "character": 26,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 267
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if Double(span.filter { ok[$0] }.count) / Double(span.count) < 0.7 {",
+  "violation": {
+   "location": {
+    "character": 72,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 274
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let widest = [shoulderWidth, hipWidth].filter(\\.isFinite).max().map { ($0 * 1000).rounded(.toNearestOrEven) / 1000 } ?? .nan",
+  "violation": {
+   "location": {
+    "character": 85,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 299
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let widest = [shoulderWidth, hipWidth].filter(\\.isFinite).max().map { ($0 * 1000).rounded(.toNearestOrEven) / 1000 } ?? .nan",
+  "violation": {
+   "location": {
+    "character": 119,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 299
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard rise >= 0.5 * torso else { return .refused(.backswingTooSmall) }",
+  "violation": {
+   "location": {
+    "character": 23,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 321
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let refAngle = atan(abs(slope)) * 180 / .pi",
+  "violation": {
+   "location": {
+    "character": 43,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 326
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        for i in 0..<13 {",
+  "violation": {
+   "location": {
+    "character": 22,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 333
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let frac = 0.2 + 0.6 * Double(i) / 12",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 334
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let frac = 0.2 + 0.6 * Double(i) / 12",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 334
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let frac = 0.2 + 0.6 * Double(i) / 12",
+  "violation": {
+   "location": {
+    "character": 48,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 334
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard down.count >= 5 else { return .refused(.tooFewDownswingSamples) }",
+  "violation": {
+   "location": {
+    "character": 29,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 342
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if verdict != .withinProRange, let back, abs(back) > 0.4, (back > 0) == (offset > 0) {",
+  "violation": {
+   "location": {
+    "character": 62,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 352
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            case (true, true): return (u + v) / 2",
+  "violation": {
+   "location": {
+    "character": 49,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 373
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let still = 0.1 * takeaway.reduce(0, +) / Double(takeaway.count)",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 388
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return (0..<33).map { j in",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 398
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let win = steps[max(1, i - 2)...min(n - 1, i + 2)].filter { $0.0.isFinite && $0.1.isFinite }",
+  "violation": {
+   "location": {
+    "character": 40,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 434
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let win = steps[max(1, i - 2)...min(n - 1, i + 2)].filter { $0.0.isFinite && $0.1.isFinite }",
+  "violation": {
+   "location": {
+    "character": 60,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 434
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            if win.count >= 3 {",
+  "violation": {
+   "location": {
+    "character": 29,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 435
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard finite.count >= 3 else { return out }",
+  "violation": {
+   "location": {
+    "character": 31,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 441
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let limit = max(3 * 1.4826 * median(finite), despikeFloor * torso)",
+  "violation": {
+   "location": {
+    "character": 25,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 442
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let limit = max(3 * 1.4826 * median(finite), despikeFloor * torso)",
+  "violation": {
+   "location": {
+    "character": 29,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 442
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                size[j] > 0.5 * limit && hypot(dev[i].0 + dev[j].0, dev[i].1 + dev[j].1) < 0.5 * size[i]",
+  "violation": {
+   "location": {
+    "character": 27,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 447
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                size[j] > 0.5 * limit && hypot(dev[i].0 + dev[j].0, dev[i].1 + dev[j].1) < 0.5 * size[i]",
+  "violation": {
+   "location": {
+    "character": 92,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 447
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let m = s.count / 2",
+  "violation": {
+   "location": {
+    "character": 27,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 468
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return s.count % 2 == 1 ? s[m] : (s[m - 1] + s[m]) / 2",
+  "violation": {
+   "location": {
+    "character": 26,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 469
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return s.count % 2 == 1 ? s[m] : (s[m - 1] + s[m]) / 2",
+  "violation": {
+   "location": {
+    "character": 62,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 469
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return k % 2 == 1 ? k : k + 1",
+  "violation": {
+   "location": {
+    "character": 20,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 475
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = k / 2",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 481
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            guard win.count >= 3, col[i].isFinite else { continue }",
+  "violation": {
+   "location": {
+    "character": 32,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 484
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let mad = 1.4826 * median(win.map { abs($0 - med) })",
+  "violation": {
+   "location": {
+    "character": 23,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 486
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard known.count >= 2 else { return col }",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 495
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let h = k / 2",
+  "violation": {
+   "location": {
+    "character": 25,
+    "file": "CoachMeCore/Sources/Diagnosis/Faults/SwingPathAnalyzer.swift",
+    "line": 512
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: 0...180,",
+  "violation": {
+   "location": {
+    "character": 20,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 39
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: 0...180,",
+  "violation": {
+   "location": {
+    "character": 20,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 56
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: 0...180,",
+  "violation": {
+   "location": {
+    "character": 20,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 73
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: 0...180,",
+  "violation": {
+   "location": {
+    "character": 20,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 90
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: -5...5,",
+  "violation": {
+   "location": {
+    "character": 17,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 107
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: -5...5,",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 107
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: -180...180,",
+  "violation": {
+   "location": {
+    "character": 17,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 126
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: -180...180,",
+  "violation": {
+   "location": {
+    "character": 23,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 126
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: -180...180,",
+  "violation": {
+   "location": {
+    "character": 17,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 143
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: -180...180,",
+  "violation": {
+   "location": {
+    "character": 23,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 143
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: -180...180,",
+  "violation": {
+   "location": {
+    "character": 17,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 160
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        range: -180...180,",
+  "violation": {
+   "location": {
+    "character": 23,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/MetricCatalog.swift",
+    "line": 160
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            ) { AngleMath.interiorAngleDegrees(vertex: $0[1], $0[0], $0[2]) }",
+  "violation": {
+   "location": {
+    "character": 73,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/SwingMetricsCalculator.swift",
+    "line": 161
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            ) { AngleMath.interiorAngleDegrees(vertex: $0[1], $0[0], $0[2]) }",
+  "violation": {
+   "location": {
+    "character": 73,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/SwingMetricsCalculator.swift",
+    "line": 165
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let shoulderCentre = Vector3.midpoint(pts[2], pts[3])",
+  "violation": {
+   "location": {
+    "character": 59,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/SwingMetricsCalculator.swift",
+    "line": 171
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let shoulderCentre = Vector3.midpoint(pts[2], pts[3])",
+  "violation": {
+   "location": {
+    "character": 67,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/SwingMetricsCalculator.swift",
+    "line": 171
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let hipCentre = Vector3.midpoint(pts[4], pts[5])",
+  "violation": {
+   "location": {
+    "character": 54,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/SwingMetricsCalculator.swift",
+    "line": 172
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let hipCentre = Vector3.midpoint(pts[4], pts[5])",
+  "violation": {
+   "location": {
+    "character": 62,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/SwingMetricsCalculator.swift",
+    "line": 172
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        ) { AngleMath.unsignedAngleDegrees($0[1] - $0[0], $0[3] - $0[2]) }",
+  "violation": {
+   "location": {
+    "character": 62,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/SwingMetricsCalculator.swift",
+    "line": 181
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        ) { AngleMath.unsignedAngleDegrees($0[1] - $0[0], $0[3] - $0[2]) }",
+  "violation": {
+   "location": {
+    "character": 70,
+    "file": "CoachMeCore/Sources/Diagnosis/Metrics/SwingMetricsCalculator.swift",
+    "line": 181
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let posed = (0..<k).map { f in (0..<33).contains { point(f, $0).x.isFinite } && (0..<33).contains { vis(f, $0) } }",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 51
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let posed = (0..<k).map { f in (0..<33).contains { point(f, $0).x.isFinite } && (0..<33).contains { vis(f, $0) } }",
+  "violation": {
+   "location": {
+    "character": 94,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 51
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let sh = ((p(ls).x + p(rs).x) / 2, (p(ls).y + p(rs).y) / 2)",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 59
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let sh = ((p(ls).x + p(rs).x) / 2, (p(ls).y + p(rs).y) / 2)",
+  "violation": {
+   "location": {
+    "character": 70,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 59
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let hip = ((p(lh).x + p(rh).x) / 2, (p(lh).y + p(rh).y) / 2)",
+  "violation": {
+   "location": {
+    "character": 46,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 60
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let hip = ((p(lh).x + p(rh).x) / 2, (p(lh).y + p(rh).y) / 2)",
+  "violation": {
+   "location": {
+    "character": 71,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 60
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            (0..<33).map { i in",
+  "violation": {
+   "location": {
+    "character": 18,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 76
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        top + SwingPathAnalyzer.oddWindow(Double(impact - address) / 20) + 3",
+  "violation": {
+   "location": {
+    "character": 70,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        top + SwingPathAnalyzer.oddWindow(Double(impact - address) / 20) + 3",
+  "violation": {
+   "location": {
+    "character": 76,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let k = SwingPathAnalyzer.oddWindow(Double(impact - address) / 20)",
+  "violation": {
+   "location": {
+    "character": 72,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 103
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = max(2, k / 2)",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 104
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = max(2, k / 2)",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 104
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if share() < 0.7 { return .wristsNotVisible }",
+  "violation": {
+   "location": {
+    "character": 22,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 130
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if share() < 0.7 { return .trackingJumps }",
+  "violation": {
+   "location": {
+    "character": 22,
+    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
+    "line": 135
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            (0..<33).map { i in",
+  "violation": {
+   "location": {
+    "character": 18,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 58
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard let step = median(steps), step > 0 else { return 30 }",
+  "violation": {
+   "location": {
+    "character": 64,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 70
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard n >= 10 else { return [] }",
+  "violation": {
+   "location": {
+    "character": 20,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 79
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard let torso = Self.median(d), torso >= 10,",
+  "violation": {
+   "location": {
+    "character": 52,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 84
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let r = max(1, Int(Self.pyRound(fps / 30)))",
+  "violation": {
+   "location": {
+    "character": 47,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 88
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let q = min(1.0, fps / 30)",
+  "violation": {
+   "location": {
+    "character": 32,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 90
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let ks = max(1, Int(Double(3 * r) * q)), kb = max(3, Int(Double(9 * r) * q))",
+  "violation": {
+   "location": {
+    "character": 36,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 92
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let ks = max(1, Int(Double(3 * r) * q)), kb = max(3, Int(Double(9 * r) * q))",
+  "violation": {
+   "location": {
+    "character": 59,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 92
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let ks = max(1, Int(Double(3 * r) * q)), kb = max(3, Int(Double(9 * r) * q))",
+  "violation": {
+   "location": {
+    "character": 73,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 92
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let win = count(5, 2), minBack = count(Self.minBack, 2), near = count(3, 2)",
+  "violation": {
+   "location": {
+    "character": 25,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let win = count(5, 2), minBack = count(Self.minBack, 2), near = count(3, 2)",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let win = count(5, 2), minBack = count(Self.minBack, 2), near = count(3, 2)",
+  "violation": {
+   "location": {
+    "character": 62,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let win = count(5, 2), minBack = count(Self.minBack, 2), near = count(3, 2)",
+  "violation": {
+   "location": {
+    "character": 79,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let win = count(5, 2), minBack = count(Self.minBack, 2), near = count(3, 2)",
+  "violation": {
+   "location": {
+    "character": 82,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 95
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            if top - lo < minBack + 2 { i = top + 1; continue }",
+  "violation": {
+   "location": {
+    "character": 37,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 106
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let cap = max(count(3, 1), (k - top) / 2)",
+  "violation": {
+   "location": {
+    "character": 33,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 122
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let cap = max(count(3, 1), (k - top) / 2)",
+  "violation": {
+   "location": {
+    "character": 52,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 122
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard swings.count >= (single ? 1 : 2) else { return [] }",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 134
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let s = v.sorted(), m = s.count / 2",
+  "violation": {
+   "location": {
+    "character": 43,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 164
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return s.count % 2 == 1 ? s[m] : (s[m - 1] + s[m]) / 2",
+  "violation": {
+   "location": {
+    "character": 26,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 165
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return s.count % 2 == 1 ? s[m] : (s[m - 1] + s[m]) / 2",
+  "violation": {
+   "location": {
+    "character": 62,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 165
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if ok.count >= 2 {",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 172
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let k = max(1, k | 1), h = k / 2, n = v.count",
+  "violation": {
+   "location": {
+    "character": 40,
+    "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
+    "line": 182
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                      (m.presence ?? 1) >= 0.5 else { return nil }",
+  "violation": {
+   "location": {
+    "character": 44,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 18
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            guard positions.count >= 7 else { continue }",
+  "violation": {
+   "location": {
+    "character": 38,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 21
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard boxes.count >= 12 else { return nil }",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 24
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let median = (0..<4).map { j -> Double in",
+  "violation": {
+   "location": {
+    "character": 27,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 25
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            return (sorted[(sorted.count-1)/2]+sorted[sorted.count/2])/2",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 27
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            return (sorted[(sorted.count-1)/2]+sorted[sorted.count/2])/2",
+  "violation": {
+   "location": {
+    "character": 68,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 27
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            return (sorted[(sorted.count-1)/2]+sorted[sorted.count/2])/2",
+  "violation": {
+   "location": {
+    "character": 72,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 27
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = median[3]-median[1], cx = (median[0]+median[2])/2, cy = (median[1]+median[3])/2",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 29
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = median[3]-median[1], cx = (median[0]+median[2])/2, cy = (median[1]+median[3])/2",
+  "violation": {
+   "location": {
+    "character": 61,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 29
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = median[3]-median[1], cx = (median[0]+median[2])/2, cy = (median[1]+median[3])/2",
+  "violation": {
+   "location": {
+    "character": 65,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 29
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = median[3]-median[1], cx = (median[0]+median[2])/2, cy = (median[1]+median[3])/2",
+  "violation": {
+   "location": {
+    "character": 91,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 29
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let h = median[3]-median[1], cx = (median[0]+median[2])/2, cy = (median[1]+median[3])/2",
+  "violation": {
+   "location": {
+    "character": 95,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 29
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard h > 0.08 else { return nil }",
+  "violation": {
+   "location": {
+    "character": 19,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 30
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let left = max(0,cx-h*0.55), right = min(1,cx+h*0.55)",
+  "violation": {
+   "location": {
+    "character": 31,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 31
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let left = max(0,cx-h*0.55), right = min(1,cx+h*0.55)",
+  "violation": {
+   "location": {
+    "character": 57,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 31
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let top = max(0,cy-h*0.7), bottom = min(1,cy+h*0.7)",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 32
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let top = max(0,cy-h*0.7), bottom = min(1,cy+h*0.7)",
+  "violation": {
+   "location": {
+    "character": 56,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 32
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard right-left > 0.05, bottom-top > 0.05 else { return nil }",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 33
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard right-left > 0.05, bottom-top > 0.05 else { return nil }",
+  "violation": {
+   "location": {
+    "character": 47,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/PersonCrop.swift",
+    "line": 33
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    private var scores = Array(repeating: -Double.infinity, count: 8)",
+  "violation": {
+   "location": {
+    "character": 68,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 7
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    private var times = Array<Double?>(repeating: nil, count: 8)",
+  "violation": {
+   "location": {
+    "character": 63,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 8
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard probabilities.count == 9, timestamp.isFinite,",
+  "violation": {
+   "location": {
+    "character": 38,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 14
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        boundaries.append((timestamp, probabilities[0], probabilities[7], probabilities[1]))",
+  "violation": {
+   "location": {
+    "character": 71,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 20
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        for event in 0..<8 where probabilities[event] > scores[event] {",
+  "violation": {
+   "location": {
+    "character": 26,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 21
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let mapping: [(Int, SwingPhase)] = [(0, .address), (2, .midBackswing),",
+  "violation": {
+   "location": {
+    "character": 61,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 31
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                           (3, .top), (4, .midDownswing),",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 32
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                           (3, .top), (4, .midDownswing),",
+  "violation": {
+   "location": {
+    "character": 56,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 32
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                           (5, .impact), (7, .finish)]",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 33
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                           (5, .impact), (7, .finish)]",
+  "violation": {
+   "location": {
+    "character": 59,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 33
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let interior = [2, 3, 4, 5].compactMap { times[$0] }",
+  "violation": {
+   "location": {
+    "character": 25,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let interior = [2, 3, 4, 5].compactMap { times[$0] }",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let interior = [2, 3, 4, 5].compactMap { times[$0] }",
+  "violation": {
+   "location": {
+    "character": 31,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let interior = [2, 3, 4, 5].compactMap { times[$0] }",
+  "violation": {
+   "location": {
+    "character": 34,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard interior.count == 4,",
+  "violation": {
+   "location": {
+    "character": 33,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 37
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if times[7].map({ $0 <= interior[3] }) ?? true {",
+  "violation": {
+   "location": {
+    "character": 18,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 45
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if times[7].map({ $0 <= interior[3] }) ?? true {",
+  "violation": {
+   "location": {
+    "character": 42,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 45
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            guard let candidate = boundaries.filter({ $0.time > interior[3] && $0.finish > 0 })",
+  "violation": {
+   "location": {
+    "character": 74,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 46
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            times[7] = candidate.time",
+  "violation": {
+   "location": {
+    "character": 19,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 48
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            scores[7] = candidate.finish",
+  "violation": {
+   "location": {
+    "character": 20,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 49
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        if let address = times[0], let mid = times[2],",
+  "violation": {
+   "location": {
+    "character": 52,
+    "file": "CoachMeCore/Sources/PhaseSegmentation/SwingNetEventSelector.swift",
+    "line": 55
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let tau = 1.0 / (2.0 * .pi * cutoff)",
+  "violation": {
+   "location": {
+    "character": 26,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/OneEuroFilter.swift",
+    "line": 44
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                || frames[i].timestampSeconds - frames[i-1].timestampSeconds > 0.3",
+  "violation": {
+   "location": {
+    "character": 80,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 26
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            return (score.visibility ?? 1) >= minVisibility && (score.presence ?? 1) >= 0.5",
+  "violation": {
+   "location": {
+    "character": 89,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 57
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    if d > 0.01 && d < 1.5 { values.append(d) }",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 83
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    if d > 0.01 && d < 1.5 { values.append(d) }",
+  "violation": {
+   "location": {
+    "character": 40,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 83
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                if values.count >= 3 { lengths[joint.rawValue] = values[values.count/2] }",
+  "violation": {
+   "location": {
+    "character": 36,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 86
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                if values.count >= 3 { lengths[joint.rawValue] = values[values.count/2] }",
+  "violation": {
+   "location": {
+    "character": 86,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 86
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                   frames[b].timestampSeconds-frames[a].timestampSeconds <= 0.3 {",
+  "violation": {
+   "location": {
+    "character": 77,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 101
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                   t-frames[a].timestampSeconds <= 3, segments[a] == segments[i], reliable(a,j),",
+  "violation": {
+   "location": {
+    "character": 52,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 110
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                   (hip.position-oldHip.position).length < 0.15 {",
+  "violation": {
+   "location": {
+    "character": 60,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 112
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                } else if usable(result[j]), (result[j].presence ?? 1) >= 0.5 {",
+  "violation": {
+   "location": {
+    "character": 75,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 118
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                guard !reliable(i,j), usable(result[p]), (result[p].presence ?? 1) >= 0.5 else { continue }",
+  "violation": {
+   "location": {
+    "character": 87,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 129
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                        abs(frames[$0].timestampSeconds-t) <= 0.75 && reliable($0,p)",
+  "violation": {
+   "location": {
+    "character": 63,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 132
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let oppositeJ = j % 2 == 1 ? j+1 : j-1",
+  "violation": {
+   "location": {
+    "character": 41,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 144
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let oppositeP = p % 2 == 1 ? p+1 : p-1",
+  "violation": {
+   "location": {
+    "character": 41,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplayCompleter.swift",
+    "line": 145
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard frames.count > 2 else { return frames }",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 10
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            segments[i] = segments[i-1] + ((dt <= 0 || dt > 0.2 || frames[i].detectedPersonCount != 1 || frames[i-1].detectedPersonCount != 1) ? 1 : 0)",
+  "violation": {
+   "location": {
+    "character": 61,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 14
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            return p.x.isFinite && p.y.isFinite && p.z.isFinite && (mark.presence ?? 1) >= 0.5",
+  "violation": {
+   "location": {
+    "character": 92,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 18
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                && ((mark.visibility ?? 1) >= 0.5 || (mark.visibility == 0 && mark.presence == 1))",
+  "violation": {
+   "location": {
+    "character": 47,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 19
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            while lower > 0 && segments[lower-1] == segments[i] && frame.timestampSeconds - frames[lower-1].timestampSeconds <= 0.10 { lower -= 1 }",
+  "violation": {
+   "location": {
+    "character": 129,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 25
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            while upper+1 < frames.count && segments[upper+1] == segments[i] && frames[upper+1].timestampSeconds - frame.timestampSeconds <= 0.10 { upper += 1 }",
+  "violation": {
+   "location": {
+    "character": 142,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 26
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let spatial = (delta.x*delta.x + delta.y*delta.y) / (0.045*0.045)",
+  "violation": {
+   "location": {
+    "character": 74,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 38
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let spatial = (delta.x*delta.x + delta.y*delta.y) / (0.045*0.045)",
+  "violation": {
+   "location": {
+    "character": 80,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 38
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let w = exp(-0.5 * (dt*dt / (0.045*0.045) + spatial))",
+  "violation": {
+   "location": {
+    "character": 34,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 39
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let w = exp(-0.5 * (dt*dt / (0.045*0.045) + spatial))",
+  "violation": {
+   "location": {
+    "character": 50,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 39
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let w = exp(-0.5 * (dt*dt / (0.045*0.045) + spatial))",
+  "violation": {
+   "location": {
+    "character": 56,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 39
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                guard determinant > 1e-10 else { return mark }",
+  "violation": {
+   "location": {
+    "character": 37,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseDisplaySmoother.swift",
+    "line": 44
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    public static let realTime = SmoothingParameters(minCutoff: 5.0, beta: 2.0, minVisibility: 0.5)",
+  "violation": {
+   "location": {
+    "character": 65,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseSequenceSmoother.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    public static let realTime = SmoothingParameters(minCutoff: 5.0, beta: 2.0, minVisibility: 0.5)",
+  "violation": {
+   "location": {
+    "character": 76,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseSequenceSmoother.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    public static let realTime = SmoothingParameters(minCutoff: 5.0, beta: 2.0, minVisibility: 0.5)",
+  "violation": {
+   "location": {
+    "character": 96,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseSequenceSmoother.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    public static let slowMotion = SmoothingParameters(minCutoff: 0.6, beta: 4.0, minVisibility: 0.5)",
+  "violation": {
+   "location": {
+    "character": 67,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseSequenceSmoother.swift",
+    "line": 52
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    public static let slowMotion = SmoothingParameters(minCutoff: 0.6, beta: 4.0, minVisibility: 0.5)",
+  "violation": {
+   "location": {
+    "character": 78,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseSequenceSmoother.swift",
+    "line": 52
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "    public static let slowMotion = SmoothingParameters(minCutoff: 0.6, beta: 4.0, minVisibility: 0.5)",
+  "violation": {
+   "location": {
+    "character": 98,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseSequenceSmoother.swift",
+    "line": 52
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        var imageState = Array(repeating: Array(repeating: OneEuroFilter.State(), count: 3),",
+  "violation": {
+   "location": {
+    "character": 90,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseSequenceSmoother.swift",
+    "line": 92
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let z = filter.filter(p.z, timestamp: t, state: &state[index][2])",
+  "violation": {
+   "location": {
+    "character": 83,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/PoseSequenceSmoother.swift",
+    "line": 111
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard frames.count > 2 else { return frames }",
+  "violation": {
+   "location": {
+    "character": 30,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/WorldDisplaySmoother.swift",
+    "line": 26
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let broken = dt <= 0 || dt > 0.2 || frames[i].detectedPersonCount != 1 || frames[i-1].detectedPersonCount != 1",
+  "violation": {
+   "location": {
+    "character": 42,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/WorldDisplaySmoother.swift",
+    "line": 30
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            return p.x.isFinite && p.y.isFinite && p.z.isFinite && (mark.presence ?? 1) >= 0.5",
+  "violation": {
+   "location": {
+    "character": 92,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/WorldDisplaySmoother.swift",
+    "line": 36
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                && ((mark.visibility ?? 1) >= 0.5 || (mark.visibility == 0 && mark.presence == 1))",
+  "violation": {
+   "location": {
+    "character": 47,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/WorldDisplaySmoother.swift",
+    "line": 37
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    let w = exp(-0.5 * (dt*dt / (timeSigma*timeSigma) + spatial))",
+  "violation": {
+   "location": {
+    "character": 34,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/WorldDisplaySmoother.swift",
+    "line": 54
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                guard determinant > 1e-10 else { return mark }",
+  "violation": {
+   "location": {
+    "character": 37,
+    "file": "CoachMeCore/Sources/PoseDetection/Smoothing/WorldDisplaySmoother.swift",
+    "line": 59
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let pts = [11, 12, 23, 24].compactMap { pose.indices.contains($0) ? pose[$0].position : nil }",
+  "violation": {
+   "location": {
+    "character": 20,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 47
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let pts = [11, 12, 23, 24].compactMap { pose.indices.contains($0) ? pose[$0].position : nil }",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 47
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let pts = [11, 12, 23, 24].compactMap { pose.indices.contains($0) ? pose[$0].position : nil }",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 47
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let pts = [11, 12, 23, 24].compactMap { pose.indices.contains($0) ? pose[$0].position : nil }",
+  "violation": {
+   "location": {
+    "character": 32,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 47
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        guard pose.count > 24 else { return 0 }",
+  "violation": {
+   "location": {
+    "character": 28,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 53
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let sh = (pose[11].position + pose[12].position) * 0.5",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 54
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let sh = (pose[11].position + pose[12].position) * 0.5",
+  "violation": {
+   "location": {
+    "character": 44,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 54
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let sh = (pose[11].position + pose[12].position) * 0.5",
+  "violation": {
+   "location": {
+    "character": 60,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 54
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let hip = (pose[23].position + pose[24].position) * 0.5",
+  "violation": {
+   "location": {
+    "character": 25,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 55
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let hip = (pose[23].position + pose[24].position) * 0.5",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 55
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let hip = (pose[23].position + pose[24].position) * 0.5",
+  "violation": {
+   "location": {
+    "character": 61,
+    "file": "CoachMeCore/Sources/PoseDetection/Tracking/PoseTrackSelector.swift",
+    "line": 55
+   },
+   "reason": "Magic numbers should be replaced by named constants",
+   "ruleDescription": "Magic numbers should be replaced by named constants",
+   "ruleIdentifier": "no_magic_numbers",
+   "ruleName": "No Magic Numbers",
+   "severity": "error"
+  }
+ }
+]

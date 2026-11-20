@@ -1,0 +1,11 @@
+only_rules:
+  - no_magic_numbers
+
+included:
+  - CoachMeCore/Sources/PoseDetection
+  - CoachMeCore/Sources/PhaseSegmentation
+  - CoachMeCore/Sources/Diagnosis
+  - CoachMe/Services
+
+no_magic_numbers:
+  severity: error

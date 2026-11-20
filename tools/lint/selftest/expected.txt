@@ -1,0 +1,8 @@
+CoachMe/Features/Sample/BadView.swift ui_calls_engine 3
+CoachMe/Features/Sample/GoodView.swift - 0
+CoachMe/Services/BadDetector.swift mediapipe_outside_adapter 1
+CoachMe/Services/SwingAnalyzer.swift inference_bound_to_main_thread 1
+CoachMe/Services/SwingAnalyzer.swift no_magic_numbers 1
+CoachMeCore/Sources/Diagnosis/BadThreshold.swift no_magic_numbers 1
+CoachMeCore/Sources/Model/BadComments.swift workaround_comment 1
+CoachMeCore/Sources/Model/BadComments.swift inline_lint_disable 1

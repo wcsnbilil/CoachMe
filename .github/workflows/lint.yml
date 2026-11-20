@@ -1,0 +1,33 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  swiftlint:
+    name: SwiftLint 规则 + 阈值字面量
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container: ghcr.io/realm/swiftlint:0.59.1
+    steps:
+      - name: git 和 python
+        run: apt-get update -qq && apt-get install -y -qq git python3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 规则自测
+        run: tools/lint/selftest.sh
+      - name: SwiftLint
+        run: tools/lint/run.sh
+      - name: 基线只许变小
+        if: github.event_name == 'pull_request'
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          python3 tools/lint/check_baseline.py "origin/${{ github.base_ref }}"

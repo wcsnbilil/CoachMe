@@ -1,0 +1,11 @@
+import SwiftUI
+import CoreML
+
+struct BadView: View {
+    var body: some View {
+        Text("x").task {
+            _ = SwingPathAnalyzer()
+            _ = MediaPipePoseDetector()
+        }
+    }
+}

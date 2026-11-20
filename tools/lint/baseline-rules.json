@@ -1,0 +1,512 @@
+[
+ {
+  "text": "        let scout = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: betaNumPoses))",
+  "violation": {
+   "location": {
+    "character": 21,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 43
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let scout = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: betaNumPoses))",
+  "violation": {
+   "location": {
+    "character": 45,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 43
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let swings = SwingSplitter().findSwings(frames: frames, imageWidth: imageWidth, imageHeight: imageHeight)",
+  "violation": {
+   "location": {
+    "character": 22,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 61
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                 poseModelIdentifier: MediaPipePoseDetector.ModelVariant.heavy.rawValue)",
+  "violation": {
+   "location": {
+    "character": 55,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 81
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let refusal = Preflight.refusal(for: reason)",
+  "violation": {
+   "location": {
+    "character": 27,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 102
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: betaNumPoses),",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 124
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: betaNumPoses),",
+  "violation": {
+   "location": {
+    "character": 48,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 124
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                     phaseDetector: SwingNetPhaseDetector())",
+  "violation": {
+   "location": {
+    "character": 53,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 125
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let sampler = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: 2))",
+  "violation": {
+   "location": {
+    "character": 23,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 178
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let sampler = SwingAnalyzer(detector: MediaPipePoseDetector(numPoses: 2))",
+  "violation": {
+   "location": {
+    "character": 47,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 178
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let frames = try await sampler.sample(asset: asset, count: Preflight.quickSamples)",
+  "violation": {
+   "location": {
+    "character": 68,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 179
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return Preflight.quick(samples: Preflight.points(frames, imageWidth: size.width, imageHeight: size.height),",
+  "violation": {
+   "location": {
+    "character": 16,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 180
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return Preflight.quick(samples: Preflight.points(frames, imageWidth: size.width, imageHeight: size.height),",
+  "violation": {
+   "location": {
+    "character": 41,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 180
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let at = Preflight.earlyFrames(address: a, top: t, impact: i)",
+  "violation": {
+   "location": {
+    "character": 22,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 197
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let lm = Preflight.points(frames, imageWidth: size.width, imageHeight: size.height)",
+  "violation": {
+   "location": {
+    "character": 26,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 200
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                self.refusal = Preflight.earlySetup(landmarks: lm, address: a, top: t, impact: i)",
+  "violation": {
+   "location": {
+    "character": 32,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 201
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let result = SwingPathAnalyzer().analyze(frames: frames, address: address, top: top, impact: impact,",
+  "violation": {
+   "location": {
+    "character": 22,
+    "file": "CoachMe/Features/Beta/BetaAnalysisRunner.swift",
+    "line": 244
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        return LLMChatService(configuration: config, apiKey: key(config))",
+  "violation": {
+   "location": {
+    "character": 16,
+    "file": "CoachMe/Features/Chat/AISettingsView.swift",
+    "line": 48
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let service = LLMChatService(configuration: configuration, apiKey: key)",
+  "violation": {
+   "location": {
+    "character": 23,
+    "file": "CoachMe/Features/Chat/AISettingsView.swift",
+    "line": 326
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                    requestService = LLMChatService(configuration: configuration, apiKey: AISettingsStore.key(configuration), images: images)",
+  "violation": {
+   "location": {
+    "character": 38,
+    "file": "CoachMe/Features/Chat/ChatPanelView.swift",
+    "line": 496
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            poseModelIdentifier: MediaPipePoseDetector.ModelVariant.heavy.rawValue",
+  "violation": {
+   "location": {
+    "character": 34,
+    "file": "CoachMe/Features/Import/ImportView.swift",
+    "line": 431
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(),",
+  "violation": {
+   "location": {
+    "character": 32,
+    "file": "CoachMe/Features/Import/ImportView.swift",
+    "line": 452
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(),",
+  "violation": {
+   "location": {
+    "character": 56,
+    "file": "CoachMe/Features/Import/ImportView.swift",
+    "line": 452
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                             phaseDetector: SwingNetPhaseDetector())",
+  "violation": {
+   "location": {
+    "character": 61,
+    "file": "CoachMe/Features/Import/ImportView.swift",
+    "line": 453
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "/// a temporary location keeps it alive until the analysis copies it into the store.",
+  "violation": {
+   "location": {
+    "character": 7,
+    "file": "CoachMe/Features/Import/ImportView.swift",
+    "line": 754
+   },
+   "reason": "修掉根因；现在修不了就开 issue，并删掉变通代码或把它做成有测试的正式行为。",
+   "ruleDescription": "",
+   "ruleIdentifier": "workaround_comment",
+   "ruleName": "不要用注释解释变通写法",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                      timeline: MetricTimeline(poseFrames: thisCache.smoothedFrames(), record: swing),",
+  "violation": {
+   "location": {
+    "character": 49,
+    "file": "CoachMe/Features/Report/ComparisonView.swift",
+    "line": 203
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                                        timeline: MetricTimeline(poseFrames: otherCache.smoothedFrames(), record: other),",
+  "violation": {
+   "location": {
+    "character": 51,
+    "file": "CoachMe/Features/Report/ComparisonView.swift",
+    "line": 206
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "                let timeline = MetricTimeline(poseFrames: cache.smoothedFrames(), record: swing)",
+  "violation": {
+   "location": {
+    "character": 32,
+    "file": "CoachMe/Features/Report/ReportView.swift",
+    "line": 89
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        path = SwingPathAnalyzer().analyze(frames: cache.frames, address: address, top: top, impact: impact,",
+  "violation": {
+   "location": {
+    "character": 16,
+    "file": "CoachMe/Features/Report/ReportView.swift",
+    "line": 338
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let timeline = MetricTimeline(poseFrames: cache.smoothedFrames(), record: swing)",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMe/Features/Report/ReportView.swift",
+    "line": 364
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "        let findings = RuleEngine().findings(rules: library.rules, metricsByPhase: byPhase,",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMe/Features/Report/ReportView.swift",
+    "line": 366
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            timeline = MetricTimeline(poseFrames: poseFrames, record: swing)",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMe/Features/Workbench/WorkbenchModel.swift",
+    "line": 36
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            let marks = try await SavedSwingPhaseAnalysis().run(url: library.videoURL(for: swing), start: swing.clipStartSeconds, end: swing.clipEndSeconds, frames: poseFrames, usePersonCrop: usePersonCrop)",
+  "violation": {
+   "location": {
+    "character": 35,
+    "file": "CoachMe/Features/Workbench/WorkbenchModel.swift",
+    "line": 86
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ },
+ {
+  "text": "            timeline = MetricTimeline(poseFrames: poseFrames, record: swing)",
+  "violation": {
+   "location": {
+    "character": 24,
+    "file": "CoachMe/Features/Workbench/WorkbenchModel.swift",
+    "line": 177
+   },
+   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
+   "ruleDescription": "",
+   "ruleIdentifier": "ui_calls_engine",
+   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
+   "severity": "error"
+  }
+ }
+]

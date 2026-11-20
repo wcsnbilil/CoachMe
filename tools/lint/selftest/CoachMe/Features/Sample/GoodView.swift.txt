@@ -1,0 +1,6 @@
+import SwiftUI
+
+struct GoodView: View {
+    let verdict: SwingPathAnalyzer.Verdict
+    var body: some View { Text(verdict.nameZH).padding(12) }
+}

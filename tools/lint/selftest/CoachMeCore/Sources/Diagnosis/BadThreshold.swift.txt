@@ -1,0 +1,3 @@
+func tooWide(_ width: Double) -> Bool {
+    width > 0.42
+}

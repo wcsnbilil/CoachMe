@@ -1,0 +1,45 @@
+only_rules:
+  - custom_rules
+
+included:
+  - CoachMe
+  - CoachMeCore/Sources
+  - CoachMeCore/Tests
+  - CoachMeTests
+
+custom_rules:
+  ui_calls_engine:
+    name: "UI 不能直接调用推理、诊断或网络引擎"
+    included: "CoachMe/(Features|Views)/.*\\.swift"
+    regex: "\\b(MediaPipePoseDetector|SwingNetPhaseDetector|SavedSwingPhaseAnalysis|MLModel)\\b|\\b(SwingAnalyzer|SwingPathAnalyzer|SwingSplitter|SwingMetricsCalculator|MetricTimeline|RuleEngine|LLMChatService)\\s*\\(|\\bPreflight\\.[a-z]|^import\\s+(CoreML|MediaPipeTasksVision)\\b"
+    excluded_match_kinds: [comment, doccomment, string]
+    message: "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。"
+    severity: error
+
+  mediapipe_outside_adapter:
+    name: "MediaPipe 只能在适配器里导入"
+    excluded: "CoachMe/Services/MediaPipePoseDetector\\.swift"
+    regex: "^import\\s+MediaPipeTasksVision\\b"
+    message: "通过 PoseDetecting 协议使用姿态识别；需要新的 MediaPipe 能力时加到 MediaPipePoseDetector 里。"
+    severity: error
+
+  inference_bound_to_main_thread:
+    name: "推理代码不能绑定主线程"
+    included: "CoachMe/Services/(MediaPipePoseDetector|SwingNetPhaseDetector|SwingAnalyzer|VideoAssetReader)\\.swift|CoachMeCore/Sources/(PoseDetection|PhaseSegmentation|Diagnosis)/.*\\.swift"
+    regex: "@MainActor|DispatchQueue\\.main|MainActor\\.run"
+    excluded_match_kinds: [comment, doccomment, string]
+    message: "去掉主线程绑定，把调用放进 actor 或后台任务；UI 需要结果时让 UI await 它。"
+    severity: error
+
+  workaround_comment:
+    name: "不要用注释解释变通写法"
+    regex: "(?i)\\b(workaround|hack|for now|temporar(y|ily)|stopgap|todo|fixme|xxx)\\b|临时|变通|暂时|先这样|绕过|权宜"
+    match_kinds: [comment, doccomment]
+    message: "修掉根因；现在修不了就开 issue，并删掉变通代码或把它做成有测试的正式行为。"
+    severity: error
+
+  inline_lint_disable:
+    name: "不能就地关闭 lint 规则"
+    regex: "swiftlint:(disable|enable)"
+    message: "规则本身不合理就改 .swiftlint.yml 并在 PR 里说明理由。"
+    severity: error

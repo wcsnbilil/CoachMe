@@ -45,9 +45,13 @@ v2 (after the first GolfDB run):
 
 from __future__ import annotations
 
+import json
 import warnings
+from pathlib import Path
 
 import numpy as np
+
+_T = json.loads((Path(__file__).resolve().parents[2] / "config" / "thresholds.json").read_text(encoding="utf-8"))["swingPath"]
 
 # MediaPipe pose indices
 NOSE, L_SH, R_SH, L_HIP, R_HIP, L_WR, R_WR = 0, 11, 12, 23, 24, 15, 16
@@ -57,15 +61,16 @@ NOSE, L_SH, R_SH, L_HIP, R_HIP, L_WR, R_WR = 0, 11, 12, 23, 24, 15, 16
 # calibrate.py on the first 200 GolfDB down-the-line swings (78 golfers, 187
 # swings, coverage 0.98). All 400 give almost the same: 0.148 / -0.505.
 # Pros come down on the body side of the address line (centre -0.15).
-DEFAULT_CALIBRATION = {"center": -0.154, "outside": 0.142, "inside": -0.516, "source": "golfdb_dtl_first200_v3d"}
+DEFAULT_CALIBRATION = {"center": _T["calibrationCenter"], "outside": _T["calibrationOutside"],
+                       "inside": _T["calibrationInside"], "source": _T["calibrationSource"]}
 
 # Wrists further apart than this (in torso lengths) are not both on the grip.
-MAX_WRIST_GAP = 0.6
+MAX_WRIST_GAP = _T["maxWristGap"]
 # Shoulder or hip line wider than this at address (in torso lengths) = off-axis camera.
 # GolfDB DTL: median 0.08, 90th percentile 0.18, widest 0.33 (golfdb_50, the clip
 # judged "camera too close" by eye). 0.3 missed golfdb_33 (0.23) and golfdb_361
 # (0.226), both clearly off the target line by eye, so the cut is 0.2.
-MAX_LINE_WIDTH = 0.2
+MAX_LINE_WIDTH = _T["maxLineWidth"]
 
 # Tracking jumps (v4). MediaPipe now and then puts a few frames of the skeleton,
 # or just the wrists, somewhere else (golfdb_478, golfdb_724). The old Hampel
@@ -73,37 +78,37 @@ MAX_LINE_WIDTH = 0.2
 # lasted two frames went straight through into the path.
 # Hips farther than this from where they are for most of the swing (torso
 # lengths): the whole pose jumped, so that frame's wrists are not trusted.
-MAX_HIP_SHIFT = 0.5
+MAX_HIP_SHIFT = _T["maxHipShift"]
 # Hands farther than this from that frame's shoulder midpoint (torso lengths)
 # cannot be at the end of the arms.
-MAX_REACH = 1.8
+MAX_REACH = _T["maxReach"]
 # Despike (see despike()): a step this far (torso lengths, or 3 scaled MADs of
 # the clip's step deviations if that is more) from the median of the steps
 # around it starts or ends a jump; a jump lasts at most MAX_JUMP_FRAMES frames.
-DESPIKE_FLOOR = 0.25
-MAX_JUMP_FRAMES = 4
+DESPIKE_FLOOR = _T["despikeFloor"]
+MAX_JUMP_FRAMES = _T["maxJumpFrames"]
 # Refuse when the hands are unknown for longer than this share of the downswing:
 # filling it would draw a straight chord, not the path.
-MAX_DOWNSWING_GAP = 0.25
+MAX_DOWNSWING_GAP = _T["maxDownswingGap"]
 # A gap this short is always filled (interpolated), however short the downswing.
 # Was 2: on real-time GolfDB clips (downswing 6-9 frames) a single 3-frame dropout
 # refused 13 clips that read in range once filled; none of the 348 clips that
 # already had a verdict changed (GolfDB 400, 2026-11-08).
-MIN_FILLED_GAP = 3
+MIN_FILLED_GAP = _T["minFilledGap"]
 
 # Soft wording near the limits (tools/robustness, PR #16: GolfDB 400 under re-encode / scale /
 # crop / brightness, hard flips 7.5% -> 2.0%, soft wording 13.5%). The verdict rules above stay;
 # these only decide how sure the report sounds, and keep a result that sits on a limit from
 # flipping between an answer and a refusal.
 # Offset this close to the outside / inside threshold (torso lengths): "near the boundary".
-NEAR_BOUNDARY = 0.05
+NEAR_BOUNDARY = _T["nearBoundary"]
 # Downswing gap within this many frames of its limit, either side: "tracking not steady".
 # A share of the downswing, so 60/120/240 fps clips get the same margin in time: 1 frame of the
 # median real-time GolfDB downswing (8 frames at 30 fps), and never less than 1 frame.
-LOW_TRACKING_FRACTION = 1 / 8
-LOW_TRACKING_MIN_FRAMES = 1.0
+LOW_TRACKING_FRACTION = _T["lowTrackingFraction"]
+LOW_TRACKING_MIN_FRAMES = _T["lowTrackingMinFrames"]
 # Shoulder / hip line within this share of MAX_LINE_WIDTH, either side: "camera slightly off".
-LOW_CAMERA_MARGIN = 0.05
+LOW_CAMERA_MARGIN = _T["lowCameraMargin"]
 CONFIDENCE = ("normal", "near_boundary", "low_tracking", "low_camera")
 
 
@@ -120,7 +125,7 @@ def _interp_nan(col: np.ndarray) -> np.ndarray:
     return col
 
 
-def _hampel(col: np.ndarray, k: int, n_sigma: float = 3.0) -> np.ndarray:
+def _hampel(col: np.ndarray, k: int, n_sigma: float = _T["hampelSigmas"]) -> np.ndarray:
     """Replace points far from the running median by that median (spike removal)."""
     out = col.copy()
     h = k // 2
@@ -130,7 +135,7 @@ def _hampel(col: np.ndarray, k: int, n_sigma: float = 3.0) -> np.ndarray:
         if len(win) < 3 or not np.isfinite(col[i]):
             continue
         med = np.median(win)
-        mad = 1.4826 * np.median(np.abs(win - med))
+        mad = _T["madScale"] * np.median(np.abs(win - med))
         if mad > 0 and abs(col[i] - med) > n_sigma * mad:
             out[i] = med
     return out
@@ -225,14 +230,15 @@ def despike(track: np.ndarray, torso: float) -> np.ndarray:
     finite = size[np.isfinite(size)]
     if len(finite) < 3:
         return out
-    limit = max(3.0 * 1.4826 * float(np.median(finite)), DESPIKE_FLOOR * torso)
+    limit = max(_T["despikeMADs"] * _T["madScale"] * float(np.median(finite)), DESPIKE_FLOOR * torso)
     i = 1
     while i < n:
         if not size[i] > limit:
             i += 1
             continue
         back = next((j for j in range(i + 1, min(n, i + MAX_JUMP_FRAMES + 1))
-                     if size[j] > 0.5 * limit and np.linalg.norm(dev[i] + dev[j]) < 0.5 * size[i]), None)
+                     if size[j] > _T["jumpReturnShare"] * limit
+                     and np.linalg.norm(dev[i] + dev[j]) < _T["jumpCancelShare"] * size[i]), None)
         if back is None:
             i += 1
             continue
@@ -304,7 +310,7 @@ def still_address(hands: np.ndarray, address: int, top: int) -> int:
     as the takeaway is long, to the first still frame.
     """
     speed = np.hypot(*(hands[1:top + 1] - hands[:top]).T)  # speed[f] = |hands[f+1] - hands[f]|
-    still = 0.1 * float(np.mean(speed[address:top]))
+    still = _T["stillSpeedShare"] * float(np.mean(speed[address:top]))
     lo = max(0, address - (top - address))
     for f in range(address, lo - 1, -1):
         if speed[f] <= still:
@@ -323,7 +329,7 @@ def classify(offset: float, cal: dict) -> str:
 
 
 def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
-            min_visibility: float = 0.5, calibration: dict | None = None,
+            min_visibility: float = _T["minVisibility"], calibration: dict | None = None,
             max_line_width: float = MAX_LINE_WIDTH, min_ref_angle: float = 0.0,
             refine_address: bool = True) -> dict:
     # min_ref_angle stays 0: on GolfDB the line's angle is 11.5 deg median and the
@@ -335,7 +341,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     lm = landmarks.astype(float).copy()
     low = ~(lm[:, :, 2] >= min_visibility)
     lm[low, 0:2] = np.nan
-    k = _odd((impact - address) / 20)
+    k = _odd((impact - address) / _T["smoothingWindowDivisor"])
     h = max(2, k // 2)  # half-width of the address median
 
     def anchors(f: int):
@@ -352,7 +358,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
 
     raw = hand_track(lm, torso)
     span = slice(address, impact + 1)
-    if np.isfinite(raw[span]).all(axis=1).mean() < 0.7:
+    if np.isfinite(raw[span]).all(axis=1).mean() < _T["minTrackedShare"]:
         return {"verdict": "无法判断", "reason": "手腕可见帧太少"}
     seen = np.isfinite(raw).all(axis=1)
     raw[pose_glitches(lm, raw, address, impact, torso)] = np.nan
@@ -364,7 +370,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     gap_margin = max(LOW_TRACKING_MIN_FRAMES, LOW_TRACKING_FRACTION * (impact - top))
     gates = {"ok_frac": round(float(ok[span].mean()), 3), "downswing_gap": int(gap),
              "downswing_gap_allowed": round(float(gap_allowed), 2)}
-    if ok[span].mean() < 0.7:
+    if ok[span].mean() < _T["minTrackedShare"]:
         return {"verdict": "无法判断", "reason": "关键点跳动太多", "jump_frames": jumped, "gates": gates}
     if gap > gap_allowed + gap_margin:
         return {"verdict": "无法判断", "reason": "下杆有一段双手追踪丢失或乱跳", "jump_frames": jumped, "gates": gates}
@@ -396,7 +402,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
 
     y_addr, y_top = hands[address, 1], hands[top, 1]
     rise = y_addr - y_top
-    if rise < 0.5 * torso:
+    if rise < _T["minBackswingRise"] * torso:
         return {"verdict": "无法判断", "reason": "上杆幅度太小，可能不是沿目标线机位或阶段不准", "camera": cam}
 
     # Reference line fixed at address: from the hands up through the shoulders
@@ -440,7 +446,7 @@ def analyze(landmarks: np.ndarray, address: int, top: int, impact: int,
     caution = []
     # Only worth saying when it changes the answer: on GolfDB 12% of pro swings
     # sit wholly on one side, mostly a style, not a camera problem.
-    if (verdict != "路径在职业范围内" and back is not None and abs(back) > 0.4
+    if (verdict != "路径在职业范围内" and back is not None and abs(back) > _T["cautionBackswingOffset"]
             and np.sign(back) == np.sign(offset)):
         caution.append("上下杆整条轨迹都在参考线同一侧，可能是机位或俯拍让参考线偏了")
     return {

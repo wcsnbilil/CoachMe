@@ -33,7 +33,8 @@ public struct SwingPathAnalyzer: Sendable {
         /// calibrate.py on the first 200 GolfDB down-the-line swings (78 golfers,
         /// coverage 0.98). All 400 give 0.148 / -0.505. Centre is -0.154: pros come
         /// down on the body side of the address line.
-        public static let golfDB = Calibration(outside: 0.142, inside: -0.516, source: "golfdb_dtl_first200_v3d")
+        public static let golfDB = Calibration(outside: SwingPathThresholds.calibrationOutside, inside: SwingPathThresholds.calibrationInside,
+                                                source: SwingPathThresholds.calibrationSource)
     }
 
     public enum Verdict: String, Sendable, Codable {
@@ -175,28 +176,23 @@ public struct SwingPathAnalyzer: Sendable {
     /// Wrists further apart than this (torso lengths) are not both on the grip.
     public var maxWristGap: Double
 
-    // Tracking-jump guards, same values as path_fault.py (see there for why).
-    static let maxHipShift = 0.5
-    static let maxReach = 1.8
-    static let despikeFloor = 0.25
-    static let maxJumpFrames = 4
-    static let maxDownswingGap = 0.25
-    /// A gap this short is always filled, however short the downswing (path_fault.MIN_FILLED_GAP).
-    static let minFilledGap = 3.0
+    static let maxHipShift = SwingPathThresholds.maxHipShift
+    static let maxReach = SwingPathThresholds.maxReach
+    static let despikeFloor = SwingPathThresholds.despikeFloor
+    static let maxJumpFrames = SwingPathThresholds.maxJumpFrames
+    static let maxDownswingGap = SwingPathThresholds.maxDownswingGap
+    static let minFilledGap = SwingPathThresholds.minFilledGap
 
-    // Soft wording near the limits, same values as path_fault.py (see there for the numbers).
-    public static let nearBoundary = 0.05
-    /// Downswing-gap margin: this share of the downswing (1 frame of the median 8-frame real-time
-    /// GolfDB downswing), never less than lowTrackingMinFrames, so every frame rate gets the same margin in time.
-    public static let lowTrackingFraction = 1.0 / 8
-    public static let lowTrackingMinFrames = 1.0
-    public static let lowCameraMargin = 0.05
+    public static let nearBoundary = SwingPathThresholds.nearBoundary
+    public static let lowTrackingFraction = SwingPathThresholds.lowTrackingFraction
+    public static let lowTrackingMinFrames = SwingPathThresholds.lowTrackingMinFrames
+    public static let lowCameraMargin = SwingPathThresholds.lowCameraMargin
 
     public init(calibration: Calibration = .golfDB,
-                minVisibility: Double = 0.5,
-                maxLineWidth: Double = 0.2,
+                minVisibility: Double = SwingPathThresholds.minVisibility,
+                maxLineWidth: Double = SwingPathThresholds.maxLineWidth,
                 minReferenceAngleDegrees: Double = 0,
-                maxWristGap: Double = 0.6,
+                maxWristGap: Double = SwingPathThresholds.maxWristGap,
                 refineAddress: Bool = true) {
         self.refineAddress = refineAddress
         self.calibration = calibration
@@ -239,7 +235,7 @@ public struct SwingPathAnalyzer: Sendable {
             guard lm[f].indices.contains(j) else { return (.nan, .nan) }
             return (lm[f][j].x, lm[f][j].y)
         }
-        let k = Self.oddWindow(Double(impact - address) / 20)
+        let k = Self.oddWindow(Double(impact - address) / SwingPathThresholds.smoothingWindowDivisor)
         let h = max(2, k / 2)
 
         // Address pose = per-joint median of a few frames, so one jumped frame
@@ -264,14 +260,14 @@ public struct SwingPathAnalyzer: Sendable {
         func known(_ p: (Double, Double)) -> Bool { p.0.isFinite && p.1.isFinite }
         let span = address...impact
         let visible = Double(raw[span].filter(known).count) / Double(span.count)
-        guard visible >= 0.7 else { return .refused(.wristsNotVisible) }
+        guard visible >= SwingPathThresholds.minTrackedShare else { return .refused(.wristsNotVisible) }
 
         let seen = raw.map(known)
         for f in Self.poseGlitches(lm, hands: raw, address: address, impact: impact, torso: torso) { raw[f] = (.nan, .nan) }
         raw = Self.despike(raw, torso: torso)
         let ok = raw.map(known)
         let jumped = span.filter { seen[$0] && !ok[$0] }.count
-        if Double(span.filter { ok[$0] }.count) / Double(span.count) < 0.7 {
+        if Double(span.filter { ok[$0] }.count) / Double(span.count) < SwingPathThresholds.minTrackedShare {
             var r = Result.refused(.trackingJumps); r.jumpFrames = jumped; return r
         }
         let gap = Double(Self.longestGap(Array(ok[top...impact])))
@@ -318,7 +314,7 @@ public struct SwingPathAnalyzer: Sendable {
 
         let yAddr = ys[address], yTop = ys[top]
         let rise = yAddr - yTop
-        guard rise >= 0.5 * torso else { return .refused(.backswingTooSmall) }
+        guard rise >= SwingPathThresholds.minBackswingRise * torso else { return .refused(.backswingTooSmall) }
 
         let h0 = (xs[address], ys[address])
         guard shMid.0.isFinite, shMid.1.isFinite, shMid.1 < h0.1 else { return .refused(.shouldersNotAboveHands) }
@@ -349,7 +345,7 @@ public struct SwingPathAnalyzer: Sendable {
             : min(abs(offset - calibration.outside), abs(offset - calibration.inside)) <= Self.nearBoundary ? .nearBoundary
             : .normal
         var caution: [String] = []
-        if verdict != .withinProRange, let back, abs(back) > 0.4, (back > 0) == (offset > 0) {
+        if verdict != .withinProRange, let back, abs(back) > SwingPathThresholds.cautionBackswingOffset, (back > 0) == (offset > 0) {
             caution.append("上下杆整条轨迹都在参考线同一侧，可能是机位或俯拍让参考线偏了")
         }
         return Result(verdict: verdict, refusal: nil, offset: offset, backswingOffset: back,
@@ -385,7 +381,7 @@ public struct SwingPathAnalyzer: Sendable {
     static func stillAddress(_ xs: [Double], _ ys: [Double], address: Int, top: Int) -> Int {
         func speed(_ f: Int) -> Double { hypot(xs[f + 1] - xs[f], ys[f + 1] - ys[f]) }
         let takeaway = (address..<top).map(speed)
-        let still = 0.1 * takeaway.reduce(0, +) / Double(takeaway.count)
+        let still = SwingPathThresholds.stillSpeedShare * takeaway.reduce(0, +) / Double(takeaway.count)
         for f in stride(from: address, through: max(0, address - (top - address)), by: -1) where speed(f) <= still {
             return f
         }
@@ -439,12 +435,12 @@ public struct SwingPathAnalyzer: Sendable {
         let size = dev.map { hypot($0.0, $0.1) }
         let finite = size.filter(\.isFinite)
         guard finite.count >= 3 else { return out }
-        let limit = max(3 * 1.4826 * median(finite), despikeFloor * torso)
+        let limit = max(SwingPathThresholds.despikeMADs * SwingPathThresholds.madScale * median(finite), despikeFloor * torso)
         var i = 1
         while i < n {
             guard size[i] > limit else { i += 1; continue }
             let back = (i + 1..<min(n, i + maxJumpFrames + 1)).first { j in
-                size[j] > 0.5 * limit && hypot(dev[i].0 + dev[j].0, dev[i].1 + dev[j].1) < 0.5 * size[i]
+                size[j] > SwingPathThresholds.jumpReturnShare * limit && hypot(dev[i].0 + dev[j].0, dev[i].1 + dev[j].1) < SwingPathThresholds.jumpCancelShare * size[i]
             }
             guard let back else { i += 1; continue }
             for f in i..<back { out[f] = (.nan, .nan) }
@@ -476,14 +472,14 @@ public struct SwingPathAnalyzer: Sendable {
     }
 
     /// _hampel: replace points more than 3 scaled MADs from the running median.
-    static func hampel(_ col: [Double], k: Int, nSigma: Double = 3) -> [Double] {
+    static func hampel(_ col: [Double], k: Int, nSigma: Double = SwingPathThresholds.hampelSigmas) -> [Double] {
         var out = col
         let h = k / 2
         for i in col.indices {
             let win = col[max(0, i - h)...min(col.count - 1, i + h)].filter(\.isFinite)
             guard win.count >= 3, col[i].isFinite else { continue }
             let med = median(win)
-            let mad = 1.4826 * median(win.map { abs($0 - med) })
+            let mad = SwingPathThresholds.madScale * median(win.map { abs($0 - med) })
             if mad > 0, abs(col[i] - med) > nSigma * mad { out[i] = med }
         }
         return out

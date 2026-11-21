@@ -16,3 +16,11 @@ tools/lint/run.sh --update-baseline  # 修掉存量违规后重写基线
 加规则：写进对应的配置，在 `selftest/` 加一个会命中的样例并在 `expected.txt` 里登记。
 
 基线（`baseline-*.json`）记录规则生效前就存在的违规。CI 要求它只变小。
+
+## 阈值
+
+阈值只写在 `config/thresholds.json`。Python 直接读它；Swift 用 `python3 tools/thresholds/generate.py` 生成的常量文件，CI 检查生成结果是最新的。
+
+| 配置段 | Python | Swift |
+|---|---|---|
+| `swingPath` | `tools/faults/path_fault.py` | `CoachMeCore/Sources/Diagnosis/Generated/SwingPathThresholds.swift` |

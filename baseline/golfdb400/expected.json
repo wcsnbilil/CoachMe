@@ -1,0 +1,2417 @@
+{
+ "metrics": {
+  "clips": 400,
+  "pairs": 162,
+  "pairsAgreeing": 156,
+  "pairAgreement": 0.963,
+  "refused": 22,
+  "verdicts": {
+   "内下过度": 6,
+   "外下过度": 3,
+   "无法判断": 22,
+   "路径在职业范围内": 369
+  }
+ },
+ "clips": {
+  "golfdb_0": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.122
+  },
+  "golfdb_1": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.022
+  },
+  "golfdb_2": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.11
+  },
+  "golfdb_3": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.123
+  },
+  "golfdb_4": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.392
+  },
+  "golfdb_5": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": -0.494
+  },
+  "golfdb_6": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.146
+  },
+  "golfdb_7": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.159
+  },
+  "golfdb_12": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.057
+  },
+  "golfdb_23": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.052
+  },
+  "golfdb_24": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.008
+  },
+  "golfdb_33": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_37": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.143
+  },
+  "golfdb_38": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.178
+  },
+  "golfdb_39": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.105
+  },
+  "golfdb_40": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.05
+  },
+  "golfdb_43": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_45": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.203
+  },
+  "golfdb_46": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.182
+  },
+  "golfdb_47": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.146
+  },
+  "golfdb_48": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.135
+  },
+  "golfdb_50": {
+   "verdict": "无法判断",
+   "reason": "下杆有一段双手追踪丢失或乱跳",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_55": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.303
+  },
+  "golfdb_56": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.274
+  },
+  "golfdb_62": {
+   "verdict": "无法判断",
+   "reason": "下杆有一段双手追踪丢失或乱跳",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_63": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": 0.087
+  },
+  "golfdb_64": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.034
+  },
+  "golfdb_65": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.091
+  },
+  "golfdb_70": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.21
+  },
+  "golfdb_71": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.081
+  },
+  "golfdb_73": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.215
+  },
+  "golfdb_76": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.036
+  },
+  "golfdb_77": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.027
+  },
+  "golfdb_80": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.049
+  },
+  "golfdb_81": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.163
+  },
+  "golfdb_82": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.143
+  },
+  "golfdb_83": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.126
+  },
+  "golfdb_88": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.003
+  },
+  "golfdb_89": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.013
+  },
+  "golfdb_92": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.067
+  },
+  "golfdb_93": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.017
+  },
+  "golfdb_94": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.118
+  },
+  "golfdb_106": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.057
+  },
+  "golfdb_107": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": 0.136
+  },
+  "golfdb_108": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.19
+  },
+  "golfdb_109": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.249
+  },
+  "golfdb_112": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.02
+  },
+  "golfdb_113": {
+   "verdict": "外下过度",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": 0.175
+  },
+  "golfdb_119": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.079
+  },
+  "golfdb_120": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.065
+  },
+  "golfdb_121": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.135
+  },
+  "golfdb_122": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_123": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_124": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.068
+  },
+  "golfdb_125": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.23
+  },
+  "golfdb_126": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.175
+  },
+  "golfdb_130": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.208
+  },
+  "golfdb_131": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.115
+  },
+  "golfdb_132": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.236
+  },
+  "golfdb_133": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.168
+  },
+  "golfdb_134": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.202
+  },
+  "golfdb_135": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.151
+  },
+  "golfdb_142": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.136
+  },
+  "golfdb_143": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.01
+  },
+  "golfdb_146": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.21
+  },
+  "golfdb_147": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.2
+  },
+  "golfdb_166": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.054
+  },
+  "golfdb_167": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.041
+  },
+  "golfdb_168": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.106
+  },
+  "golfdb_170": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.079
+  },
+  "golfdb_171": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.432
+  },
+  "golfdb_174": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.414
+  },
+  "golfdb_178": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.426
+  },
+  "golfdb_179": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.186
+  },
+  "golfdb_180": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.003
+  },
+  "golfdb_181": {
+   "verdict": "无法判断",
+   "reason": "手腕可见帧太少",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_184": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.267
+  },
+  "golfdb_185": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": 0.005
+  },
+  "golfdb_186": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.056
+  },
+  "golfdb_189": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.168
+  },
+  "golfdb_191": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.264
+  },
+  "golfdb_192": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.138
+  },
+  "golfdb_193": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.375
+  },
+  "golfdb_194": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.326
+  },
+  "golfdb_197": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.091
+  },
+  "golfdb_198": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.053
+  },
+  "golfdb_199": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.401
+  },
+  "golfdb_200": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.188
+  },
+  "golfdb_201": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.191
+  },
+  "golfdb_202": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.05
+  },
+  "golfdb_203": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.02
+  },
+  "golfdb_207": {
+   "verdict": "无法判断",
+   "reason": "手腕可见帧太少",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_209": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.02
+  },
+  "golfdb_214": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.166
+  },
+  "golfdb_215": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.051
+  },
+  "golfdb_218": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.189
+  },
+  "golfdb_219": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.115
+  },
+  "golfdb_220": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.165
+  },
+  "golfdb_227": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.124
+  },
+  "golfdb_228": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.128
+  },
+  "golfdb_233": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.39
+  },
+  "golfdb_234": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.275
+  },
+  "golfdb_235": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.229
+  },
+  "golfdb_236": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.241
+  },
+  "golfdb_239": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.27
+  },
+  "golfdb_240": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.182
+  },
+  "golfdb_241": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.051
+  },
+  "golfdb_242": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.028
+  },
+  "golfdb_243": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.034
+  },
+  "golfdb_245": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.049
+  },
+  "golfdb_250": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.41
+  },
+  "golfdb_251": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": -0.47
+  },
+  "golfdb_252": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.19
+  },
+  "golfdb_253": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.145
+  },
+  "golfdb_254": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.083
+  },
+  "golfdb_255": {
+   "verdict": "外下过度",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": 0.147
+  },
+  "golfdb_260": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.34
+  },
+  "golfdb_261": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.434
+  },
+  "golfdb_262": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.302
+  },
+  "golfdb_263": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.163
+  },
+  "golfdb_264": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.232
+  },
+  "golfdb_265": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.048
+  },
+  "golfdb_266": {
+   "verdict": "内下过度",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.53
+  },
+  "golfdb_267": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": -0.466
+  },
+  "golfdb_269": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.203
+  },
+  "golfdb_270": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.261
+  },
+  "golfdb_289": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.445
+  },
+  "golfdb_290": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.236
+  },
+  "golfdb_291": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.386
+  },
+  "golfdb_292": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.236
+  },
+  "golfdb_293": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.319
+  },
+  "golfdb_294": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.368
+  },
+  "golfdb_300": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.261
+  },
+  "golfdb_301": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.244
+  },
+  "golfdb_304": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.304
+  },
+  "golfdb_305": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.444
+  },
+  "golfdb_306": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.106
+  },
+  "golfdb_307": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.086
+  },
+  "golfdb_312": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.182
+  },
+  "golfdb_313": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.198
+  },
+  "golfdb_314": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.165
+  },
+  "golfdb_315": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.195
+  },
+  "golfdb_316": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.443
+  },
+  "golfdb_317": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.235
+  },
+  "golfdb_318": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.294
+  },
+  "golfdb_319": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.144
+  },
+  "golfdb_320": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.185
+  },
+  "golfdb_321": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.073
+  },
+  "golfdb_324": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.118
+  },
+  "golfdb_325": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.127
+  },
+  "golfdb_326": {
+   "verdict": "无法判断",
+   "reason": "下杆有一段双手追踪丢失或乱跳",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_327": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.025
+  },
+  "golfdb_333": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.157
+  },
+  "golfdb_335": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.17
+  },
+  "golfdb_339": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.23
+  },
+  "golfdb_341": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.019
+  },
+  "golfdb_343": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.102
+  },
+  "golfdb_344": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.023
+  },
+  "golfdb_349": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.054
+  },
+  "golfdb_350": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.059
+  },
+  "golfdb_353": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.259
+  },
+  "golfdb_354": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.082
+  },
+  "golfdb_355": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.356
+  },
+  "golfdb_356": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.281
+  },
+  "golfdb_357": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.318
+  },
+  "golfdb_358": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.312
+  },
+  "golfdb_361": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_362": {
+   "verdict": "内下过度",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.551
+  },
+  "golfdb_365": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.233
+  },
+  "golfdb_366": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.107
+  },
+  "golfdb_367": {
+   "verdict": "无法判断",
+   "reason": "手腕可见帧太少",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_380": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.176
+  },
+  "golfdb_383": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.213
+  },
+  "golfdb_388": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.067
+  },
+  "golfdb_389": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.07
+  },
+  "golfdb_394": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.194
+  },
+  "golfdb_395": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.028
+  },
+  "golfdb_396": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.453
+  },
+  "golfdb_397": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.307
+  },
+  "golfdb_398": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.218
+  },
+  "golfdb_399": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.299
+  },
+  "golfdb_402": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.169
+  },
+  "golfdb_403": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.192
+  },
+  "golfdb_406": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.205
+  },
+  "golfdb_407": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.246
+  },
+  "golfdb_410": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.239
+  },
+  "golfdb_411": {
+   "verdict": "内下过度",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": -0.526
+  },
+  "golfdb_412": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.277
+  },
+  "golfdb_413": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.256
+  },
+  "golfdb_418": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.193
+  },
+  "golfdb_419": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.122
+  },
+  "golfdb_426": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.134
+  },
+  "golfdb_427": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.096
+  },
+  "golfdb_430": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.205
+  },
+  "golfdb_431": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.157
+  },
+  "golfdb_432": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.187
+  },
+  "golfdb_433": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.198
+  },
+  "golfdb_437": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.1
+  },
+  "golfdb_441": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_443": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.059
+  },
+  "golfdb_446": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_448": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.031
+  },
+  "golfdb_449": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.031
+  },
+  "golfdb_452": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.035
+  },
+  "golfdb_453": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.043
+  },
+  "golfdb_458": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.143
+  },
+  "golfdb_459": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.097
+  },
+  "golfdb_464": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.257
+  },
+  "golfdb_465": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.225
+  },
+  "golfdb_468": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.049
+  },
+  "golfdb_469": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.078
+  },
+  "golfdb_470": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.198
+  },
+  "golfdb_471": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.205
+  },
+  "golfdb_472": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.024
+  },
+  "golfdb_473": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.003
+  },
+  "golfdb_474": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.012
+  },
+  "golfdb_475": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.012
+  },
+  "golfdb_476": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.12
+  },
+  "golfdb_477": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.142
+  },
+  "golfdb_478": {
+   "verdict": "无法判断",
+   "reason": "下杆有一段双手追踪丢失或乱跳",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_479": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.108
+  },
+  "golfdb_482": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.249
+  },
+  "golfdb_483": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.35
+  },
+  "golfdb_485": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_490": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.062
+  },
+  "golfdb_491": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.326
+  },
+  "golfdb_496": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.191
+  },
+  "golfdb_497": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.238
+  },
+  "golfdb_504": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.176
+  },
+  "golfdb_505": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.1
+  },
+  "golfdb_508": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.05
+  },
+  "golfdb_509": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.072
+  },
+  "golfdb_514": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.16
+  },
+  "golfdb_515": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.148
+  },
+  "golfdb_518": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.18
+  },
+  "golfdb_520": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.197
+  },
+  "golfdb_524": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.17
+  },
+  "golfdb_525": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.029
+  },
+  "golfdb_530": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_531": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.036
+  },
+  "golfdb_536": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.233
+  },
+  "golfdb_537": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.158
+  },
+  "golfdb_540": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.227
+  },
+  "golfdb_541": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.241
+  },
+  "golfdb_544": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.23
+  },
+  "golfdb_548": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.254
+  },
+  "golfdb_553": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.245
+  },
+  "golfdb_554": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.161
+  },
+  "golfdb_568": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.132
+  },
+  "golfdb_569": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_574": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.224
+  },
+  "golfdb_575": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.264
+  },
+  "golfdb_576": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.258
+  },
+  "golfdb_577": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.223
+  },
+  "golfdb_578": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.367
+  },
+  "golfdb_580": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.109
+  },
+  "golfdb_581": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.46
+  },
+  "golfdb_586": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.101
+  },
+  "golfdb_587": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.042
+  },
+  "golfdb_588": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.172
+  },
+  "golfdb_589": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.28
+  },
+  "golfdb_590": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.074
+  },
+  "golfdb_591": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.05
+  },
+  "golfdb_592": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_594": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.195
+  },
+  "golfdb_595": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.114
+  },
+  "golfdb_598": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.268
+  },
+  "golfdb_599": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.387
+  },
+  "golfdb_604": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.18
+  },
+  "golfdb_605": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.005
+  },
+  "golfdb_606": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.387
+  },
+  "golfdb_607": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.324
+  },
+  "golfdb_608": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.133
+  },
+  "golfdb_609": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.002
+  },
+  "golfdb_610": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.284
+  },
+  "golfdb_611": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.459
+  },
+  "golfdb_614": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.018
+  },
+  "golfdb_615": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.044
+  },
+  "golfdb_616": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.384
+  },
+  "golfdb_617": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.305
+  },
+  "golfdb_621": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.095
+  },
+  "golfdb_622": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.096
+  },
+  "golfdb_624": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.421
+  },
+  "golfdb_625": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_camera",
+   "offset": -0.269
+  },
+  "golfdb_638": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.05
+  },
+  "golfdb_639": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.08
+  },
+  "golfdb_642": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.037
+  },
+  "golfdb_643": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.076
+  },
+  "golfdb_644": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.064
+  },
+  "golfdb_645": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.016
+  },
+  "golfdb_648": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": 0.127
+  },
+  "golfdb_649": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.032
+  },
+  "golfdb_650": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.131
+  },
+  "golfdb_651": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.125
+  },
+  "golfdb_658": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.179
+  },
+  "golfdb_659": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.208
+  },
+  "golfdb_662": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.346
+  },
+  "golfdb_663": {
+   "verdict": "内下过度",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": -0.525
+  },
+  "golfdb_666": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.159
+  },
+  "golfdb_667": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.143
+  },
+  "golfdb_668": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.0
+  },
+  "golfdb_669": {
+   "verdict": "外下过度",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": 0.184
+  },
+  "golfdb_676": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.187
+  },
+  "golfdb_677": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.148
+  },
+  "golfdb_680": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.211
+  },
+  "golfdb_681": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.24
+  },
+  "golfdb_684": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.017
+  },
+  "golfdb_685": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.033
+  },
+  "golfdb_686": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.002
+  },
+  "golfdb_687": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.117
+  },
+  "golfdb_688": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.076
+  },
+  "golfdb_689": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.408
+  },
+  "golfdb_690": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.392
+  },
+  "golfdb_695": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.231
+  },
+  "golfdb_696": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.372
+  },
+  "golfdb_697": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.306
+  },
+  "golfdb_698": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.336
+  },
+  "golfdb_703": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_705": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.025
+  },
+  "golfdb_706": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.06
+  },
+  "golfdb_707": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.347
+  },
+  "golfdb_708": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.382
+  },
+  "golfdb_711": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.326
+  },
+  "golfdb_715": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.002
+  },
+  "golfdb_716": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.029
+  },
+  "golfdb_719": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.05
+  },
+  "golfdb_720": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.066
+  },
+  "golfdb_721": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.206
+  },
+  "golfdb_722": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.193
+  },
+  "golfdb_723": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.293
+  },
+  "golfdb_724": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.512
+  },
+  "golfdb_725": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.329
+  },
+  "golfdb_726": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.258
+  },
+  "golfdb_727": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_728": {
+   "verdict": "无法判断",
+   "reason": "机位偏离目标线（肩/髋线太宽）",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_730": {
+   "verdict": "无法判断",
+   "reason": "下杆有一段双手追踪丢失或乱跳",
+   "confidence": null,
+   "offset": null
+  },
+  "golfdb_733": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.4
+  },
+  "golfdb_734": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.402
+  },
+  "golfdb_741": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.153
+  },
+  "golfdb_742": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.161
+  },
+  "golfdb_743": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.43
+  },
+  "golfdb_744": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": -0.484
+  },
+  "golfdb_751": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.153
+  },
+  "golfdb_752": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.134
+  },
+  "golfdb_753": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.1
+  },
+  "golfdb_754": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.069
+  },
+  "golfdb_759": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.213
+  },
+  "golfdb_760": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.04
+  },
+  "golfdb_761": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.148
+  },
+  "golfdb_762": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.043
+  },
+  "golfdb_769": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.288
+  },
+  "golfdb_770": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.368
+  },
+  "golfdb_771": {
+   "verdict": "内下过度",
+   "reason": null,
+   "confidence": "near_boundary",
+   "offset": -0.516
+  },
+  "golfdb_772": {
+   "verdict": "内下过度",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.567
+  },
+  "golfdb_779": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": 0.064
+  },
+  "golfdb_780": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.014
+  },
+  "golfdb_783": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.18
+  },
+  "golfdb_784": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.053
+  },
+  "golfdb_787": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.144
+  },
+  "golfdb_788": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.138
+  },
+  "golfdb_794": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.314
+  },
+  "golfdb_795": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.078
+  },
+  "golfdb_802": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.002
+  },
+  "golfdb_805": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.247
+  },
+  "golfdb_806": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.198
+  },
+  "golfdb_807": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.321
+  },
+  "golfdb_808": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.097
+  },
+  "golfdb_812": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.058
+  },
+  "golfdb_813": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.082
+  },
+  "golfdb_820": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.06
+  },
+  "golfdb_821": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.054
+  },
+  "golfdb_824": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.287
+  },
+  "golfdb_825": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.243
+  },
+  "golfdb_826": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.366
+  },
+  "golfdb_827": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.218
+  },
+  "golfdb_832": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.04
+  },
+  "golfdb_833": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.017
+  },
+  "golfdb_838": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.021
+  },
+  "golfdb_839": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": 0.035
+  },
+  "golfdb_840": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.317
+  },
+  "golfdb_841": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.148
+  },
+  "golfdb_847": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.04
+  },
+  "golfdb_848": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.043
+  },
+  "golfdb_851": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.357
+  },
+  "golfdb_852": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.446
+  },
+  "golfdb_855": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "low_tracking",
+   "offset": -0.154
+  },
+  "golfdb_857": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.018
+  },
+  "golfdb_860": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.268
+  },
+  "golfdb_862": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.216
+  },
+  "golfdb_865": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.269
+  },
+  "golfdb_866": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.244
+  },
+  "golfdb_867": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.1
+  },
+  "golfdb_868": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.054
+  },
+  "golfdb_871": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.38
+  },
+  "golfdb_872": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.438
+  },
+  "golfdb_873": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.163
+  },
+  "golfdb_874": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.174
+  },
+  "golfdb_897": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.181
+  },
+  "golfdb_898": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.203
+  },
+  "golfdb_903": {
+   "verdict": "路径在职业范围内",
+   "reason": null,
+   "confidence": "normal",
+   "offset": -0.326
+  }
+ }
+}

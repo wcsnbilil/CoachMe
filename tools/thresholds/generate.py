@@ -9,7 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "config" / "thresholds.json"
-OUTPUTS = {"swingPath": ROOT / "CoachMeCore/Sources/Diagnosis/Generated/SwingPathThresholds.swift"}
+GENERATED = ROOT / "CoachMeCore/Sources/Diagnosis/Generated"
+OUTPUTS = {
+    "swingPath": GENERATED / "SwingPathThresholds.swift",
+    "swingSplit": GENERATED / "SwingSplitThresholds.swift",
+    "preflight": GENERATED / "PreflightThresholds.swift",
+}
 
 
 def literal(value):

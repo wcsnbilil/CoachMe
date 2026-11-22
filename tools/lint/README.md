@@ -24,3 +24,5 @@ tools/lint/run.sh --update-baseline  # 修掉存量违规后重写基线
 | 配置段 | Python | Swift |
 |---|---|---|
 | `swingPath` | `tools/faults/path_fault.py` | `CoachMeCore/Sources/Diagnosis/Generated/SwingPathThresholds.swift` |
+| `swingSplit` | `tools/split/swing_split.py` | `…/Generated/SwingSplitThresholds.swift` |
+| `preflight` | `tools/preflight/preflight.py` | `…/Generated/PreflightThresholds.swift` |

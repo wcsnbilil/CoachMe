@@ -24,22 +24,21 @@ public struct SwingSplitter: Sendable {
         public init(start: Int, end: Int) { self.start = start; self.end = end }
     }
 
-    // Same names and values as swing_split.py (lengths in torso units).
-    public static let minVisibility = 0.5
-    public static let topBelow = 0.1
-    public static let addressStill = 0.05
-    public static let addressMax = 0.1
-    public static let impactTolerance = 0.45
-    public static let impactX = 0.6
-    public static let downRatio = 0.9
-    public static let minBack = 4
-    public static let restSeconds = 1.0
-    public static let padBeforeSeconds = 1.0
-    public static let padAfterSeconds = 1.5
+    public static let minVisibility = SwingSplitThresholds.minVisibility
+    public static let topBelow = SwingSplitThresholds.topBelow
+    public static let addressStill = SwingSplitThresholds.addressStill
+    public static let addressMax = SwingSplitThresholds.addressMax
+    public static let impactTolerance = SwingSplitThresholds.impactTolerance
+    public static let impactX = SwingSplitThresholds.impactX
+    public static let downRatio = SwingSplitThresholds.downRatio
+    public static let minBack = SwingSplitThresholds.minBack
+    public static let restSeconds = SwingSplitThresholds.restSeconds
+    public static let padBeforeSeconds = SwingSplitThresholds.padBeforeSeconds
+    public static let padAfterSeconds = SwingSplitThresholds.padAfterSeconds
     /// Stretched-timeline slow motion: a swing longer than this (address to impact) gets its padding
     /// scaled by duration / normalSwingSeconds. See swing_split.py.
-    public static let slowSwingSeconds = 2.0
-    public static let normalSwingSeconds = 1.0
+    public static let slowSwingSeconds = SwingSplitThresholds.slowSwingSeconds
+    public static let normalSwingSeconds = SwingSplitThresholds.normalSwingSeconds
 
     static let lw = 15, rw = 16, ls = 11, rs = 12, lh = 23, rh = 24
 

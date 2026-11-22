@@ -23,27 +23,30 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 import numpy as np
 
+_T = json.loads((Path(__file__).resolve().parents[2] / "config" / "thresholds.json").read_text(encoding="utf-8"))["swingSplit"]
+
 LW, RW, LS, RS, LH, RH = 15, 16, 11, 12, 23, 24
-MIN_VIS = 0.5
-TOP_BELOW = 0.1        # top: hands may sit this far below the shoulder line (short / compact tops)
-ADDRESS_STILL = 0.05   # address: last frame within this of the lowest hands before the top
-ADDRESS_MAX = 0.1      # address hands must be below hips + this (rejects tops measured from the chest)
-IMPACT_TOL = 0.45      # impact: hands back within this of the address height
-IMPACT_X = 0.6         # ... and within this horizontally of the address hands
-DOWN_RATIO = 0.9       # downswing frames <= ratio x backswing frames (pros 0.05-0.72 on GolfDB)
-MIN_BACK = 4           # backswing frames at least
-REST_S = 1.0           # next address at least this long after the previous impact (kills finish -> lower)
-PAD_BEFORE_S = 1.0     # window starts this long before address (SwingNet needs some address)
-PAD_AFTER_S = 1.5      # ... and ends this long after impact (finish)
+MIN_VIS = _T["minVisibility"]
+TOP_BELOW = _T["topBelow"]  # top: hands may sit this far below the shoulder line (short / compact tops)
+ADDRESS_STILL = _T["addressStill"]  # address: last frame within this of the lowest hands before the top
+ADDRESS_MAX = _T["addressMax"]  # address hands must be below hips + this (rejects tops measured from the chest)
+IMPACT_TOL = _T["impactTolerance"]  # impact: hands back within this of the address height
+IMPACT_X = _T["impactX"]  # ... and within this horizontally of the address hands
+DOWN_RATIO = _T["downRatio"]  # downswing frames <= ratio x backswing frames (pros 0.05-0.72 on GolfDB)
+MIN_BACK = _T["minBack"]  # backswing frames at least
+REST_S = _T["restSeconds"]  # next address at least this long after the previous impact (kills finish -> lower)
+PAD_BEFORE_S = _T["padBeforeSeconds"]  # window starts this long before address (SwingNet needs some address)
+PAD_AFTER_S = _T["padAfterSeconds"]  # ... and ends this long after impact (finish)
 # Slow-motion files whose timeline is stretched (iPhone slo-mo exported at 30 fps): the swing itself is
 # found the same way (the rule is about shape, not speed), but one second of padding would be a
 # fraction of a second of real motion. A swing that takes longer than SLOW_SWING_S from address to
 # impact gets its padding stretched by duration / NORMAL_SWING_S.
-SLOW_SWING_S = 2.0     # real-time swings: 0.6-1.4 s address -> impact
-NORMAL_SWING_S = 1.0
+SLOW_SWING_S = _T["slowSwingSeconds"]  # real-time swings: 0.6-1.4 s address -> impact
+NORMAL_SWING_S = _T["normalSwingSeconds"]
 
 
 def _fill(v: np.ndarray) -> np.ndarray:

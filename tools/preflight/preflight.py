@@ -26,6 +26,7 @@ address agrees on 95-96% (tools/preflight/preflight_eval.py).
 """
 from __future__ import annotations
 
+import json
 import sys
 import warnings
 from pathlib import Path
@@ -36,12 +37,15 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "faults"))
 import path_fault  # noqa: E402
 
-MIN_SECONDS = 1.0          # a full swing takes longer than this even in real time
-QUICK_SAMPLES = 16         # poses sampled evenly across the clip for the quick layer
-MIN_POSE_SHARE = 0.5       # samples with a pose at all
-MIN_BODY_SHARE = 0.5       # ... of those, samples with a shoulder and a hip visible
-QUICK_CAMERA_WIDTH = 0.45  # narrowest standing sample wider than this (torso lengths) = not down the line
-MIN_VIS = 0.5
+_T = json.loads((ROOT / "config" / "thresholds.json").read_text(encoding="utf-8"))["preflight"]
+_PATH = path_fault._T
+
+MIN_SECONDS = _T["minSeconds"]  # a full swing takes longer than this even in real time
+QUICK_SAMPLES = _T["quickSamples"]  # poses sampled evenly across the clip for the quick layer
+MIN_POSE_SHARE = _T["minPoseShare"]  # samples with a pose at all
+MIN_BODY_SHARE = _T["minBodyShare"]  # ... of those, samples with a shoulder and a hip visible
+QUICK_CAMERA_WIDTH = _T["quickCameraWidth"]  # narrowest standing sample wider than this (torso lengths) = not down the line
+MIN_VIS = _T["minVisibility"]
 REFUSED = "无法判断"
 LS, RS, LH, RH, LW, RW = 11, 12, 23, 24, 15, 16
 
@@ -92,11 +96,11 @@ def quick(samples: np.ndarray, duration: float, people: int = 1) -> dict:
 
 def early_frames(address: int, top: int, impact: int) -> int:
     """How many frames (from the clip start) early_setup needs: the top plus the smoothing margin."""
-    k = path_fault._odd((impact - address) / 20)
-    return top + k + 3
+    k = path_fault._odd((impact - address) / _PATH["smoothingWindowDivisor"])
+    return top + k + _T["earlyMarginFrames"]
 
 
-def early_setup(landmarks: np.ndarray, address: int, top: int, impact: int, min_visibility: float = 0.5) -> str | None:
+def early_setup(landmarks: np.ndarray, address: int, top: int, impact: int, min_visibility: float = _PATH["minVisibility"]) -> str | None:
     """path_fault.analyze's refusals up to and including the camera check, on frames [0, early_frames).
     The visibility / jump shares are over address..impact in the full analysis; here the frames after
     the top count as good, so this leans towards carrying on. The hip "home" of pose_glitches and the
@@ -104,7 +108,7 @@ def early_setup(landmarks: np.ndarray, address: int, top: int, impact: int, min_
     from the full analysis. Returns the refusal reason, or None = carry on."""
     if not (0 <= address < top < impact):
         return "阶段顺序不对"
-    k = path_fault._odd((impact - address) / 20)
+    k = path_fault._odd((impact - address) / _PATH["smoothingWindowDivisor"])
     h = max(2, k // 2)
     seen = min(len(landmarks), early_frames(address, top, impact))
     if seen <= top:
@@ -125,11 +129,11 @@ def early_setup(landmarks: np.ndarray, address: int, top: int, impact: int, min_
         return "准备姿势躯干不可见"
     raw = path_fault.hand_track(lm, torso)
     span, rest = impact - address + 1, impact - top
-    if (np.isfinite(raw[address:top + 1]).all(axis=1).sum() + rest) / span < 0.7:
+    if (np.isfinite(raw[address:top + 1]).all(axis=1).sum() + rest) / span < _PATH["minTrackedShare"]:
         return "手腕可见帧太少"
     raw[path_fault.pose_glitches(lm, raw, address, min(impact, seen - 1), torso)] = np.nan
     raw = path_fault.despike(raw, torso)
-    if (np.isfinite(raw[address:top + 1]).all(axis=1).sum() + rest) / span < 0.7:
+    if (np.isfinite(raw[address:top + 1]).all(axis=1).sum() + rest) / span < _PATH["minTrackedShare"]:
         return "关键点跳动太多"
     hands = path_fault._smooth(raw, k)
     f = path_fault.still_address(hands, address, top)

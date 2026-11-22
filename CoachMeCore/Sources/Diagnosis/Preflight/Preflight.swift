@@ -9,14 +9,14 @@ import Model
 /// 2. `earlySetup`: once SwingNet's phases are known and the pose pass has `earlyFrames` frames, the full
 ///    analysis's set-up refusals (trunk, wrists, jumpy key points, camera off the target line).
 public enum Preflight {
-    public static let minSeconds = 1.0
-    public static let quickSamples = 16
-    public static let minPoseShare = 0.5
-    public static let minBodyShare = 0.5
+    public static let minSeconds = PreflightThresholds.minSeconds
+    public static let quickSamples = PreflightThresholds.quickSamples
+    public static let minPoseShare = PreflightThresholds.minPoseShare
+    public static let minBodyShare = PreflightThresholds.minBodyShare
     /// Narrowest standing sample wider than this (torso lengths) = not down the line. The full analysis
     /// refuses above SwingPathAnalyzer.maxLineWidth (0.2) at address; this is far above it on purpose.
-    public static let quickCameraWidth = 0.45
-    static let minVisibility = 0.5
+    public static let quickCameraWidth = PreflightThresholds.quickCameraWidth
+    static let minVisibility = PreflightThresholds.minVisibility
     static let ls = 11, rs = 12, lh = 23, rh = 24, lw = 15, rw = 16
 
     public enum QuickReason: String, Sendable, Codable {
@@ -92,7 +92,8 @@ public enum Preflight {
 
     /// How many frames from the clip start `earlySetup` needs: the top plus the smoothing margin.
     public static func earlyFrames(address: Int, top: Int, impact: Int) -> Int {
-        top + SwingPathAnalyzer.oddWindow(Double(impact - address) / 20) + 3
+        top + SwingPathAnalyzer.oddWindow(Double(impact - address) / SwingPathThresholds.smoothingWindowDivisor)
+            + PreflightThresholds.earlyMarginFrames
     }
 
     /// SwingPathAnalyzer.analyze's refusals up to and including the camera check, on frames
@@ -100,7 +101,7 @@ public enum Preflight {
     public static func earlySetup(landmarks input: [[SwingPathAnalyzer.PathPoint]], address: Int, top: Int, impact: Int,
                                   analyzer: SwingPathAnalyzer = SwingPathAnalyzer()) -> SwingPathAnalyzer.Refusal? {
         guard 0 <= address, address < top, top < impact else { return .phaseOrder }
-        let k = SwingPathAnalyzer.oddWindow(Double(impact - address) / 20)
+        let k = SwingPathAnalyzer.oddWindow(Double(impact - address) / SwingPathThresholds.smoothingWindowDivisor)
         let h = max(2, k / 2)
         let seen = min(input.count, earlyFrames(address: address, top: top, impact: impact))
         guard seen > top else { return nil }
@@ -127,12 +128,12 @@ public enum Preflight {
         func known(_ p: (Double, Double)) -> Bool { p.0.isFinite && p.1.isFinite }
         let span = Double(impact - address + 1), rest = Double(impact - top)
         func share() -> Double { (Double((address...top).filter { known(raw[$0]) }.count) + rest) / span }
-        if share() < 0.7 { return .wristsNotVisible }
+        if share() < SwingPathThresholds.minTrackedShare { return .wristsNotVisible }
         for f in A.poseGlitches(lm, hands: raw, address: address, impact: min(impact, seen - 1), torso: torso) {
             raw[f] = (.nan, .nan)
         }
         raw = A.despike(raw, torso: torso)
-        if share() < 0.7 { return .trackingJumps }
+        if share() < SwingPathThresholds.minTrackedShare { return .trackingJumps }
         let xs = A.smooth(raw.map(\.0), k: k), ys = A.smooth(raw.map(\.1), k: k)
         let still = A.stillAddress(xs, ys, address: address, top: top)
         let a2 = anchors(still)

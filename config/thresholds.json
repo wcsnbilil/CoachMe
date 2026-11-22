@@ -1,0 +1,31 @@
+{
+  "swingPath": {
+    "calibrationCenter": -0.154,
+    "calibrationOutside": 0.142,
+    "calibrationInside": -0.516,
+    "calibrationSource": "golfdb_dtl_first200_v3d",
+    "minVisibility": 0.5,
+    "maxWristGap": 0.6,
+    "maxLineWidth": 0.2,
+    "minTrackedShare": 0.7,
+    "minBackswingRise": 0.5,
+    "smoothingWindowDivisor": 20.0,
+    "stillSpeedShare": 0.1,
+    "hampelSigmas": 3.0,
+    "madScale": 1.4826,
+    "maxHipShift": 0.5,
+    "maxReach": 1.8,
+    "despikeFloor": 0.25,
+    "despikeMADs": 3.0,
+    "jumpReturnShare": 0.5,
+    "jumpCancelShare": 0.5,
+    "maxJumpFrames": 4,
+    "maxDownswingGap": 0.25,
+    "minFilledGap": 3.0,
+    "cautionBackswingOffset": 0.4,
+    "nearBoundary": 0.05,
+    "lowTrackingFraction": 0.125,
+    "lowTrackingMinFrames": 1.0,
+    "lowCameraMargin": 0.05
+  }
+}

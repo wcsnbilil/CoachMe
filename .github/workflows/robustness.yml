@@ -4,7 +4,8 @@
 name: 扰动稳健性
 
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths:
       - tools/robustness/**
       - tools/faults/run_path.py

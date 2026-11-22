@@ -2,12 +2,12 @@ name: Lint
 
 on:
   push:
-    branches: [main]
+    branches-ignore: [baseline-data, ci-screenshots]
   pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: lint-${{ github.ref }}
+  group: lint-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
       - name: SwiftLint
         run: tools/lint/run.sh
       - name: 基线只许变小
-        if: github.event_name == 'pull_request'
+        if: github.ref != 'refs/heads/main'
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          python3 tools/lint/check_baseline.py "origin/${{ github.base_ref }}"
+          python3 tools/lint/check_baseline.py "origin/${{ github.base_ref || 'main' }}"

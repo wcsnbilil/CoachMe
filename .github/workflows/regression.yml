@@ -2,12 +2,12 @@ name: 回归基准
 
 on:
   push:
-    branches: [main]
+    branches-ignore: [baseline-data, ci-screenshots]
   pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: regression-${{ github.ref }}
+  group: regression-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -26,8 +26,8 @@ jobs:
       - name: 逐杆判定与快照一致
         run: python tools/baseline/regress.py | tee -a "$GITHUB_STEP_SUMMARY"
       - name: 一致率不低于基线分支
-        if: github.event_name == 'pull_request'
-        run: python tools/baseline/regress.py --against "origin/${{ github.base_ref }}" | tee -a "$GITHUB_STEP_SUMMARY"
+        if: github.ref != 'refs/heads/main'
+        run: python tools/baseline/regress.py --against "origin/${{ github.base_ref || 'main' }}" | tee -a "$GITHUB_STEP_SUMMARY"
 
   phases:
     name: 7 阶段：GolfDB split 1 快照 + 准确率不下降
@@ -44,5 +44,5 @@ jobs:
       - name: 逐段关键帧与快照一致
         run: python tools/baseline/regress_phases.py | tee -a "$GITHUB_STEP_SUMMARY"
       - name: 准确率不低于基线分支
-        if: github.event_name == 'pull_request'
-        run: python tools/baseline/regress_phases.py --against "origin/${{ github.base_ref }}" | tee -a "$GITHUB_STEP_SUMMARY"
+        if: github.ref != 'refs/heads/main'
+        run: python tools/baseline/regress_phases.py --against "origin/${{ github.base_ref || 'main' }}" | tee -a "$GITHUB_STEP_SUMMARY"

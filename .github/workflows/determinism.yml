@@ -4,8 +4,13 @@
 # 同一进程内每段跑 N 次。最后一个 job 跨进程、跨机器比较。
 name: 结论稳定性
 
+# 重型流程：合入 main 后、每晚、手动触发；PR 上不跑。
 on:
-  pull_request:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**.md"]
+  schedule:
+    - cron: "47 19 * * *"   # 北京时间 03:47
   workflow_dispatch:
     inputs:
       runs:
@@ -13,7 +18,7 @@ on:
         default: "2"
 
 concurrency:
-  group: determinism-${{ github.ref }}
+  group: determinism-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

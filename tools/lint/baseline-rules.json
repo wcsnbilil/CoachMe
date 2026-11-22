@@ -300,72 +300,12 @@
   }
  },
  {
-  "text": "            poseModelIdentifier: MediaPipePoseDetector.ModelVariant.heavy.rawValue",
-  "violation": {
-   "location": {
-    "character": 34,
-    "file": "CoachMe/Features/Import/ImportView.swift",
-    "line": 431
-   },
-   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
-   "ruleDescription": "",
-   "ruleIdentifier": "ui_calls_engine",
-   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
-   "severity": "error"
-  }
- },
- {
-  "text": "                let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(),",
-  "violation": {
-   "location": {
-    "character": 32,
-    "file": "CoachMe/Features/Import/ImportView.swift",
-    "line": 452
-   },
-   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
-   "ruleDescription": "",
-   "ruleIdentifier": "ui_calls_engine",
-   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
-   "severity": "error"
-  }
- },
- {
-  "text": "                let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(),",
-  "violation": {
-   "location": {
-    "character": 56,
-    "file": "CoachMe/Features/Import/ImportView.swift",
-    "line": 452
-   },
-   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
-   "ruleDescription": "",
-   "ruleIdentifier": "ui_calls_engine",
-   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
-   "severity": "error"
-  }
- },
- {
-  "text": "                                             phaseDetector: SwingNetPhaseDetector())",
-  "violation": {
-   "location": {
-    "character": 61,
-    "file": "CoachMe/Features/Import/ImportView.swift",
-    "line": 453
-   },
-   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
-   "ruleDescription": "",
-   "ruleIdentifier": "ui_calls_engine",
-   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
-   "severity": "error"
-  }
- },
- {
   "text": "/// a temporary location keeps it alive until the analysis copies it into the store.",
   "violation": {
    "location": {
     "character": 7,
     "file": "CoachMe/Features/Import/ImportView.swift",
-    "line": 754
+    "line": 746
    },
    "reason": "修掉根因；现在修不了就开 issue，并删掉变通代码或把它做成有测试的正式行为。",
    "ruleDescription": "",

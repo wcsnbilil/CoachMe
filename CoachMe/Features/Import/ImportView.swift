@@ -428,7 +428,7 @@ struct ImportView: View {
             handedness: handedness,
             club: club,
             cameraView: cameraView,
-            poseModelIdentifier: MediaPipePoseDetector.ModelVariant.heavy.rawValue
+            poseModelIdentifier: SwingImport.poseModelIdentifier
         )
 
         analysisTask = Task {
@@ -444,27 +444,19 @@ struct ImportView: View {
                 saved.videoFilename = filename
 
                 let storedURL = LocalStore.shared.videosDirectory.appendingPathComponent(filename)
-                let asset = AVURLAsset(url: storedURL)
-                let range = CMTimeRange(
-                    start: CMTime(seconds: selectedStart, preferredTimescale: 600),
-                    end: CMTime(seconds: selectedEnd, preferredTimescale: 600))
-
-                let analyzer = SwingAnalyzer(detector: MediaPipePoseDetector(),
-                                             phaseDetector: SwingNetPhaseDetector())
-                let frames = try await analyzer.analyse(asset: asset, timeRange: range) { p in
+                let analysis = try await SwingImport.analyse(videoURL: storedURL, start: selectedStart, end: selectedEnd) { p in
                     Task { @MainActor in progress = p }
                 }
-                try Task.checkCancellation()
 
-                saved.keyframes = await analyzer.keyframes
-                saved.phaseDetectionNote = await analyzer.phaseDetectionNote
+                saved.keyframes = analysis.keyframes
+                saved.phaseDetectionNote = analysis.phaseDetectionNote
 
                 let cache = AnalysisCache(swingID: swingID,
                                           analysisVersion: saved.analysisVersion,
                                           algorithmVersion: saved.algorithmVersion,
                                           poseModelIdentifier: saved.poseModelIdentifier,
                                           createdAt: Date(),
-                                          frames: frames,
+                                          frames: analysis.frames,
                                           smoothing: selectedSlowMotion ? .slowMotion : .realTime)
                 progress = AnalysisProgress(framesProcessed: 0, estimatedTotalFrames: 0, currentTimestampSeconds: 0, stage: "正在保存分析…")
                 try await storage.saveAnalysis(cache)

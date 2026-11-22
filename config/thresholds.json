@@ -27,5 +27,29 @@
     "lowTrackingFraction": 0.125,
     "lowTrackingMinFrames": 1.0,
     "lowCameraMargin": 0.05
+  },
+  "swingSplit": {
+    "minVisibility": 0.5,
+    "topBelow": 0.1,
+    "addressStill": 0.05,
+    "addressMax": 0.1,
+    "impactTolerance": 0.45,
+    "impactX": 0.6,
+    "downRatio": 0.9,
+    "minBack": 4,
+    "restSeconds": 1.0,
+    "padBeforeSeconds": 1.0,
+    "padAfterSeconds": 1.5,
+    "slowSwingSeconds": 2.0,
+    "normalSwingSeconds": 1.0
+  },
+  "preflight": {
+    "minSeconds": 1.0,
+    "quickSamples": 16,
+    "minPoseShare": 0.5,
+    "minBodyShare": 0.5,
+    "quickCameraWidth": 0.45,
+    "minVisibility": 0.5,
+    "earlyMarginFrames": 3
   }
 }

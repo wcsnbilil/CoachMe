@@ -290,7 +290,7 @@
    "location": {
     "character": 31,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 46
+    "line": 47
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -305,7 +305,7 @@
    "location": {
     "character": 30,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 47
+    "line": 48
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -320,7 +320,7 @@
    "location": {
     "character": 30,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 49
+    "line": 50
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -335,7 +335,7 @@
    "location": {
     "character": 82,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 62
+    "line": 64
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -350,7 +350,7 @@
    "location": {
     "character": 26,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 64
+    "line": 66
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -365,7 +365,7 @@
    "location": {
     "character": 43,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 64
+    "line": 66
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -380,7 +380,7 @@
    "location": {
     "character": 48,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 69
+    "line": 71
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -395,7 +395,7 @@
    "location": {
     "character": 28,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 71
+    "line": 73
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -410,7 +410,7 @@
    "location": {
     "character": 21,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 102
+    "line": 104
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -425,7 +425,7 @@
    "location": {
     "character": 21,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 104
+    "line": 106
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -440,7 +440,7 @@
    "location": {
     "character": 32,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 104
+    "line": 106
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -455,7 +455,7 @@
    "location": {
     "character": 42,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 104
+    "line": 106
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -470,7 +470,7 @@
    "location": {
     "character": 53,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 104
+    "line": 106
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -485,7 +485,7 @@
    "location": {
     "character": 31,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 105
+    "line": 107
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -500,7 +500,7 @@
    "location": {
     "character": 38,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 105
+    "line": 107
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -515,7 +515,7 @@
    "location": {
     "character": 45,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 105
+    "line": 107
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -530,7 +530,7 @@
    "location": {
     "character": 30,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 106
+    "line": 108
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -545,7 +545,7 @@
    "location": {
     "character": 37,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 106
+    "line": 108
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -560,7 +560,7 @@
    "location": {
     "character": 44,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 106
+    "line": 108
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -575,7 +575,7 @@
    "location": {
     "character": 33,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 107
+    "line": 109
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -590,7 +590,7 @@
    "location": {
     "character": 38,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 107
+    "line": 109
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -605,7 +605,7 @@
    "location": {
     "character": 43,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 107
+    "line": 109
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -620,7 +620,7 @@
    "location": {
     "character": 50,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 108
+    "line": 110
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -635,7 +635,7 @@
    "location": {
     "character": 53,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 108
+    "line": 110
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -650,7 +650,7 @@
    "location": {
     "character": 58,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 108
+    "line": 110
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -665,7 +665,7 @@
    "location": {
     "character": 28,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 110
+    "line": 112
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -680,7 +680,7 @@
    "location": {
     "character": 45,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 111
+    "line": 113
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -695,7 +695,7 @@
    "location": {
     "character": 27,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 112
+    "line": 114
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -710,7 +710,7 @@
    "location": {
     "character": 33,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 112
+    "line": 114
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -725,7 +725,7 @@
    "location": {
     "character": 54,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 112
+    "line": 114
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -740,7 +740,7 @@
    "location": {
     "character": 60,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 112
+    "line": 114
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -755,7 +755,7 @@
    "location": {
     "character": 79,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 115
+    "line": 117
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -770,7 +770,7 @@
    "location": {
     "character": 119,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 115
+    "line": 117
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -785,7 +785,7 @@
    "location": {
     "character": 82,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 118
+    "line": 120
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -800,7 +800,7 @@
    "location": {
     "character": 121,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 118
+    "line": 120
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -815,7 +815,7 @@
    "location": {
     "character": 36,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 120
+    "line": 122
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -830,7 +830,7 @@
    "location": {
     "character": 32,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 121
+    "line": 123
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -845,7 +845,7 @@
    "location": {
     "character": 60,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 122
+    "line": 124
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -860,7 +860,7 @@
    "location": {
     "character": 60,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 123
+    "line": 125
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -875,7 +875,7 @@
    "location": {
     "character": 60,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 124
+    "line": 126
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -890,7 +890,7 @@
    "location": {
     "character": 60,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 125
+    "line": 127
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -905,7 +905,7 @@
    "location": {
     "character": 35,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 127
+    "line": 129
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -920,7 +920,7 @@
    "location": {
     "character": 55,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 127
+    "line": 129
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -935,7 +935,7 @@
    "location": {
     "character": 82,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 127
+    "line": 129
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -950,7 +950,7 @@
    "location": {
     "character": 93,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 155
+    "line": 157
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -965,7 +965,7 @@
    "location": {
     "character": 144,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 155
+    "line": 157
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -980,7 +980,7 @@
    "location": {
     "character": 64,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 156
+    "line": 158
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -995,7 +995,7 @@
    "location": {
     "character": 58,
     "file": "CoachMe/Services/SwingNetPhaseDetector.swift",
-    "line": 166
+    "line": 168
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -1830,57 +1830,12 @@
   }
  },
  {
-  "text": "        top + SwingPathAnalyzer.oddWindow(Double(impact - address) / 20) + 3",
-  "violation": {
-   "location": {
-    "character": 70,
-    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
-    "line": 95
-   },
-   "reason": "Magic numbers should be replaced by named constants",
-   "ruleDescription": "Magic numbers should be replaced by named constants",
-   "ruleIdentifier": "no_magic_numbers",
-   "ruleName": "No Magic Numbers",
-   "severity": "error"
-  }
- },
- {
-  "text": "        top + SwingPathAnalyzer.oddWindow(Double(impact - address) / 20) + 3",
-  "violation": {
-   "location": {
-    "character": 76,
-    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
-    "line": 95
-   },
-   "reason": "Magic numbers should be replaced by named constants",
-   "ruleDescription": "Magic numbers should be replaced by named constants",
-   "ruleIdentifier": "no_magic_numbers",
-   "ruleName": "No Magic Numbers",
-   "severity": "error"
-  }
- },
- {
-  "text": "        let k = SwingPathAnalyzer.oddWindow(Double(impact - address) / 20)",
-  "violation": {
-   "location": {
-    "character": 72,
-    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
-    "line": 103
-   },
-   "reason": "Magic numbers should be replaced by named constants",
-   "ruleDescription": "Magic numbers should be replaced by named constants",
-   "ruleIdentifier": "no_magic_numbers",
-   "ruleName": "No Magic Numbers",
-   "severity": "error"
-  }
- },
- {
   "text": "        let h = max(2, k / 2)",
   "violation": {
    "location": {
     "character": 21,
     "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
-    "line": 104
+    "line": 105
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -1895,37 +1850,7 @@
    "location": {
     "character": 28,
     "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
-    "line": 104
-   },
-   "reason": "Magic numbers should be replaced by named constants",
-   "ruleDescription": "Magic numbers should be replaced by named constants",
-   "ruleIdentifier": "no_magic_numbers",
-   "ruleName": "No Magic Numbers",
-   "severity": "error"
-  }
- },
- {
-  "text": "        if share() < 0.7 { return .wristsNotVisible }",
-  "violation": {
-   "location": {
-    "character": 22,
-    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
-    "line": 130
-   },
-   "reason": "Magic numbers should be replaced by named constants",
-   "ruleDescription": "Magic numbers should be replaced by named constants",
-   "ruleIdentifier": "no_magic_numbers",
-   "ruleName": "No Magic Numbers",
-   "severity": "error"
-  }
- },
- {
-  "text": "        if share() < 0.7 { return .trackingJumps }",
-  "violation": {
-   "location": {
-    "character": 22,
-    "file": "CoachMeCore/Sources/Diagnosis/Preflight/Preflight.swift",
-    "line": 135
+    "line": 105
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -1940,7 +1865,7 @@
    "location": {
     "character": 18,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 58
+    "line": 57
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -1955,7 +1880,7 @@
    "location": {
     "character": 64,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 70
+    "line": 69
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -1970,7 +1895,7 @@
    "location": {
     "character": 20,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 79
+    "line": 78
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -1985,7 +1910,7 @@
    "location": {
     "character": 52,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 84
+    "line": 83
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2000,7 +1925,7 @@
    "location": {
     "character": 47,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 88
+    "line": 87
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2015,7 +1940,7 @@
    "location": {
     "character": 32,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 90
+    "line": 89
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2030,7 +1955,7 @@
    "location": {
     "character": 36,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 92
+    "line": 91
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2045,7 +1970,7 @@
    "location": {
     "character": 59,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 92
+    "line": 91
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2060,7 +1985,7 @@
    "location": {
     "character": 73,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 92
+    "line": 91
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2075,7 +2000,7 @@
    "location": {
     "character": 25,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 95
+    "line": 94
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2090,7 +2015,7 @@
    "location": {
     "character": 28,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 95
+    "line": 94
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2105,7 +2030,7 @@
    "location": {
     "character": 62,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 95
+    "line": 94
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2120,7 +2045,7 @@
    "location": {
     "character": 79,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 95
+    "line": 94
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2135,7 +2060,7 @@
    "location": {
     "character": 82,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 95
+    "line": 94
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2150,7 +2075,7 @@
    "location": {
     "character": 37,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 106
+    "line": 105
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2165,7 +2090,7 @@
    "location": {
     "character": 33,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 122
+    "line": 121
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2180,7 +2105,7 @@
    "location": {
     "character": 52,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 122
+    "line": 121
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2195,7 +2120,7 @@
    "location": {
     "character": 45,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 134
+    "line": 133
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2210,7 +2135,7 @@
    "location": {
     "character": 43,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 164
+    "line": 163
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2225,7 +2150,7 @@
    "location": {
     "character": 26,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 165
+    "line": 164
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2240,7 +2165,7 @@
    "location": {
     "character": 62,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 165
+    "line": 164
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2255,7 +2180,7 @@
    "location": {
     "character": 24,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 172
+    "line": 171
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",
@@ -2270,7 +2195,7 @@
    "location": {
     "character": 40,
     "file": "CoachMeCore/Sources/Diagnosis/Split/SwingSplitter.swift",
-    "line": 182
+    "line": 181
    },
    "reason": "Magic numbers should be replaced by named constants",
    "ruleDescription": "Magic numbers should be replaced by named constants",

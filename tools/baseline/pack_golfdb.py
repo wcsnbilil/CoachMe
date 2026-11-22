@@ -7,8 +7,9 @@ normalised, 4 decimals) and GolfDB's annotation table.
 
 Output:
   swings.json    one entry per clip: name, id, youtube_id, player, slow, width, height, frames, events
-                 (GolfDB's 8 labelled frames, relative to the first), offset (index of the clip's first
-                 value in landmarks.i16)
+                 (GolfDB's 10 frame numbers relative to the first: clip start, the 8 labelled events,
+                 clip end; address, top and impact are entries 1, 4 and 6), offset (index of the clip's
+                 first value in landmarks.i16)
   landmarks.i16  little-endian int16, per clip frames x 33 x 3: x and y times XY_SCALE, visibility times
                  VIS_SCALE; MISSING where the App returned no pose for the frame
 """

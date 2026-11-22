@@ -51,7 +51,7 @@ jobs:
     name: 同一视频跑多次（模拟器 ${{ matrix.machine }}）
     needs: fixtures
     runs-on: macos-15
-    timeout-minutes: 150
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -93,6 +93,7 @@ jobs:
           xcodebuild build-for-testing -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
             -derivedDataPath dd CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tail -3
       - name: 三个独立进程
+        timeout-minutes: 60
         run: |
           set -o pipefail
           for p in 1 2 3; do
@@ -101,18 +102,19 @@ jobs:
             TEST_RUNNER_COACHME_DETERMINISM_OUT="$PWD/det/p$p" \
             TEST_RUNNER_COACHME_DETERMINISM_RUNS="${{ github.event.inputs.runs || '2' }}" \
             TEST_RUNNER_COACHME_DETERMINISM_QUICK=$Q TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=$L \
-            xcodebuild test-without-building -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
+            tools/ci/xcodebuild_test.sh xcodebuild test-without-building -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
               -derivedDataPath dd -only-testing:CoachMeTests/DeterminismTests \
               2>&1 | grep -E "^DET |Test Case .*(passed|failed)|\*\* TEST" || true
           done
       - name: 同一份代码、三份 ubuntu 转出来的视频（iOS CI 用的就是 ubuntu 转的）
+        timeout-minutes: 45
         if: matrix.machine == 'm1'
         run: |
           for u in u1 u2 u3; do
             TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/ubuntu-videos/videos-$u" \
             TEST_RUNNER_COACHME_DETERMINISM_OUT="$PWD/det/$u" \
             TEST_RUNNER_COACHME_DETERMINISM_RUNS=1 TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=0 \
-            xcodebuild test-without-building -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
+            tools/ci/xcodebuild_test.sh xcodebuild test-without-building -workspace CoachMe.xcworkspace -scheme CoachMe -destination "id=$SIM" \
               -derivedDataPath dd -only-testing:CoachMeTests/DeterminismTests \
               2>&1 | grep -E "^DET .*run=" | sed "s/^/[$u] /" || true
           done

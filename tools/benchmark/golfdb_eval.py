@@ -132,6 +132,7 @@ def main():
     p.add_argument("--split", type=int, default=1)
     p.add_argument("--limit", type=int, help="only the first N swings (quick check)")
     p.add_argument("--out", type=Path, default=Path("golfdb_results.json"))
+    p.add_argument("--save-probs", type=Path, help="also write each swing's per-frame probabilities to <dir>/<id>.npy")
     a = p.parse_args()
     model = load_model(a.backend)
 
@@ -162,7 +163,11 @@ def main():
             continue
         events = np.asarray(row.events)
         events = (events - events[0])[1:-1]  # clip-relative frames of the 8 labelled events
-        r = score(probabilities(model, read_frames(path)), events)
+        probs = probabilities(model, read_frames(path))
+        if a.save_probs:
+            a.save_probs.mkdir(parents=True, exist_ok=True)
+            np.save(a.save_probs / f"{row.id}.npy", probs)
+        r = score(probs, events)
         r.update(id=int(row.id), slow=int(row.slow), view=row.view, club=row.club)
         results.append(r)
         if n % 10 == 0:

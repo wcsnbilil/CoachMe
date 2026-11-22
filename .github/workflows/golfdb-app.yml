@@ -7,7 +7,8 @@
 name: GolfDB App 基准
 
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths:
       - .github/workflows/golfdb-app.yml
       - CoachMe/Services/**

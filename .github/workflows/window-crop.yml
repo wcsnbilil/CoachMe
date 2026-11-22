@@ -4,7 +4,8 @@
 name: 裁切窗口一致性
 
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths:
       - tools/window/window_crop.py
       - tools/window/window_report.py

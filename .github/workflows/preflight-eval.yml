@@ -5,13 +5,7 @@ name: 快速预检一致率
 
 on:
   push:
-    branches: [claude/preflight]
-    paths:
-      - tools/preflight/**
-      - tools/faults/path_fault.py
-      - tools/split/swing_split.py
-      - .github/workflows/preflight-eval.yml
-  pull_request:
+    branches: [main]
     paths:
       - tools/preflight/**
       - tools/faults/path_fault.py

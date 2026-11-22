@@ -1,16 +1,22 @@
 # 云端 Mac 自动编译 + 测试（GitHub 免费 macOS runner；公开仓库不计分钟）。
 #
+# 快速检查（每次 push、每个 PR）：core；PR 上另加 app-build（只编译）。
+# 重型流程（合入 main 后、每晚、手动触发）：模拟器测试 + 端到端四个 job。
+# 要在分支上看模拟器测试或截图：Actions 里对该分支手动触发本流程。
+#
 # TestFlight 上传在 testflight.yml（写好但未启用，等 Apple 开发者账号）。
 name: iOS CI
 
 on:
   push:
-    branches: [main]
+    branches-ignore: [baseline-data, ci-screenshots]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "17 19 * * *"   # 北京时间 03:17
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -78,8 +84,39 @@ jobs:
             grep -E "(SwingPathParityTests|SwingSplitParityTests|PreflightParityTests).*(passed|failed|skipped)" swift-test.log | tail -6
           } | tee -a "$GITHUB_STEP_SUMMARY" || true
 
+  app-build:
+    name: App 编译（不跑测试）
+    if: github.event_name == 'pull_request'
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+      - name: 下载 MediaPipe 模型
+        run: bash tools/download-model.sh heavy
+      - name: xcodegen + pod install
+        run: |
+          xcodebuild -version
+          xcodegen generate
+          pod install --repo-update
+      - name: xcodebuild build-for-testing
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -workspace CoachMe.xcworkspace -scheme CoachMe \
+            -destination "generic/platform=iOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            2>&1 | tee xcodebuild.log | grep -E "error:|warning: .*CoachMe|\*\* (BUILD|TEST)"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: xcodebuild-build-log
+          path: xcodebuild.log
+
   e2e-fixtures:
     name: 端到端视频（格式矩阵）
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -253,7 +290,7 @@ jobs:
   e2e-report:
     name: 端到端对比（App vs Python）
     needs: [app, e2e-python]
-    if: always()
+    if: ${{ !cancelled() && (needs.app.result == 'success' || needs.app.result == 'failure') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

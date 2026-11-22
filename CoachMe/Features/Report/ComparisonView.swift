@@ -200,10 +200,10 @@ struct ComparisonView: View {
         }
         // Same builder the report uses, so the numbers match the report exactly.
         let mine = ReportView.context(swing: swing,
-                                      timeline: MetricTimeline(poseFrames: thisCache.smoothedFrames(), record: swing),
+                                      timeline: SwingReview.timeline(for: swing, cache: thisCache),
                                       rules: library.rules)
         let theirs = ReportView.context(swing: other,
-                                        timeline: MetricTimeline(poseFrames: otherCache.smoothedFrames(), record: other),
+                                        timeline: SwingReview.timeline(for: other, cache: otherCache),
                                         rules: library.rules)
         thisContext = mine
         summary = SwingComparison.summary(this: mine, other: theirs)

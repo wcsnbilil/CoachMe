@@ -33,7 +33,7 @@ final class WorkbenchModel {
         self.displayFrames = WorldDisplaySmoother().smooth(PoseDisplaySmoother().smooth(PoseDisplayCompleter(minVisibility: swing.qualityPolicy.minVisibility)
             .complete(self.poseFrames, keyframes: swing.keyframes)))
         if cache != nil {
-            timeline = MetricTimeline(poseFrames: poseFrames, record: swing)
+            timeline = SwingReview.timeline(for: swing, poseFrames: poseFrames)
         }
         let asset = AVURLAsset(url: videoURL)
         playback = PlaybackController(url: videoURL, duration: swing.durationSeconds, startTime: swing.clipStartSeconds)
@@ -83,7 +83,7 @@ final class WorkbenchModel {
         phaseDetectionMessage = nil
         defer { findingPhases = false }
         do {
-            let marks = try await SavedSwingPhaseAnalysis().run(url: library.videoURL(for: swing), start: swing.clipStartSeconds, end: swing.clipEndSeconds, frames: poseFrames, usePersonCrop: usePersonCrop)
+            let marks = try await SwingReview.detectPhases(for: swing, videoURL: library.videoURL(for: swing), poseFrames: poseFrames, usePersonCrop: usePersonCrop)
             // Do not overwrite marks added while the background analysis ran.
             guard swing.keyframes.isEmpty else { return }
             if marks.isEmpty {
@@ -174,7 +174,7 @@ final class WorkbenchModel {
         // Address may have moved, which changes every rotation metric. Recompute
         // from the cached landmarks; no inference re-run.
         if let cache {
-            timeline = MetricTimeline(poseFrames: poseFrames, record: swing)
+            timeline = SwingReview.timeline(for: swing, poseFrames: poseFrames)
         }
     }
 

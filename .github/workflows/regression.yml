@@ -1,0 +1,30 @@
+name: 回归基准
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  swing-path:
+    name: 外下/内下：GolfDB 400 快照 + 一致率不下降
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install --quiet numpy
+      - name: 逐杆判定与快照一致
+        run: python tools/baseline/regress.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 一致率不低于基线分支
+        if: github.event_name == 'pull_request'
+        run: python tools/baseline/regress.py --against "origin/${{ github.base_ref }}" | tee -a "$GITHUB_STEP_SUMMARY"

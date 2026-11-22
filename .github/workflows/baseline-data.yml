@@ -1,0 +1,56 @@
+name: 回归基准数据
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/baseline-data.yml
+      - tools/baseline/pack_golfdb.py
+      - tools/e2e/golfdb_reuse_app_run.txt
+  workflow_dispatch:
+
+concurrency:
+  group: baseline-data
+  cancel-in-progress: true
+
+jobs:
+  pack:
+    name: 打包 GolfDB 400 的 App 关键点
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - id: source
+        run: echo "run=$(tr -d '[:space:]' < tools/e2e/golfdb_reuse_app_run.txt)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: golfdb-app-landmarks
+          path: golfdb-app
+          run-id: ${{ steps.source.outputs.run }}
+          github-token: ${{ github.token }}
+      - name: 打包
+        run: |
+          pip install --quiet numpy pandas
+          curl -fsSL -o golfDB.pkl https://raw.githubusercontent.com/wmcnally/golfdb/master/data/golfDB.pkl
+          python tools/baseline/pack_golfdb.py golfdb-app golfDB.pkl --limit 400 \
+            --source-run "${{ steps.source.outputs.run }}" --out packed/golfdb400 | tee -a "$GITHUB_STEP_SUMMARY"
+          ls -la packed/golfdb400
+          sha256sum packed/golfdb400/* | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 推到 baseline-data 分支
+        run: |
+          set -e
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir "$RUNNER_TEMP/data" && cd "$RUNNER_TEMP/data"
+          git init -q
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan baseline-data
+          cp -r "$GITHUB_WORKSPACE/packed/golfdb400" .
+          git add -A
+          git commit -q -m "GolfDB 400 App 关键点（来源 run ${{ steps.source.outputs.run }}，打包于 ${{ github.sha }}）"
+          git push -q --force origin baseline-data

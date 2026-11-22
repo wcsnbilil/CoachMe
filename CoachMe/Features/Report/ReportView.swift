@@ -86,7 +86,7 @@ struct ReportView: View {
         }
         .sheet(isPresented: $showingChat) {
             if let cache = library.analysis(for: swing) {
-                let timeline = MetricTimeline(poseFrames: cache.smoothedFrames(), record: swing)
+                let timeline = SwingReview.timeline(for: swing, cache: cache)
                 ChatPanelView(swing: swing, phase: discussion?.phase, timestamp: discussion?.time ?? swing.clipStartSeconds,
                               context: analysisContext ?? Self.context(swing: swing, timeline: timeline, rules: library.rules),
                               onJump: onJump.map { jump in { time in showingChat = false; jump(time) } },
@@ -324,19 +324,8 @@ struct ReportView: View {
     }
 
     private func rebuildPath() async {
-        guard swing.cameraView == .downTheLine,
-              let cache = library.analysis(for: swing),
-              let address = swing.keyframes.keyframe(for: .address)?.timestampSeconds,
-              let top = swing.keyframes.keyframe(for: .top)?.timestampSeconds,
-              let impact = swing.keyframes.keyframe(for: .impact)?.timestampSeconds else { path = nil; return }
-        let asset = AVURLAsset(url: library.videoURL(for: swing))
-        guard let track = try? await asset.loadTracks(withMediaType: .video).first,
-              let size = try? await track.load(.naturalSize),
-              let transform = try? await track.load(.preferredTransform) else { path = nil; return }
-        let presented = size.applying(transform)
-        // Raw landmarks, as in tools/faults/path_fault.py: the analyzer does its own smoothing.
-        path = SwingPathAnalyzer().analyze(frames: cache.frames, address: address, top: top, impact: impact,
-                                           imageWidth: abs(presented.width), imageHeight: abs(presented.height))
+        guard let cache = library.analysis(for: swing) else { path = nil; return }
+        path = await SwingReview.downswingPath(for: swing, cache: cache, videoURL: library.videoURL(for: swing))
     }
 
     private var limitations: some View {
@@ -361,10 +350,9 @@ struct ReportView: View {
     private func rebuild() {
         guard let cache = library.analysis(for: swing) else { return }
         // Same smoothed landmarks as the workbench, so both show the same numbers.
-        let timeline = MetricTimeline(poseFrames: cache.smoothedFrames(), record: swing)
+        let timeline = SwingReview.timeline(for: swing, cache: cache)
         let byPhase = timeline.metricsByPhase(swing.keyframes)
-        let findings = RuleEngine().findings(rules: library.rules, metricsByPhase: byPhase,
-                                             handedness: swing.handedness, club: swing.club, view: swing.cameraView)
+        let findings = SwingReview.findings(for: swing, metricsByPhase: byPhase, rules: library.rules)
 
         sections = swing.keyframes.sorted { $0.phase.order < $1.phase.order }.compactMap { keyframe in
             guard let metrics = byPhase[keyframe.phase] else { return nil }

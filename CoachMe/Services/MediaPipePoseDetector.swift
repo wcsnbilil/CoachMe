@@ -74,6 +74,7 @@ final class MediaPipePoseDetector: PoseDetecting {
     }
 
     func detect(pixelBuffer: CVPixelBuffer, timestampMilliseconds: Int) throws -> PoseDetectionResult {
+        precondition(!Thread.isMainThread, "推理不能在主线程运行：把调用放进 actor 或后台任务，UI 需要结果时 await 它。")
         guard let landmarker else {
             throw PoseDetectorError.modelLoadFailed(underlying: "detector 未初始化，请先调用 prepare()")
         }

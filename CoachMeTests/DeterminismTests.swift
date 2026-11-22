@@ -135,7 +135,7 @@ final class DeterminismTests: XCTestCase {
     }
 
     /// Two fresh detectors, the same decoded buffers, in step.
-    static func lockstep(_ url: URL) async throws -> Lockstep {
+    nonisolated static func lockstep(_ url: URL) async throws -> Lockstep {
         let asset = AVURLAsset(url: url)
         let duration = try await asset.load(.duration).seconds
         let selection = try await BetaAnalysisRunner.selectSwing(asset: asset, duration: duration)

@@ -3,7 +3,7 @@ import CoreVideo
 @testable import CoachMe
 
 final class SwingNetPhaseDetectorTests: XCTestCase {
-    func testBundledModelsAcceptSingleFrameTail() throws {
+    func testBundledModelsAcceptSingleFrameTail() async throws {
         var buffer: CVPixelBuffer?
         XCTAssertEqual(CVPixelBufferCreate(kCFAllocatorDefault, 320, 180,
                        kCVPixelFormatType_32BGRA, nil, &buffer), kCVReturnSuccess)

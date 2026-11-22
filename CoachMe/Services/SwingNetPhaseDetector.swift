@@ -37,6 +37,7 @@ final class SwingNetPhaseDetector {
     }
 
     func append(pixelBuffer: CVPixelBuffer, timestamp: Double, crop: CGRect? = nil) throws {
+        precondition(!Thread.isMainThread, "推理不能在主线程运行：把调用放进 actor 或后台任务，UI 需要结果时 await 它。")
         try Task.checkCancellation()
         guard let encoder else { throw DetectionError.invalidOutput }
         let image = try Self.normalizedInput(pixelBuffer, crop: crop)
@@ -50,6 +51,7 @@ final class SwingNetPhaseDetector {
     }
 
     func finish() throws -> [Keyframe] {
+        precondition(!Thread.isMainThread, "推理不能在主线程运行：把调用放进 actor 或后台任务，UI 需要结果时 await 它。")
         try flush()
         return selector.keyframes()
     }

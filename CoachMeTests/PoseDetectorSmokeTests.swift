@@ -42,7 +42,7 @@ final class PoseDetectorSmokeTests: XCTestCase {
         XCTAssertNoThrow(try detector.prepare())
     }
 
-    func testDetectOnABlankFrameReturnsAResultInsteadOfThrowing() throws {
+    func testDetectOnABlankFrameReturnsAResultInsteadOfThrowing() async throws {
         let detector = MediaPipePoseDetector()
         try detector.prepare()
         let result = try detector.detect(pixelBuffer: try blankFrame(), timestampMilliseconds: 0)
@@ -54,7 +54,7 @@ final class PoseDetectorSmokeTests: XCTestCase {
 
     /// MediaPipe's video mode rejects non-increasing timestamps. `detect` is
     /// supposed to absorb that rather than let the SDK throw.
-    func testOutOfOrderTimestampsDoNotThrow() throws {
+    func testOutOfOrderTimestampsDoNotThrow() async throws {
         let detector = MediaPipePoseDetector()
         try detector.prepare()
         let frame = try blankFrame()
@@ -64,7 +64,7 @@ final class PoseDetectorSmokeTests: XCTestCase {
         XCTAssertNoThrow(try detector.detect(pixelBuffer: frame, timestampMilliseconds: 50))
     }
 
-    func testDetectBeforePrepareThrowsInsteadOfCrashing() throws {
+    func testDetectBeforePrepareThrowsInsteadOfCrashing() async throws {
         let detector = MediaPipePoseDetector()
         XCTAssertThrowsError(try detector.detect(pixelBuffer: try blankFrame(), timestampMilliseconds: 0))
     }

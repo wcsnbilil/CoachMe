@@ -53,14 +53,14 @@ final class PoseDetectorFixtureTests: XCTestCase {
         return try detector.detect(pixelBuffer: try fixturePixelBuffer(), timestampMilliseconds: 0)
     }
 
-    func testModelFindsExactlyOnePersonAndAllThirtyThreeLandmarks() throws {
+    func testModelFindsExactlyOnePersonAndAllThirtyThreeLandmarks() async throws {
         let result = try detectOnFixture()
         XCTAssertEqual(result.personCount, 1, "样例图中只有一个人")
         XCTAssertEqual(result.imageLandmarks.count, PoseJoint.allCases.count,
                        "MediaPipe 关键点数量应与 PoseJoint 枚举一致")
     }
 
-    func testImageLandmarksAreNormalisedAndWorldLandmarksExist() throws {
+    func testImageLandmarksAreNormalisedAndWorldLandmarksExist() async throws {
         let result = try detectOnFixture()
         for (i, landmark) in result.imageLandmarks.enumerated() {
             XCTAssertTrue((-0.5...1.5).contains(landmark.position.x),
@@ -74,7 +74,7 @@ final class PoseDetectorFixtureTests: XCTestCase {
 
     /// The whole point of the seam: what MediaPipe returns must be computable by
     /// CoachMeCore without any further massaging.
-    func testCoachMeCoreComputesRealMetricsFromTheDetectedPose() throws {
+    func testCoachMeCoreComputesRealMetricsFromTheDetectedPose() async throws {
         let result = try detectOnFixture()
         let frame = PoseFrame(timestampSeconds: 0,
                               imageLandmarks: result.imageLandmarks,

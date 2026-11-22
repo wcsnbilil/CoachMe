@@ -70,6 +70,8 @@ jobs:
             echo "::error::内测版页面引用了不该可达的界面"; exit 1
           fi
           echo "内测版页面没有引用 AI、关节指标、3D 小人或骨架回放"
+      - name: xcodebuild 包装脚本自测
+        run: tools/ci/selftest.sh
       - name: swift test
         run: |
           set -o pipefail
@@ -224,7 +226,7 @@ jobs:
           TEST_RUNNER_COACHME_DETERMINISM_DIR="$PWD/e2e-videos" \
           TEST_RUNNER_COACHME_DETERMINISM_RUNS=2 \
           TEST_RUNNER_COACHME_DETERMINISM_LOCKSTEP=0 \
-          xcodebuild test \
+          tools/ci/xcodebuild_test.sh xcodebuild test \
             -workspace CoachMe.xcworkspace -scheme CoachMe \
             -destination "id=$SIM" \
             -resultBundlePath TestResults.xcresult \

@@ -1,4 +1,4 @@
-# claude/coachme-codebase-audit-edxe2q @ e070c5c
+# claude/coachme-codebase-audit-edxe2q @ ebfaff4
 
 ## 1_guide_en.png
 <img src="1_guide_en.png" width="300">

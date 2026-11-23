@@ -46,6 +46,8 @@ Beta → Model、Diagnosis
 
 App 侧的越界调用还在，并且多了一处：`Features/Beta/BetaAnalysisRunner.swift` 直接构造 `MediaPipePoseDetector`、`SwingNetPhaseDetector`、`SwingAnalyzer`、`SwingPathAnalyzer`，并用 `LocalStore.shared`（9 处）。第 3 节表格里的 8 处不变。UI 迁移排在回归基准和 CI 之后。
 
+> 更新（2026-11-23）：UI 迁移已完成（PR #33–#36）。界面改为调用 `CoachMe/SwingAnalysis/` 里的用例，`BetaAnalysisRunner.swift` 也移到了那里；lint 规则 `ui_calls_engine` 的豁免基线已清零。
+
 ### 0.4 第 4.3 节「没有任何自动门槛」已不成立
 
 现在已有这些自动检查（都在 `.github/workflows/`）：

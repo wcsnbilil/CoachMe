@@ -24,6 +24,10 @@ concurrency:
 env:
   LIMIT: ${{ github.event.inputs.limit || '400' }}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   whole:
     name: 整段（基线）

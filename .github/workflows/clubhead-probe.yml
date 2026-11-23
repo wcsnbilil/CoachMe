@@ -9,6 +9,10 @@ concurrency:
   group: clubhead-probe-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   eval:
     name: 复现 ClubheadDB + 评测现有杆头原型

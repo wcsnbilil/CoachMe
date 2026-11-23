@@ -10,6 +10,10 @@ concurrency:
   group: regression-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   swing-path:
     name: 外下/内下：GolfDB 400 快照 + 一致率不下降

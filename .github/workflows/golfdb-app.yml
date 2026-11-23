@@ -32,6 +32,10 @@ concurrency:
 env:
   LIMIT: ${{ github.event.inputs.limit || '400' }}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   app:
     name: App 流水线出关键点（模拟器）
@@ -221,4 +225,4 @@ jobs:
         if: always() && hashFiles('impact/results_swingnet.json') != ''
         run: |
           python tools/e2e/refusal_diff.py report_py/results.json impact/results_swingnet.json | tee -a "$GITHUB_STEP_SUMMARY"
-          echo; python tools/e2e/refusal_diff.py report_py/results.json impact/results_hybrid.json | head -8
+          echo; python tools/e2e/refusal_diff.py report_py/results.json impact/results_hybrid.json > refusal_hybrid.txt; sed -n 1,8p refusal_hybrid.txt

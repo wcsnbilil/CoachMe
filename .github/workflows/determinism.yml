@@ -21,6 +21,10 @@ concurrency:
   group: determinism-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   fixtures:
     # iOS CI 的端到端视频是在 ubuntu 上每次重新转码的：三台 ubuntu 各转一次，看文件是否逐字节相同。
@@ -37,7 +41,7 @@ jobs:
       - name: 格式矩阵 + 哈希
         run: |
           echo "CPU: $(grep -m1 'model name' /proc/cpuinfo) avx512=$(grep -c -m1 avx512f /proc/cpuinfo || true)"
-          ffmpeg -version | head -1
+          ffmpeg -version | sed -n 1p
           bash tools/e2e/make_variants.sh CoachMeTests/Fixtures/swing3s.mp4 e2e-videos > /dev/null
           (cd e2e-videos && sha256sum * | sed 's/^/SHA ${{ matrix.u }} /')
           { echo "### ${{ matrix.u }} $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2)"; echo '```'; (cd e2e-videos && sha256sum * | cut -c1-12,65-); echo '```'; } >> "$GITHUB_STEP_SUMMARY"

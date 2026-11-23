@@ -16,6 +16,10 @@ name: TestFlight
 on:
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   upload:
     if: ${{ vars.TESTFLIGHT_ENABLED == 'true' }}

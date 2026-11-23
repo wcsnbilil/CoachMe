@@ -10,6 +10,10 @@ concurrency:
   group: lint-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   swiftlint:
     name: SwiftLint 规则 + 阈值字面量
@@ -26,6 +30,10 @@ jobs:
         run: python3 tools/thresholds/generate.py --check
       - name: 规则自测
         run: tools/lint/selftest.sh
+      - name: 工作流都开了 pipefail
+        run: |
+          tools/ci/selftest_workflows.sh
+          python3 tools/ci/check_workflows.py
       - name: SwiftLint
         run: tools/lint/run.sh
       - name: 基线只许变小

@@ -11,6 +11,7 @@
 | `golfdb400/expected.json` | 逐杆判定快照（判定、拒判原因、结论把握、offset）和由它算出的指标 | `python3 tools/baseline/regress.py --update` |
 | `golfdb-split1-phases/swings.json`、`probabilities.u16` | 逐帧概率和标注，格式见 `tools/baseline/pack_phases.py` | 同上 |
 | `golfdb-split1-phases/expected.json` | 逐段 7 个关键帧的帧号快照和由它算出的指标 | `python3 tools/baseline/regress_phases.py --update` |
+| `keyframes-to-path/expected.json` | 两份数据都有的片段（目前 89 段）：用识别出的关键帧和用标注的关键帧各判一次外下/内下的快照 | `python3 tools/baseline/regress_keyframes.py --update` |
 
 ## 检查
 
@@ -22,12 +23,16 @@ swift test --package-path CoachMeCore --filter GolfDB400RegressionTests   # Swif
 python3 tools/baseline/regress_phases.py                         # Python 选帧与快照逐段一致
 python3 tools/baseline/regress_phases.py --against origin/main   # 7 阶段准确率不低于 main
 swift test --package-path CoachMeCore --filter GolfDBPhaseRegressionTests # Swift 选帧与快照逐段一致
+
+python3 tools/baseline/regress_keyframes.py                         # 识别关键帧 vs 标注关键帧的判定与快照一致
+python3 tools/baseline/regress_keyframes.py --against origin/main   # 判定一致率不低于 main
 ```
 
-门槛指标有两个，任何一个下降的 PR 都不能合并：
+门槛指标有三个，任何一个下降的 PR 都不能合并：
 
 - `pairAgreement`：同一杆的实时和慢动作两个版本得到相同外下/内下判定的比例。
 - `phaseAccuracy`：7 个阶段的关键帧落在 GolfDB 论文容差（`max(round((击球帧 − 准备帧) / 30), 1)` 帧）内的比例；App 不给关键帧的片段 7 个阶段都算错。
+- `verdictAgreement`：用 App 识别出的准备、顶点、击球帧判外下/内下，和用 GolfDB 标注的这三帧判，结论相同的片段比例。它量的是「关键帧的误差有没有改变用户看到的结论」；`phaseAccuracy` 量的是帧号本身。这一项只有 Python 版，Swift 的选帧和判定各自由上面两项的 Swift 测试对照。
 
 改了判定或选帧逻辑、结果有意变化时：运行对应脚本的 `--update`，把 `expected.json` 的差异一起提交，在 PR 里列出哪些杆变了、为什么。
 

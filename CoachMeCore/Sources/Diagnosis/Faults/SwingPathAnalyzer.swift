@@ -52,6 +52,17 @@ public struct SwingPathAnalyzer: Sendable {
             }
         }
 
+        /// What the report shows. `nameZH` stays as the label shared with tools/faults/path_fault.py;
+        /// only the hands are tracked, so every judged verdict names the hand path, not the club path.
+        public var displayZH: String {
+            switch self {
+            case .withinProRange: return "手部路径在职业范围内"
+            case .overTheTop:     return "外下式手部路径"
+            case .tooInside:      return "内下式手部路径"
+            case .cannotJudge:    return "无法判断"
+            }
+        }
+
         /// The usual ball-flight consequence, phrased as a risk, not a fact:
         /// the face decides the start line, so a path alone never proves a slice.
         /// `side` is Result.side: +1 right-handed, -1 left-handed (mirror image).
@@ -59,11 +70,11 @@ public struct SwingPathAnalyzer: Sendable {
             let lefty = side == -1
             switch self {
             case .overTheTop:
-                return lefty ? "下杆从外侧下来，容易出现左曲（slice）或拉右"
-                             : "下杆从外侧下来，容易出现右曲（slice）或拉左"
+                return lefty ? "下杆时双手从外侧下来，容易出现左曲（slice）或拉右"
+                             : "下杆时双手从外侧下来，容易出现右曲（slice）或拉左"
             case .tooInside:
-                return lefty ? "下杆过于从内侧下来，容易出现大右曲或推左"
-                             : "下杆过于从内侧下来，容易出现大左曲或推右"
+                return lefty ? "下杆时双手过于从内侧下来，容易出现大右曲或推左"
+                             : "下杆时双手过于从内侧下来，容易出现大左曲或推右"
             default:
                 return nil
             }

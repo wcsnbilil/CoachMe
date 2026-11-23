@@ -1,0 +1,12 @@
+import SwiftUI
+import Diagnosis
+
+struct VerdictLabel: View {
+    let verdict: SwingPathAnalyzer.Verdict
+    var body: some View {
+        VStack {
+            Text(verdict.nameZH)
+            Text(verdict.displayZH)
+        }
+    }
+}

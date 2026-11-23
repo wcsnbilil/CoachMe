@@ -66,14 +66,14 @@ public struct BetaStrings: Sendable {
     public var tryAgain: String { t("换一段视频", "Try another video") }
 
     // MARK: Report
-    public var reportTitle: String { t("下杆路径", "Downswing path") }
+    public var reportTitle: String { t("下杆手部路径", "Downswing hand path") }
     public func verdictTitle(_ v: SwingPathAnalyzer.Verdict) -> String {
         switch v {
         // Hands only: a club path fault can hide behind a clean hand path (Niko's two clips, 2026-11-08),
         // so this verdict never says "within range" / "no problem" in the beta.
-        case .withinProRange: return t("未见明显外下或内下", "No clear over-the-top or inside")
-        case .overTheTop:     return t("外下过度", "Over the top")
-        case .tooInside:      return t("内下过度", "Too far inside")
+        case .withinProRange: return t("手部路径未见明显外下或内下", "No clear over-the-top or inside hand path")
+        case .overTheTop:     return t("外下式手部路径", "Over-the-top hand path")
+        case .tooInside:      return t("内下式手部路径", "Too-far-inside hand path")
         case .cannotJudge:    return t("无法判断", "Can't judge")
         }
     }
@@ -101,7 +101,7 @@ public struct BetaStrings: Sendable {
     // MARK: Soft wording (SwingPathAnalyzer.Confidence)
     /// Shown instead of the verdict title when the offset sits next to a threshold.
     public func nearBoundaryTitle(outside: Bool) -> String {
-        outside ? t("接近外下边界", "Close to over the top") : t("接近内下边界", "Close to too far inside")
+        outside ? t("手部路径接近外下边界", "Hand path close to over the top") : t("手部路径接近内下边界", "Hand path close to too far inside")
     }
     public func nearBoundaryNote(outside: Bool) -> String {
         outside

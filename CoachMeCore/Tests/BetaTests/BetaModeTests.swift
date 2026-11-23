@@ -222,6 +222,27 @@ final class BetaModeTests: XCTestCase {
         XCTAssertTrue(BetaStrings(.zh).verdictSummary(.withinProRange, leftHanded: false).contains("看不到球杆的路线"))
     }
 
+    /// Only the hands are tracked (owner's decision 2026-11-23): every title and headline that states a
+    /// verdict names the hand path, and none of them claims a club path.
+    func testBetaHeadlinesNameTheHandPathNotTheClubPath() {
+        for (lang, hand) in [(BetaLanguage.zh, "手部路径"), (.en, "hand path")] {
+            let s = BetaStrings(lang)
+            var texts = [s.reportTitle, s.nearBoundaryTitle(outside: true), s.nearBoundaryTitle(outside: false)]
+            for v in [SwingPathAnalyzer.Verdict.withinProRange, .overTheTop, .tooInside] {
+                texts.append(s.verdictTitle(v))
+                for c in [SwingPathAnalyzer.Confidence?.none] + SwingPathAnalyzer.Confidence.allCases.map(Optional.some) {
+                    for outside in [true, false] { texts.append(s.headline(v, confidence: c, nearOutside: outside)) }
+                }
+            }
+            for text in texts {
+                XCTAssertTrue(text.lowercased().contains(hand), "\(lang)：「\(text)」没有写明是手部路径")
+                for word in ["杆头路径", "球杆路径", "club path", "clubhead path"] {
+                    XCTAssertFalse(text.lowercased().contains(word), "\(lang)：「\(text)」含有「\(word)」")
+                }
+            }
+        }
+    }
+
     func testStringsDifferByLanguageAndAreNonEmpty() {
         let zh = BetaStrings(.zh), en = BetaStrings(.en)
         XCTAssertEqual(zh.guideItems.count, 5)
@@ -380,8 +401,8 @@ final class BetaModeTests: XCTestCase {
         }
         XCTAssertNotEqual(zh.lowCameraNote, en.lowCameraNote)
         // near_boundary replaces the verdict title, also for a verdict inside the pro range
-        XCTAssertEqual(zh.headline(.withinProRange, confidence: .nearBoundary, nearOutside: true), "接近外下边界")
-        XCTAssertEqual(zh.headline(.tooInside, confidence: .nearBoundary, nearOutside: false), "接近内下边界")
+        XCTAssertEqual(zh.headline(.withinProRange, confidence: .nearBoundary, nearOutside: true), "手部路径接近外下边界")
+        XCTAssertEqual(zh.headline(.tooInside, confidence: .nearBoundary, nearOutside: false), "手部路径接近内下边界")
         XCTAssertEqual(zh.headline(.overTheTop, confidence: .lowTracking, nearOutside: true), zh.verdictTitle(.overTheTop))
         XCTAssertEqual(zh.headline(.cannotJudge, confidence: .nearBoundary, nearOutside: true), zh.verdictTitle(.cannotJudge))
     }

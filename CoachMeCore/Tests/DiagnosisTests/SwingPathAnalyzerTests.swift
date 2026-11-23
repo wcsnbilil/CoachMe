@@ -19,6 +19,20 @@ final class SwingPathAnalyzerTests: XCTestCase {
         XCTAssertEqual(run(SyntheticSwing.make(loop: 0)).verdict, .withinProRange)
     }
 
+    /// Only the hands are tracked (owner's decision 2026-11-23): the report names the hand path, never the club path.
+    func testReportWordingNamesTheHandPath() {
+        for v in [SwingPathAnalyzer.Verdict.withinProRange, .overTheTop, .tooInside] {
+            XCTAssertTrue(v.displayZH.contains("手部路径"), v.displayZH)
+            for side in [1, -1] {
+                if let risk = v.riskZH(side: side) { XCTAssertTrue(risk.contains("双手"), risk) }
+            }
+        }
+        for v in [SwingPathAnalyzer.Verdict.withinProRange, .overTheTop, .tooInside, .cannotJudge] {
+            for word in ["杆头路径", "球杆路径"] { XCTAssertFalse(v.displayZH.contains(word), v.displayZH) }
+        }
+        XCTAssertEqual(SwingPathAnalyzer.Verdict.overTheTop.nameZH, "外下过度", "nameZH 必须和 tools/faults/path_fault.py 的判定标签一致")
+    }
+
     func testMatchesPythonOnTheBaseSwing() {
         // path_fault.py on make_swing(loop=0): offset -0.156, backswing_offset -0.156, loop 0.0
         let r = run(SyntheticSwing.make(loop: 0))

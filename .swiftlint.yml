@@ -16,6 +16,14 @@ custom_rules:
     message: "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。"
     severity: error
 
+  verdict_label_in_ui:
+    name: "界面显示判定用 displayZH"
+    included: "CoachMe/(Features|Views)/.*\\.swift"
+    regex: "\\bverdict\\.nameZH\\b"
+    excluded_match_kinds: [comment, doccomment, string]
+    message: "nameZH 是和 tools/faults/path_fault.py 对照用的标签；给用户看的写 verdict.displayZH，它写明只看了手部路径。"
+    severity: error
+
   mediapipe_outside_adapter:
     name: "MediaPipe 只能在适配器里导入"
     excluded: "CoachMe/Services/MediaPipePoseDetector\\.swift"

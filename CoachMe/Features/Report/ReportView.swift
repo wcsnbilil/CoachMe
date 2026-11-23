@@ -288,12 +288,12 @@ struct ReportView: View {
     @ViewBuilder
     private var pathCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("下杆路径（外下 / 内下）").font(.subheadline.weight(.semibold))
+            Text("下杆手部路径（外下 / 内下）").font(.subheadline.weight(.semibold))
             if swing.cameraView != .downTheLine {
                 Text("需要沿目标线（球手正后方）机位的视频才能判断。")
                     .font(.caption).foregroundStyle(CoachStyle.textSecondary)
             } else if let path {
-                Text(path.verdict.nameZH).font(.headline)
+                Text(path.verdict.displayZH).font(.headline)
                 if let risk = path.verdict.riskZH(side: path.side) {
                     Text(risk).font(.callout)
                 }

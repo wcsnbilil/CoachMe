@@ -76,6 +76,8 @@ def main():
     ap.add_argument("--work", required=True)
     ap.add_argument("--summary")
     ap.add_argument("--sam", default="sam2_t.pt")
+    ap.add_argument("--club-python", default=sys.executable,
+                    help="interpreter with ultralytics for club_track.py; MediaPipe 0.10.21 needs NumPy 1, ultralytics pulls NumPy 2")
     a = ap.parse_args()
     frames_root, work = Path(a.frames), Path(a.work)
     videos, report, club = work / "videos", work / "report", work / "club"
@@ -88,7 +90,7 @@ def main():
         sizes[clip] = (first.shape[1], first.shape[0])
     subprocess.run([sys.executable, str(ROOT / "tools/faults/run_path.py"), "--no-sheet", "--out", str(report)]
                    + sum((["--video", str(videos / f"{c}.mp4")] for c in clips), []), check=True)
-    subprocess.run([sys.executable, str(ROOT / "tools/club/club_track.py"), str(report), "--videos-dir", str(videos),
+    subprocess.run([a.club_python, str(ROOT / "tools/club/club_track.py"), str(report), "--videos-dir", str(videos),
                     "--out", str(club), "--model", a.sam], check=True)
     results = {r["name"]: r for r in json.loads((report / "results.json").read_text(encoding="utf-8"))}
     tracks = {r["name"]: r for r in json.loads((club / "results.json").read_text(encoding="utf-8"))}

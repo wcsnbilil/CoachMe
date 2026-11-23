@@ -26,11 +26,17 @@ jobs:
           python-version: "3.11"
       - name: ffmpeg
         run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
-      - name: 依赖
+      - name: 依赖（姿态和阶段：MediaPipe 0.10.21 要 NumPy 1）
         run: |
-          pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install --quiet clubhead-db==1.0.1 yt-dlp pyarrow pandas mediapipe==0.10.21 opencv-python-headless numpy coremltools ultralytics
+          pip install --quiet clubhead-db==1.0.1 yt-dlp "pyarrow<20" pandas mediapipe==0.10.21 "opencv-python-headless<4.12" "numpy<2" coremltools
+          python -c "import pyarrow, mediapipe, cv2, numpy; print(numpy.__version__, cv2.__version__)"
           bash tools/download-model.sh heavy
+      - name: 依赖（杆头原型：ultralytics SAM 2，单独的环境）
+        run: |
+          python -m venv "$RUNNER_TEMP/sam"
+          "$RUNNER_TEMP/sam/bin/pip" install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          "$RUNNER_TEMP/sam/bin/pip" install --quiet ultralytics opencv-python-headless
+          "$RUNNER_TEMP/sam/bin/python" -c "import ultralytics, cv2, numpy; print(ultralytics.__version__, numpy.__version__)"
       # Reddit 的签名链接会过期：对齐过的帧缓存起来，之后的运行不再依赖下载。
       - name: 对齐过的帧（缓存）
         id: cache
@@ -46,5 +52,5 @@ jobs:
       - name: 评测现有杆头原型
         run: |
           ls "$RUNNER_TEMP/clubheaddb_aligned"
-          python tools/club/clubheaddb_eval.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --work "$RUNNER_TEMP/eval" --summary "$RUNNER_TEMP/eval.md"
+          python tools/club/clubheaddb_eval.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --work "$RUNNER_TEMP/eval" --club-python "$RUNNER_TEMP/sam/bin/python" --summary "$RUNNER_TEMP/eval.md"
           cat "$RUNNER_TEMP/eval.md" >> "$GITHUB_STEP_SUMMARY"

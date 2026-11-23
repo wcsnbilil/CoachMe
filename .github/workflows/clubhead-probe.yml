@@ -3,11 +3,6 @@
 name: ClubheadDB 杆头评测
 
 on:
-  push:
-    branches: [claude/coachme-codebase-audit-edxe2q]
-    paths:
-      - .github/workflows/clubhead-probe.yml
-      - tools/club/**
   workflow_dispatch:
 
 concurrency:

@@ -255,51 +255,6 @@
   }
  },
  {
-  "text": "        return LLMChatService(configuration: config, apiKey: key(config))",
-  "violation": {
-   "location": {
-    "character": 16,
-    "file": "CoachMe/Features/Chat/AISettingsView.swift",
-    "line": 48
-   },
-   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
-   "ruleDescription": "",
-   "ruleIdentifier": "ui_calls_engine",
-   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
-   "severity": "error"
-  }
- },
- {
-  "text": "        let service = LLMChatService(configuration: configuration, apiKey: key)",
-  "violation": {
-   "location": {
-    "character": 23,
-    "file": "CoachMe/Features/Chat/AISettingsView.swift",
-    "line": 326
-   },
-   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
-   "ruleDescription": "",
-   "ruleIdentifier": "ui_calls_engine",
-   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
-   "severity": "error"
-  }
- },
- {
-  "text": "                    requestService = LLMChatService(configuration: configuration, apiKey: AISettingsStore.key(configuration), images: images)",
-  "violation": {
-   "location": {
-    "character": 38,
-    "file": "CoachMe/Features/Chat/ChatPanelView.swift",
-    "line": 496
-   },
-   "reason": "把这次计算做成 SwingAnalysis 的一个 async 用例，UI 只拿结果类型来显示。",
-   "ruleDescription": "",
-   "ruleIdentifier": "ui_calls_engine",
-   "ruleName": "UI 不能直接调用推理、诊断或网络引擎",
-   "severity": "error"
-  }
- },
- {
   "text": "/// a temporary location keeps it alive until the analysis copies it into the store.",
   "violation": {
    "location": {

@@ -493,7 +493,7 @@ final class ChatModel {
                 do {
                     let images = try await AIKeyframeImages.load(swing: swing, videoURL: store.videoURL(for: swing))
                     try Task.checkCancellation()
-                    requestService = LLMChatService(configuration: configuration, apiKey: AISettingsStore.key(configuration), images: images)
+                    requestService = AISettingsStore.service(configuration: configuration, apiKey: AISettingsStore.key(configuration), images: images)
                     preparationLabel = "教练正在查看你的动作…"
                 } catch {
                     conversation.updateStatus(messageID: message.id, to: Task.isCancelled ? .cancelled : .failed)

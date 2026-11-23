@@ -1,53 +1,5 @@
 import SwiftUI
-import Security
 import AICoach
-
-@MainActor
-enum AISettingsStore {
-    static var configuration: LLMConfiguration {
-        guard let data = UserDefaults.standard.data(forKey: "llm.configuration"),
-              let config = try? JSONDecoder().decode(LLMConfiguration.self, from: data) else { return .init() }
-        return config
-    }
-    static func key(_ config: LLMConfiguration) -> String {
-        var query = keyQuery(config)
-        query[kSecReturnData as String] = true
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
-        var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data else { return "" }
-        return String(decoding: data, as: UTF8.self)
-    }
-    private static func keyQuery(_ config: LLMConfiguration) -> [String:Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: "com.coachme.llm",
-         kSecAttrAccount as String: config.provider.rawValue + "|" + config.baseURL]
-    }
-    static func save(_ config: LLMConfiguration, key: String) throws {
-        _ = try config.endpoint()
-        let query = keyQuery(config)
-        let value = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty else { throw ChatServiceError.notConfigured }
-        let changes: [String:Any] = [kSecValueData as String: Data(value.utf8),
-                                    kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly]
-        var status = SecItemUpdate(query as CFDictionary, changes as CFDictionary)
-        if status == errSecItemNotFound {
-            status = SecItemAdd(query.merging(changes) { _,new in new } as CFDictionary,nil)
-        }
-        guard status == errSecSuccess else { throw ChatServiceError.transport("无法保存 API Key 到钥匙串。") }
-        UserDefaults.standard.set(try JSONEncoder().encode(config), forKey: "llm.configuration")
-    }
-    static func remove(_ config: LLMConfiguration) throws {
-        let status = SecItemDelete(keyQuery(config) as CFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw ChatServiceError.transport("无法删除 API Key。")
-        }
-    }
-    static func service() -> LLMChatService {
-        let config = configuration
-        return LLMChatService(configuration: config, apiKey: key(config))
-    }
-}
 
 @MainActor
 struct AISettingsView: View {
@@ -323,7 +275,7 @@ struct AISettingsView: View {
 
     private func testConnection() async {
         defer { testing = false }
-        let service = LLMChatService(configuration: configuration, apiKey: key)
+        let service = AISettingsStore.service(configuration: configuration, apiKey: key)
         let context = SwingAnalysisContext(swingID: UUID(), analysisVersion: 0, handedness: .rightHanded,
             club: .unknown, cameraView: .unknown, markedPhases: [], selectedPhase: nil,
             selectedTimestampSeconds: nil, readings: [],

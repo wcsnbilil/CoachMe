@@ -1,0 +1,1346 @@
+{
+ "metrics": {
+  "clips": 89,
+  "agreeing": 85,
+  "verdictAgreement": 0.9551,
+  "faultOnlyWithDetectedFrames": 0,
+  "refusedOnlyWithDetectedFrames": 2
+ },
+ "clips": {
+  "golfdb_33": {
+   "slow": 0,
+   "detectedFrames": [
+    48,
+    77,
+    87
+   ],
+   "labelledFrames": [
+    45,
+    78,
+    86
+   ],
+   "detectedVerdict": "无法判断",
+   "labelledVerdict": "无法判断"
+  },
+  "golfdb_37": {
+   "slow": 0,
+   "detectedFrames": [
+    34,
+    60,
+    70
+   ],
+   "labelledFrames": [
+    32,
+    61,
+    70
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_38": {
+   "slow": 1,
+   "detectedFrames": [
+    66,
+    187,
+    216
+   ],
+   "labelledFrames": [
+    68,
+    179,
+    212
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_55": {
+   "slow": 0,
+   "detectedFrames": [
+    44,
+    70,
+    78
+   ],
+   "labelledFrames": [
+    42,
+    71,
+    78
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_56": {
+   "slow": 1,
+   "detectedFrames": [
+    119,
+    208,
+    232
+   ],
+   "labelledFrames": [
+    89,
+    206,
+    233
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_64": {
+   "slow": 0,
+   "detectedFrames": [
+    37,
+    66,
+    74
+   ],
+   "labelledFrames": [
+    36,
+    68,
+    75
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_65": {
+   "slow": 1,
+   "detectedFrames": [
+    59,
+    153,
+    176
+   ],
+   "labelledFrames": [
+    26,
+    148,
+    176
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_82": {
+   "slow": 0,
+   "detectedFrames": [
+    36,
+    67,
+    74
+   ],
+   "labelledFrames": [
+    33,
+    67,
+    74
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_83": {
+   "slow": 1,
+   "detectedFrames": [
+    71,
+    187,
+    211
+   ],
+   "labelledFrames": [
+    45,
+    179,
+    211
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_185": {
+   "slow": 0,
+   "detectedFrames": [
+    4,
+    280,
+    287
+   ],
+   "labelledFrames": [
+    249,
+    280,
+    287
+   ],
+   "detectedVerdict": "无法判断",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_186": {
+   "slow": 1,
+   "detectedFrames": [
+    74,
+    173,
+    198
+   ],
+   "labelledFrames": [
+    49,
+    169,
+    200
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_189": {
+   "slow": 0,
+   "detectedFrames": [
+    58,
+    146,
+    152
+   ],
+   "labelledFrames": [
+    115,
+    147,
+    153
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_193": {
+   "slow": 0,
+   "detectedFrames": [
+    176,
+    199,
+    208
+   ],
+   "labelledFrames": [
+    174,
+    200,
+    208
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_194": {
+   "slow": 1,
+   "detectedFrames": [
+    30,
+    115,
+    144
+   ],
+   "labelledFrames": [
+    10,
+    113,
+    144
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_198": {
+   "slow": 0,
+   "detectedFrames": [
+    227,
+    256,
+    264
+   ],
+   "labelledFrames": [
+    223,
+    255,
+    264
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_202": {
+   "slow": 0,
+   "detectedFrames": [
+    350,
+    374,
+    382
+   ],
+   "labelledFrames": [
+    352,
+    375,
+    382
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_203": {
+   "slow": 1,
+   "detectedFrames": [
+    48,
+    120,
+    152
+   ],
+   "labelledFrames": [
+    38,
+    124,
+    152
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_227": {
+   "slow": 0,
+   "detectedFrames": [
+    18,
+    44,
+    52
+   ],
+   "labelledFrames": [
+    22,
+    44,
+    52
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_228": {
+   "slow": 1,
+   "detectedFrames": [
+    17,
+    76,
+    139
+   ],
+   "labelledFrames": [
+    21,
+    103,
+    135
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_239": {
+   "slow": 0,
+   "detectedFrames": [
+    21,
+    39,
+    47
+   ],
+   "labelledFrames": [
+    21,
+    40,
+    47
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_240": {
+   "slow": 1,
+   "detectedFrames": [
+    25,
+    87,
+    122
+   ],
+   "labelledFrames": [
+    21,
+    97,
+    123
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_243": {
+   "slow": 0,
+   "detectedFrames": [
+    15,
+    65,
+    75
+   ],
+   "labelledFrames": [
+    17,
+    66,
+    75
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_245": {
+   "slow": 1,
+   "detectedFrames": [
+    81,
+    204,
+    233
+   ],
+   "labelledFrames": [
+    21,
+    201,
+    233
+   ],
+   "detectedVerdict": "无法判断",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_254": {
+   "slow": 0,
+   "detectedFrames": [
+    43,
+    69,
+    76
+   ],
+   "labelledFrames": [
+    42,
+    67,
+    76
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_255": {
+   "slow": 1,
+   "detectedFrames": [
+    4,
+    108,
+    129
+   ],
+   "labelledFrames": [
+    7,
+    95,
+    130
+   ],
+   "detectedVerdict": "外下过度",
+   "labelledVerdict": "外下过度"
+  },
+  "golfdb_269": {
+   "slow": 0,
+   "detectedFrames": [
+    45,
+    66,
+    72
+   ],
+   "labelledFrames": [
+    46,
+    66,
+    73
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_270": {
+   "slow": 1,
+   "detectedFrames": [
+    74,
+    93,
+    99
+   ],
+   "labelledFrames": [
+    73,
+    93,
+    99
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_300": {
+   "slow": 0,
+   "detectedFrames": [
+    47,
+    74,
+    85
+   ],
+   "labelledFrames": [
+    44,
+    77,
+    85
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_301": {
+   "slow": 1,
+   "detectedFrames": [
+    90,
+    179,
+    206
+   ],
+   "labelledFrames": [
+    49,
+    175,
+    208
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_306": {
+   "slow": 0,
+   "detectedFrames": [
+    39,
+    68,
+    75
+   ],
+   "labelledFrames": [
+    40,
+    68,
+    75
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_307": {
+   "slow": 1,
+   "detectedFrames": [
+    11,
+    109,
+    143
+   ],
+   "labelledFrames": [
+    9,
+    116,
+    144
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_324": {
+   "slow": 0,
+   "detectedFrames": [
+    49,
+    69,
+    77
+   ],
+   "labelledFrames": [
+    43,
+    70,
+    77
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_325": {
+   "slow": 1,
+   "detectedFrames": [
+    90,
+    150,
+    182
+   ],
+   "labelledFrames": [
+    51,
+    154,
+    183
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_357": {
+   "slow": 0,
+   "detectedFrames": [
+    275,
+    296,
+    303
+   ],
+   "labelledFrames": [
+    270,
+    296,
+    303
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_358": {
+   "slow": 1,
+   "detectedFrames": [
+    59,
+    135,
+    158
+   ],
+   "labelledFrames": [
+    43,
+    131,
+    158
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_361": {
+   "slow": 0,
+   "detectedFrames": [
+    441,
+    462,
+    470
+   ],
+   "labelledFrames": [
+    436,
+    462,
+    470
+   ],
+   "detectedVerdict": "无法判断",
+   "labelledVerdict": "无法判断"
+  },
+  "golfdb_362": {
+   "slow": 1,
+   "detectedFrames": [
+    91,
+    173,
+    206
+   ],
+   "labelledFrames": [
+    79,
+    177,
+    208
+   ],
+   "detectedVerdict": "内下过度",
+   "labelledVerdict": "内下过度"
+  },
+  "golfdb_365": {
+   "slow": 0,
+   "detectedFrames": [
+    209,
+    227,
+    234
+   ],
+   "labelledFrames": [
+    204,
+    227,
+    234
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_366": {
+   "slow": 0,
+   "detectedFrames": [
+    26,
+    52,
+    59
+   ],
+   "labelledFrames": [
+    28,
+    50,
+    59
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_367": {
+   "slow": 1,
+   "detectedFrames": [
+    64,
+    130,
+    160
+   ],
+   "labelledFrames": [
+    38,
+    125,
+    157
+   ],
+   "detectedVerdict": "无法判断",
+   "labelledVerdict": "无法判断"
+  },
+  "golfdb_394": {
+   "slow": 0,
+   "detectedFrames": [
+    165,
+    187,
+    196
+   ],
+   "labelledFrames": [
+    164,
+    188,
+    196
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_395": {
+   "slow": 1,
+   "detectedFrames": [
+    61,
+    125,
+    172
+   ],
+   "labelledFrames": [
+    49,
+    139,
+    171
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_398": {
+   "slow": 0,
+   "detectedFrames": [
+    214,
+    247,
+    255
+   ],
+   "labelledFrames": [
+    207,
+    245,
+    254
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_399": {
+   "slow": 1,
+   "detectedFrames": [
+    127,
+    255,
+    287
+   ],
+   "labelledFrames": [
+    101,
+    247,
+    283
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_418": {
+   "slow": 0,
+   "detectedFrames": [
+    129,
+    146,
+    153
+   ],
+   "labelledFrames": [
+    126,
+    146,
+    153
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_419": {
+   "slow": 1,
+   "detectedFrames": [
+    59,
+    135,
+    164
+   ],
+   "labelledFrames": [
+    58,
+    135,
+    162
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_452": {
+   "slow": 0,
+   "detectedFrames": [
+    113,
+    143,
+    151
+   ],
+   "labelledFrames": [
+    107,
+    143,
+    151
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_453": {
+   "slow": 1,
+   "detectedFrames": [
+    58,
+    162,
+    175
+   ],
+   "labelledFrames": [
+    90,
+    159,
+    177
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_472": {
+   "slow": 0,
+   "detectedFrames": [
+    403,
+    423,
+    430
+   ],
+   "labelledFrames": [
+    400,
+    424,
+    430
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_473": {
+   "slow": 1,
+   "detectedFrames": [
+    94,
+    152,
+    184
+   ],
+   "labelledFrames": [
+    60,
+    161,
+    184
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_476": {
+   "slow": 0,
+   "detectedFrames": [
+    100,
+    125,
+    135
+   ],
+   "labelledFrames": [
+    99,
+    126,
+    135
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_477": {
+   "slow": 1,
+   "detectedFrames": [
+    29,
+    126,
+    167
+   ],
+   "labelledFrames": [
+    27,
+    130,
+    167
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_504": {
+   "slow": 0,
+   "detectedFrames": [
+    217,
+    243,
+    251
+   ],
+   "labelledFrames": [
+    216,
+    243,
+    250
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_505": {
+   "slow": 1,
+   "detectedFrames": [
+    88,
+    182,
+    208
+   ],
+   "labelledFrames": [
+    72,
+    179,
+    209
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_518": {
+   "slow": 0,
+   "detectedFrames": [
+    131,
+    155,
+    162
+   ],
+   "labelledFrames": [
+    134,
+    155,
+    162
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_520": {
+   "slow": 0,
+   "detectedFrames": [
+    200,
+    220,
+    227
+   ],
+   "labelledFrames": [
+    196,
+    219,
+    227
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_540": {
+   "slow": 0,
+   "detectedFrames": [
+    214,
+    243,
+    254
+   ],
+   "labelledFrames": [
+    218,
+    246,
+    255
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_541": {
+   "slow": 1,
+   "detectedFrames": [
+    66,
+    143,
+    189
+   ],
+   "labelledFrames": [
+    52,
+    156,
+    189
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_544": {
+   "slow": 0,
+   "detectedFrames": [
+    289,
+    315,
+    321
+   ],
+   "labelledFrames": [
+    288,
+    315,
+    321
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_548": {
+   "slow": 1,
+   "detectedFrames": [
+    82,
+    179,
+    208
+   ],
+   "labelledFrames": [
+    77,
+    184,
+    208
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_553": {
+   "slow": 0,
+   "detectedFrames": [
+    167,
+    199,
+    206
+   ],
+   "labelledFrames": [
+    165,
+    198,
+    206
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_554": {
+   "slow": 1,
+   "detectedFrames": [
+    110,
+    214,
+    252
+   ],
+   "labelledFrames": [
+    101,
+    223,
+    253
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_568": {
+   "slow": 0,
+   "detectedFrames": [
+    85,
+    114,
+    122
+   ],
+   "labelledFrames": [
+    78,
+    114,
+    122
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_569": {
+   "slow": 1,
+   "detectedFrames": [
+    63,
+    160,
+    194
+   ],
+   "labelledFrames": [
+    111,
+    180,
+    194
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "无法判断"
+  },
+  "golfdb_598": {
+   "slow": 0,
+   "detectedFrames": [
+    195,
+    209,
+    218
+   ],
+   "labelledFrames": [
+    185,
+    210,
+    218
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_599": {
+   "slow": 1,
+   "detectedFrames": [
+    71,
+    134,
+    169
+   ],
+   "labelledFrames": [
+    47,
+    140,
+    171
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_642": {
+   "slow": 0,
+   "detectedFrames": [
+    235,
+    260,
+    269
+   ],
+   "labelledFrames": [
+    229,
+    260,
+    269
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_643": {
+   "slow": 1,
+   "detectedFrames": [
+    69,
+    151,
+    191
+   ],
+   "labelledFrames": [
+    46,
+    155,
+    193
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_644": {
+   "slow": 0,
+   "detectedFrames": [
+    204,
+    230,
+    240
+   ],
+   "labelledFrames": [
+    201,
+    230,
+    239
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_645": {
+   "slow": 1,
+   "detectedFrames": [
+    67,
+    170,
+    199
+   ],
+   "labelledFrames": [
+    64,
+    161,
+    199
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_658": {
+   "slow": 0,
+   "detectedFrames": [
+    372,
+    394,
+    401
+   ],
+   "labelledFrames": [
+    363,
+    392,
+    401
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_659": {
+   "slow": 1,
+   "detectedFrames": [
+    39,
+    129,
+    154
+   ],
+   "labelledFrames": [
+    19,
+    120,
+    155
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_668": {
+   "slow": 0,
+   "detectedFrames": [
+    320,
+    335,
+    341
+   ],
+   "labelledFrames": [
+    301,
+    334,
+    341
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_669": {
+   "slow": 1,
+   "detectedFrames": [
+    72,
+    126,
+    154
+   ],
+   "labelledFrames": [
+    50,
+    125,
+    154
+   ],
+   "detectedVerdict": "外下过度",
+   "labelledVerdict": "外下过度"
+  },
+  "golfdb_689": {
+   "slow": 0,
+   "detectedFrames": [
+    119,
+    138,
+    146
+   ],
+   "labelledFrames": [
+    118,
+    139,
+    146
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_690": {
+   "slow": 1,
+   "detectedFrames": [
+    72,
+    144,
+    172
+   ],
+   "labelledFrames": [
+    61,
+    145,
+    172
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_719": {
+   "slow": 0,
+   "detectedFrames": [
+    113,
+    131,
+    138
+   ],
+   "labelledFrames": [
+    110,
+    131,
+    138
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_720": {
+   "slow": 1,
+   "detectedFrames": [
+    60,
+    114,
+    141
+   ],
+   "labelledFrames": [
+    39,
+    112,
+    141
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_730": {
+   "slow": 1,
+   "detectedFrames": [
+    74,
+    168,
+    188
+   ],
+   "labelledFrames": [
+    67,
+    165,
+    188
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "无法判断"
+  },
+  "golfdb_795": {
+   "slow": 0,
+   "detectedFrames": [
+    196,
+    217,
+    224
+   ],
+   "labelledFrames": [
+    187,
+    215,
+    224
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_802": {
+   "slow": 0,
+   "detectedFrames": [
+    93,
+    112,
+    120
+   ],
+   "labelledFrames": [
+    84,
+    112,
+    120
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_832": {
+   "slow": 0,
+   "detectedFrames": [
+    91,
+    110,
+    116
+   ],
+   "labelledFrames": [
+    90,
+    110,
+    116
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_833": {
+   "slow": 1,
+   "detectedFrames": [
+    46,
+    111,
+    130
+   ],
+   "labelledFrames": [
+    27,
+    107,
+    131
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_867": {
+   "slow": 0,
+   "detectedFrames": [
+    51,
+    79,
+    87
+   ],
+   "labelledFrames": [
+    49,
+    78,
+    86
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_868": {
+   "slow": 1,
+   "detectedFrames": [
+    24,
+    119,
+    150
+   ],
+   "labelledFrames": [
+    6,
+    123,
+    150
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_871": {
+   "slow": 0,
+   "detectedFrames": [
+    137,
+    166,
+    173
+   ],
+   "labelledFrames": [
+    130,
+    166,
+    174
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_872": {
+   "slow": 1,
+   "detectedFrames": [
+    132,
+    235,
+    260
+   ],
+   "labelledFrames": [
+    86,
+    231,
+    262
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_873": {
+   "slow": 0,
+   "detectedFrames": [
+    274,
+    288,
+    295
+   ],
+   "labelledFrames": [
+    271,
+    289,
+    295
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  },
+  "golfdb_874": {
+   "slow": 1,
+   "detectedFrames": [
+    56,
+    120,
+    146
+   ],
+   "labelledFrames": [
+    51,
+    119,
+    144
+   ],
+   "detectedVerdict": "路径在职业范围内",
+   "labelledVerdict": "路径在职业范围内"
+  }
+ }
+}

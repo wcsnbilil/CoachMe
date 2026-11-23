@@ -1,0 +1,35 @@
+# ClubheadDB（CC BY-NC 4.0）现在还能复现多少：下载每段视频、按标注帧率抽帧、和标注帧数对比。
+# 视频和帧只存在于这台临时机器上，跑完就丢；不上传 artifact，不推任何分支。
+name: ClubheadDB 复现探查
+
+on:
+  push:
+    branches: [claude/coachme-codebase-audit-edxe2q]
+    paths:
+      - .github/workflows/clubhead-probe.yml
+      - tools/club/clubheaddb_probe.py
+  workflow_dispatch:
+
+concurrency:
+  group: clubhead-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    name: 下载、抽帧、对齐标注
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: ffmpeg
+        run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - name: 依赖
+        run: pip install --quiet clubhead-db==1.0.1 yt-dlp pyarrow pandas
+      - name: 探查
+        run: python tools/club/clubheaddb_probe.py --work "$RUNNER_TEMP/clubheaddb" --summary "$RUNNER_TEMP/summary.md"
+      - name: 写入 summary
+        if: always()
+        run: cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY" || true

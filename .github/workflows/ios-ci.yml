@@ -19,6 +19,10 @@ concurrency:
   group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   core:
     name: CoachMeCore 测试 + Swift/Python 一致性
@@ -128,8 +132,8 @@ jobs:
       - name: ffmpeg 版本
         id: ff
         run: |
-          echo "cores=$(nproc) $(grep -m1 "model name" /proc/cpuinfo)"; ffmpeg -version | head -1
-          echo "ver=$(ffmpeg -version | head -1 | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
+          echo "cores=$(nproc) $(grep -m1 "model name" /proc/cpuinfo)"; ffmpeg -version | sed -n 1p
+          echo "ver=$(ffmpeg -version | sed -n 1p | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
       # 同一份脚本 + 同一个源片段 + 同一个 ffmpeg 版本 → 直接用上次转好的文件，每次跑的输入逐字节相同。
       # 不能每次重转：同一 ffmpeg 版本在不同 CPU 的 runner 上（EPYC 7763 / 9V74 / Xeon 8370C）转出的竖拍片段不一样，
       # 单线程 + bitexact 缩放也消不掉；而这几段的结论对压缩的细微差别很敏感。

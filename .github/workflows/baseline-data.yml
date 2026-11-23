@@ -17,6 +17,10 @@ concurrency:
   group: baseline-data
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   pack:
     name: 打包 GolfDB 400 的 App 关键点

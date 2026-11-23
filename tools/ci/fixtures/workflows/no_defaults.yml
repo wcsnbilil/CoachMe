@@ -1,0 +1,7 @@
+name: no defaults
+on: push
+jobs:
+  a:
+    runs-on: ubuntu-latest
+    steps:
+      - run: python check.py | tee -a "$GITHUB_STEP_SUMMARY"

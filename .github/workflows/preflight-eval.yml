@@ -21,6 +21,10 @@ permissions:
   actions: read
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   eval:
     name: 预检一致率（${{ matrix.side }} 关键点）

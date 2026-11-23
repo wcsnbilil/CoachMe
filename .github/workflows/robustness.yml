@@ -27,6 +27,10 @@ concurrency:
 env:
   LIMIT: ${{ github.event.inputs.limit || '400' }}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   run:
     name: run_path（${{ matrix.perturb }}）

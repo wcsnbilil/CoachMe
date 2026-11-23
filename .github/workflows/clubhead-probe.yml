@@ -71,13 +71,21 @@ jobs:
         run: |
           pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
           pip install --quiet ultralytics clubhead-db==1.0.1 pyarrow pandas
+      - name: 依赖（手部位置：MediaPipe 0.10.21 要 NumPy 1，单独的环境）
+        run: |
+          python -m venv "$RUNNER_TEMP/mp"
+          "$RUNNER_TEMP/mp/bin/pip" install --quiet mediapipe==0.10.21 "opencv-python-headless<4.12" "numpy<2"
+          bash tools/download-model.sh heavy
       - name: 对齐过的帧（缓存，由上面的评测 job 建立）
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/clubheaddb_aligned
           key: clubheaddb-aligned-v1
           fail-on-cache-miss: true
+      - name: 留出球手的手部位置
+        run: |
+          "$RUNNER_TEMP/mp/bin/python" tools/club/clubheaddb_pose.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --clips "${{ matrix.holdout }}" --out "$RUNNER_TEMP/poses"
       - name: 训练并在留出的球手上评测
         run: |
-          python tools/club/clubheaddb_train.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --holdout "${{ matrix.holdout }}" --work "$RUNNER_TEMP/fold" --summary "$RUNNER_TEMP/fold.md"
+          python tools/club/clubheaddb_train.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --holdout "${{ matrix.holdout }}" --work "$RUNNER_TEMP/fold" --poses "$RUNNER_TEMP/poses" --summary "$RUNNER_TEMP/fold.md"
           cat "$RUNNER_TEMP/fold.md" >> "$GITHUB_STEP_SUMMARY"

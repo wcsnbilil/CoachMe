@@ -1,6 +1,6 @@
 # CoachMe
 
-iPhone 高尔夫挥杆分析 App，尚未上架。本地姿态识别、7 阶段切分、外下/内下诊断；杆身/杆头跟踪在做。
+iPhone 高尔夫挥杆分析 App，不商用、不上架。本地姿态识别、7 阶段切分、外下/内下诊断；杆身/杆头跟踪在做。
 
 产品上的决定见 `docs/PRODUCT_RULES.md`，页面和功能的叫法见 `docs/FEATURE_MAP.md`，代码现状见 `docs/AUDIT.md`。
 

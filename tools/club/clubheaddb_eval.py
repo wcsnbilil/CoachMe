@@ -64,9 +64,9 @@ def summarise(table, name):
     n = len(table)
     if n == 0:
         return f"| {name} | 0 | - | - | - | - | - |"
-    tracked = table[table.tracked]
-    within = [f"{(tracked.error <= r).sum() / n:.0%}" for r in RADII]
-    median = f"{tracked.error.median():.3f}" if len(tracked) else "-"
+    tracked = table[table["tracked"]]
+    within = [f"{(tracked['error'] <= r).sum() / n:.0%}" for r in RADII]
+    median = f"{tracked['error'].median():.3f}" if len(tracked) else "-"
     return f"| {name} | {n} | {len(tracked) / n:.0%} | {median} | " + " | ".join(within) + " |"
 
 
@@ -107,9 +107,9 @@ def main():
     head = "| 范围 | 标注帧 | 跟踪到 | 误差中位数（躯干长） | " + " | ".join(f"≤{r} 躯干长" for r in RADII) + " |"
     lines = ["### 现有杆头原型（直线检测 + SAM 2）对 ClubheadDB 人工标注", "",
              f"{len(clips)} 段；只计准备到击球之间、有杆头标注的帧。", "", head, "|---|---|---|---|" + "---|" * len(RADII),
-             summarise(scored, "全部"), summarise(scored[scored.phase == "backswing"], "上杆（准备→顶点）"),
-             summarise(scored[scored.phase == "downswing"], "下杆（顶点→击球）")]
-    lines += [summarise(scored[scored.clip == c], c) for c in clips]
+             summarise(scored, "全部"), summarise(scored[scored["phase"] == "backswing"], "上杆（准备→顶点）"),
+             summarise(scored[scored["phase"] == "downswing"], "下杆（顶点→击球）")]
+    lines += [summarise(scored[scored["clip"] == c], c) for c in clips]
     if notes:
         lines += ["", "没有结果的段：", ""] + notes
     text = "\n".join(lines) + "\n"

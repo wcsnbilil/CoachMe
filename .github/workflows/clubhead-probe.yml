@@ -1,13 +1,13 @@
-# ClubheadDB（CC BY-NC 4.0）现在还能复现多少：下载每段视频、按标注帧率抽帧、和标注帧数对比。
-# 视频和帧只存在于这台临时机器上，跑完就丢；不上传 artifact，不推任何分支。
-name: ClubheadDB 复现探查
+# ClubheadDB（CC BY-NC 4.0）还能复现多少，以及现有杆头原型对它的人工标注有多准。
+# 视频和帧只在这台临时机器和本仓库的 Actions 缓存里（缓存不能从网页下载）；不上传 artifact，不推任何分支。
+name: ClubheadDB 杆头评测
 
 on:
   push:
     branches: [claude/coachme-codebase-audit-edxe2q]
     paths:
       - .github/workflows/clubhead-probe.yml
-      - tools/club/clubheaddb_probe.py
+      - tools/club/**
   workflow_dispatch:
 
 concurrency:
@@ -15,10 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  probe:
-    name: 下载、抽帧、对齐标注
+  eval:
+    name: 复现 ClubheadDB + 评测现有杆头原型
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,9 +27,24 @@ jobs:
       - name: ffmpeg
         run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
       - name: 依赖
-        run: pip install --quiet clubhead-db==1.0.1 yt-dlp pyarrow pandas
-      - name: 探查
-        run: python tools/club/clubheaddb_probe.py --work "$RUNNER_TEMP/clubheaddb" --summary "$RUNNER_TEMP/summary.md"
-      - name: 写入 summary
-        if: always()
-        run: cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY" || true
+        run: |
+          pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet clubhead-db==1.0.1 yt-dlp pyarrow pandas mediapipe==0.10.21 opencv-python-headless numpy coremltools ultralytics
+          bash tools/download-model.sh heavy
+      # Reddit 的签名链接会过期：对齐过的帧缓存起来，之后的运行不再依赖下载。
+      - name: 对齐过的帧（缓存）
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/clubheaddb_aligned
+          key: clubheaddb-aligned-v1
+      - name: 复现探查
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          python tools/club/clubheaddb_probe.py --work "$RUNNER_TEMP/clubheaddb" --keep "$RUNNER_TEMP/clubheaddb_aligned" --summary "$RUNNER_TEMP/probe.md"
+          cat "$RUNNER_TEMP/probe.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: 评测现有杆头原型
+        run: |
+          ls "$RUNNER_TEMP/clubheaddb_aligned"
+          python tools/club/clubheaddb_eval.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --work "$RUNNER_TEMP/eval" --summary "$RUNNER_TEMP/eval.md"
+          cat "$RUNNER_TEMP/eval.md" >> "$GITHUB_STEP_SUMMARY"

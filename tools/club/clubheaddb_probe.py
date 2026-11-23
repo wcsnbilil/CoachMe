@@ -5,7 +5,10 @@ the frames themselves are downloaded from YouTube/Reddit with yt-dlp and cut wit
 listed frame rate. This script runs that download for every clip and compares, per clip, the number
 of frames extracted with the number of labelled frames. Nothing is kept: run it in a scratch directory.
 
-  python3 tools/club/clubheaddb_probe.py --work /tmp/clubheaddb --summary summary.md
+  python3 tools/club/clubheaddb_probe.py --work /tmp/clubheaddb --summary summary.md [--keep aligned/]
+
+--keep copies the frames of every clip whose frame count matches its labels to <keep>/<clip>/,
+for tools/club/clubheaddb_eval.py; keep that directory out of the repository.
 """
 import argparse
 import os
@@ -54,6 +57,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--work", required=True)
     ap.add_argument("--summary")
+    ap.add_argument("--keep")
     a = ap.parse_args()
     work = Path(a.work)
     shutil.rmtree(work, ignore_errors=True)
@@ -71,6 +75,9 @@ def main():
         if error:
             failures[f"{row.source}: {error}"] += 1
         rows.append((row.video_id, row.source, row.playback_speed, expected, extracted, status))
+        print(f"{row.video_id} {row.source} {status} {expected} {extracted}", flush=True)
+        if a.keep and status == "对齐":
+            shutil.copytree(work / row.video_id, Path(a.keep) / row.video_id, dirs_exist_ok=True)
         video.unlink(missing_ok=True)
         shutil.rmtree(work / row.video_id, ignore_errors=True)
     table = pd.DataFrame(rows, columns=["clip", "source", "speed", "labelled", "extracted", "status"])

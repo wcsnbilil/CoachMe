@@ -27,6 +27,8 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install --quiet numpy
+      - name: 区间的逐单元数据和三个门槛指标对得上
+        run: python tools/baseline/test_uncertainty.py
       - name: 逐杆判定与快照一致
         run: python tools/baseline/regress.py | tee -a "$GITHUB_STEP_SUMMARY"
       - name: 一致率不低于基线分支

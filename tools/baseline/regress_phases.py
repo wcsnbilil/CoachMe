@@ -19,8 +19,10 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "benchmark"))
+sys.path.insert(0, str(ROOT / "tools" / "baseline"))
 from app_selector import APP_EVENTS, SwingNetEventSelector  # noqa: E402
 from golfdb_eval import APP_PHASE_OF_EVENT, tolerance  # noqa: E402
+from uncertainty import describe_interval, describe_paired  # noqa: E402
 
 DATA = ROOT / "baseline" / "golfdb-split1-phases"
 EXPECTED = DATA / "expected.json"
@@ -37,20 +39,30 @@ def load():
         yield swing, block.reshape(swing["frames"], classes) / manifest["scale"]
 
 
+def correct(frames, events):
+    labels = np.asarray(events[1:-1])
+    allowed = tolerance(labels)
+    return [frames[APP_PHASE_OF_EVENT[e]] is not None
+            and abs(frames[APP_PHASE_OF_EVENT[e]] - int(labels[e])) <= allowed for e in APP_EVENTS]
+
+
+def units(clips):
+    manifest = json.loads((DATA / "swings.json").read_text(encoding="utf-8"))
+    events = {str(swing["id"]): swing["events"] for swing in manifest["swings"]}
+    return {name: float(np.mean(correct(frames, events[name]))) for name, frames in clips.items() if name in events}
+
+
 def run():
-    clips, correct = {}, []
+    clips, table = {}, []
     for swing, probabilities in load():
         selector = SwingNetEventSelector()
         for frame, row in enumerate(probabilities):
             selector.append([float(p) for p in row], float(frame))
         marks = selector.keyframes()
-        labels = np.asarray(swing["events"][1:-1])
-        allowed = tolerance(labels)
         frames = {phase: (None if phase not in marks else int(marks[phase][0])) for phase in PHASES}
         clips[str(swing["id"])] = frames
-        correct.append([frames[APP_PHASE_OF_EVENT[e]] is not None
-                        and abs(frames[APP_PHASE_OF_EVENT[e]] - int(labels[e])) <= allowed for e in APP_EVENTS])
-    table = np.asarray(correct, dtype=float)
+        table.append(correct(frames, swing["events"]))
+    table = np.asarray(table, dtype=float)
     metrics = {
         "clips": len(clips),
         "phaseAccuracy": round(float(table.mean()), 4),
@@ -69,6 +81,7 @@ def compare(result):
     changed = [name for name in result["clips"] if result["clips"][name] != expected["clips"].get(name)]
     print(f"7 阶段准确率 {result['metrics']['phaseAccuracy']:.4f}（快照 {expected['metrics']['phaseAccuracy']:.4f}）；"
           f"没有关键帧的片段 {result['metrics']['clipsWithoutKeyframes']}（快照 {expected['metrics']['clipsWithoutKeyframes']}）")
+    print(f"phaseAccuracy {describe_interval(units(result['clips']).values(), '片段')}")
     if not changed and result["metrics"] == expected["metrics"]:
         print(f"{len(result['clips'])} 段与快照一致")
         return 0
@@ -85,13 +98,15 @@ def against(ref):
     if shown.returncode != 0:
         print(f"{ref} 上还没有 expected.json")
         return 0
-    before = json.loads(shown.stdout)["metrics"]
-    now = json.loads(EXPECTED.read_text(encoding="utf-8"))["metrics"]
+    old = json.loads(shown.stdout)
+    new = json.loads(EXPECTED.read_text(encoding="utf-8"))
+    before, now = old["metrics"], new["metrics"]
     failed = 0
     for key in GATED:
         print(f"{key}: {before[key]} -> {now[key]}")
         if now[key] < before[key]:
             failed = 1
+    print(f"phaseAccuracy {describe_paired(units(old['clips']), units(new['clips']), '片段')}")
     if failed:
         print("基准指标下降了。这个 PR 不能合并：找出是哪些片段变差了并修掉，不要更新快照来通过检查。")
     return failed

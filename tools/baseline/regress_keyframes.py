@@ -24,6 +24,7 @@ import path_fault  # noqa: E402
 import regress  # noqa: E402
 import regress_phases  # noqa: E402
 from app_selector import SwingNetEventSelector  # noqa: E402
+from uncertainty import describe_interval, describe_paired  # noqa: E402
 
 EXPECTED = ROOT / "baseline" / "keyframes-to-path" / "expected.json"
 GATED = ["verdictAgreement"]
@@ -68,6 +69,10 @@ def run():
     return {"metrics": metrics, "clips": clips}
 
 
+def units(clips):
+    return {name: float(clip["detectedVerdict"] == clip["labelledVerdict"]) for name, clip in clips.items()}
+
+
 def compare(result):
     expected = json.loads(EXPECTED.read_text(encoding="utf-8"))
     changed = [name for name in result["clips"] if result["clips"][name] != expected["clips"].get(name)]
@@ -76,6 +81,7 @@ def compare(result):
           f"（快照 {expected['metrics']['verdictAgreement']:.4f}）；"
           f"只因识别关键帧而报外下/内下 {metrics['faultOnlyWithDetectedFrames']} 段，"
           f"只因识别关键帧而拒判 {metrics['refusedOnlyWithDetectedFrames']} 段")
+    print(f"verdictAgreement {describe_interval(units(result['clips']).values(), '片段')}")
     if not changed and metrics == expected["metrics"]:
         print(f"{metrics['clips']} 段与快照一致")
         return 0
@@ -92,13 +98,15 @@ def against(ref):
     if shown.returncode != 0:
         print(f"{ref} 上还没有 {EXPECTED.relative_to(ROOT)}")
         return 0
-    before = json.loads(shown.stdout)["metrics"]
-    now = json.loads(EXPECTED.read_text(encoding="utf-8"))["metrics"]
+    old = json.loads(shown.stdout)
+    new = json.loads(EXPECTED.read_text(encoding="utf-8"))
+    before, now = old["metrics"], new["metrics"]
     failed = 0
     for key in GATED:
         print(f"{key}: {before[key]} -> {now[key]}")
         if now[key] < before[key]:
             failed = 1
+    print(f"verdictAgreement {describe_paired(units(old['clips']), units(new['clips']), '片段')}")
     if failed:
         print("基准指标下降了。这个 PR 不能合并：找出是哪些片段变差了并修掉，不要更新快照来通过检查。")
     return failed

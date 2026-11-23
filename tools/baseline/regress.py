@@ -19,8 +19,10 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "faults"))
+sys.path.insert(0, str(ROOT / "tools" / "baseline"))
 import path_fault  # noqa: E402
 from compare import pair_agreement  # noqa: E402
+from uncertainty import describe_interval, describe_paired  # noqa: E402
 
 DATA = ROOT / "baseline" / "golfdb400"
 EXPECTED = DATA / "expected.json"
@@ -72,6 +74,18 @@ def run():
     return {"metrics": metrics, "clips": clips}
 
 
+def units(clips):
+    """1 for each real-time / slow-motion pair with the same verdict, 0 otherwise, keyed by (youtube_id, player)."""
+    manifest = json.loads((DATA / "swings.json").read_text(encoding="utf-8"))
+    groups = {}
+    for swing in manifest["swings"]:
+        clip = clips.get(swing["name"])
+        if clip is not None:
+            groups.setdefault((swing["youtube_id"], swing["player"]), {})[swing["slow"]] = clip
+    return {key: float(g[0]["verdict"] == g[1]["verdict"]) for key, g in groups.items()
+            if 0 in g and 1 in g and g[0]["offset"] is not None and g[1]["offset"] is not None}
+
+
 def write(result):
     EXPECTED.write_text(json.dumps(result, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
@@ -81,6 +95,7 @@ def compare(result):
     changed = [name for name in result["clips"] if result["clips"][name] != expected["clips"].get(name)]
     print(f"一致率 {result['metrics']['pairsAgreeing']}/{result['metrics']['pairs']} = {result['metrics']['pairAgreement']:.4f}"
           f"（快照 {expected['metrics']['pairAgreement']:.4f}）；拒判 {result['metrics']['refused']}（快照 {expected['metrics']['refused']}）")
+    print(f"pairAgreement {describe_interval(units(result['clips']).values(), '一对')}")
     if not changed and result["metrics"] == expected["metrics"]:
         print(f"{len(result['clips'])} 杆与快照一致")
         return 0
@@ -97,13 +112,15 @@ def against(ref):
     if shown.returncode != 0:
         print(f"{ref} 上还没有 expected.json")
         return 0
-    before = json.loads(shown.stdout)["metrics"]
-    now = json.loads(EXPECTED.read_text(encoding="utf-8"))["metrics"]
+    old = json.loads(shown.stdout)
+    new = json.loads(EXPECTED.read_text(encoding="utf-8"))
+    before, now = old["metrics"], new["metrics"]
     failed = 0
     for key in GATED:
         print(f"{key}: {before[key]} -> {now[key]}")
         if now[key] < before[key]:
             failed = 1
+    print(f"pairAgreement {describe_paired(units(old['clips']), units(new['clips']), '一对')}")
     if failed:
         print("基准指标下降了。这个 PR 不能合并：找出是哪些杆变差了并修掉，不要更新快照来通过检查。")
     return failed

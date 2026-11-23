@@ -24,7 +24,7 @@
 
 | 新增 | 位置 | 说明 |
 |---|---|---|
-| 内测模式 | `CoachMe/Features/Beta/`（8 个文件）、Core 的 `Beta` target | 只看下杆路径、离线、中英双语；由 build setting `COACHME_BETA_MODE` 切换（默认开）。按产品决定是**临时形态**，上架的是完整版 |
+| 内测模式 | `CoachMe/Features/Beta/`（8 个文件）、Core 的 `Beta` target | 只看下杆路径、离线、中英双语；由 build setting `COACHME_BETA_MODE` 切换（默认开）。以后和完整版哪个为主还没定（见 `docs/PRODUCT_RULES.md`） |
 | 联网开关 | Core 的 `AppPolicy` target（`NetworkGate`、`AppFeature`） | 内测期间禁止任何网络请求；`LLMChatService` 发请求前检查 |
 | 多杆切分 | `Diagnosis/Split/SwingSplitter.swift`，Python 主版本 `tools/split/` | 超过 8 秒的视频先粗筛出每一杆，只分析最后一杆 |
 | 快速预检 | `Diagnosis/Preflight/Preflight.swift`，Python 主版本 `tools/preflight/` | 导入后提前拒判，规则与完整分析一致 |

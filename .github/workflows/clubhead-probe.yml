@@ -4,6 +4,12 @@ name: ClubheadDB 杆头评测
 
 on:
   workflow_dispatch:
+    inputs:
+      model:
+        description: 自训检测器的起点权重
+        type: choice
+        default: yolo11n.pt
+        options: [yolo11n.pt, yolo11s.pt]
 
 concurrency:
   group: clubhead-probe-${{ github.ref }}
@@ -86,6 +92,8 @@ jobs:
         run: |
           "$RUNNER_TEMP/mp/bin/python" tools/club/clubheaddb_pose.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --clips "${{ matrix.holdout }}" --out "$RUNNER_TEMP/poses"
       - name: 训练并在留出的球手上评测
+        env:
+          MODEL: ${{ inputs.model || 'yolo11n.pt' }}
         run: |
-          python tools/club/clubheaddb_train.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --holdout "${{ matrix.holdout }}" --work "$RUNNER_TEMP/fold" --poses "$RUNNER_TEMP/poses" --summary "$RUNNER_TEMP/fold.md"
+          python tools/club/clubheaddb_train.py --model "$MODEL" --frames "$RUNNER_TEMP/clubheaddb_aligned" --holdout "${{ matrix.holdout }}" --work "$RUNNER_TEMP/fold" --poses "$RUNNER_TEMP/poses" --summary "$RUNNER_TEMP/fold.md"
           cat "$RUNNER_TEMP/fold.md" >> "$GITHUB_STEP_SUMMARY"

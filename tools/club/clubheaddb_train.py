@@ -32,6 +32,7 @@ import numpy as np
 import pandas as pd
 
 RADII = (0.02, 0.05)
+CONF_LEVELS = (0.05, 0.25, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 BINS = (("静止", 0.0, 0.005), ("移动", 0.005, 0.03), ("快速", 0.03, np.inf))
 TOP1_CONF, CANDIDATE_CONF, HIDDEN_CONF = 0.25, 0.05, 0.25
 STEP_SCALE, SWITCH_COST, REACH_TORSOS = 0.1, 1.0, 3.0
@@ -116,6 +117,25 @@ def viterbi(frames):
     return path[::-1]
 
 
+def confidence(tops):
+    """Can a confidence threshold separate right boxes from wrong ones? The most confident box of each frame
+    (any conf >= CANDIDATE_CONF): right = within RADII[0] of the label, wrong = farther, hidden = the label
+    says the clubhead is not visible. Per level: the share of each kind still kept at conf >= level."""
+    kinds = (("right", "认对"), ("wrong", "认错"), ("hidden", "看不见时报出"))
+    lines = ["", "最高置信度的框按门槛保留的比例（认对 = 离标注 ≤" + f"{RADII[0]} 画面高）：", "",
+             "| 门槛 | " + " | ".join(f"{label}（{(tops['kind'] == k).sum()}）" for k, label in kinds) + " |",
+             "|---|" + "---|" * len(kinds)]
+    for level in CONF_LEVELS:
+        cells = []
+        for k, _ in kinds:
+            mine = tops[tops["kind"] == k]
+            cells.append("-" if mine.empty else f"{(mine['conf'] >= level).mean():.0%}")
+        lines.append(f"| {level} | " + " | ".join(cells) + " |")
+    medians = " · ".join(f"{label} {tops[tops['kind'] == k]['conf'].median():.2f}" for k, label in kinds
+                         if (tops["kind"] == k).any())
+    return lines + ["", f"置信度中位数：{medians}"]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--frames", required=True)
@@ -147,7 +167,7 @@ def main():
 
     held = table[table["video_id"].isin(test)].copy()
     held["step"] = motion(held)
-    rows = []
+    rows, tops = [], []
     for clip, part in held.groupby("video_id"):
         hands, torso = pose(Path(a.poses) / f"{clip}.npz" if a.poses else None)
         boxes = []
@@ -165,6 +185,12 @@ def main():
         for i, row in enumerate(part.itertuples()):
             visible = not np.isnan(row.x_center)
             aspect, height = boxes[i][3], boxes[i][4]
+            xy, c = boxes[i][0], boxes[i][1]
+            if len(c):
+                best = xy[c.argmax()]
+                right = visible and np.hypot(best[0] - row.x_center * aspect, best[1] - row.y_center) <= RADII[0]
+                kind = "hidden" if not visible else ("right" if right else "wrong")
+                tops.append({"kind": kind, "conf": float(c.max())})
             for name, chosen in picks.items():
                 pick = chosen[i]
                 error = np.nan
@@ -200,6 +226,7 @@ def main():
     for name in ("top1", "viterbi", "hands"):
         hidden = scored[(scored["decoder"] == name) & ~scored["visible"]]
         lines.append(f"| {name} | {len(hidden)} | {int(hidden['found'].sum())} |")
+    lines += confidence(pd.DataFrame(tops, columns=["kind", "conf"]))
     text = "\n".join(lines) + "\n"
     print(text)
     if a.summary:

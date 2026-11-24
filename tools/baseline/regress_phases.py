@@ -6,8 +6,9 @@
 
 Scoring follows the GolfDB paper as tools/benchmark/golfdb_eval.py does: a phase is correct when the
 app's keyframe is within max(round((impact - address) / 30), 1) frames of the label. A clip where the
-app gives no keyframes counts as wrong on all seven. Gated metric: phaseAccuracy, the share of correct
-phases over all clips.
+app gives no keyframes counts as wrong on all seven. Gated metrics: phaseAccuracy, the share of correct
+phases over all clips, and motionPhaseAccuracy, the same over the five phases inside the swing (address and
+finish sit in still stretches where the GolfDB label is a guess, so a change could trade real phases for them).
 """
 import argparse
 import json
@@ -26,8 +27,9 @@ from uncertainty import describe_interval, describe_paired  # noqa: E402
 
 DATA = ROOT / "baseline" / "golfdb-split1-phases"
 EXPECTED = DATA / "expected.json"
-GATED = ["phaseAccuracy"]
+GATED = ["phaseAccuracy", "motionPhaseAccuracy"]
 PHASES = [APP_PHASE_OF_EVENT[e] for e in APP_EVENTS]
+MOTION = [i for i, phase in enumerate(PHASES) if phase not in ("address", "finish")]
 
 
 def load():
@@ -46,10 +48,12 @@ def correct(frames, events):
             and abs(frames[APP_PHASE_OF_EVENT[e]] - int(labels[e])) <= allowed for e in APP_EVENTS]
 
 
-def units(clips):
+def units(clips, phases=None):
     manifest = json.loads((DATA / "swings.json").read_text(encoding="utf-8"))
     events = {str(swing["id"]): swing["events"] for swing in manifest["swings"]}
-    return {name: float(np.mean(correct(frames, events[name]))) for name, frames in clips.items() if name in events}
+    pick = range(len(PHASES)) if phases is None else phases
+    return {name: float(np.mean([correct(frames, events[name])[i] for i in pick]))
+            for name, frames in clips.items() if name in events}
 
 
 def run():
@@ -66,6 +70,7 @@ def run():
     metrics = {
         "clips": len(clips),
         "phaseAccuracy": round(float(table.mean()), 4),
+        "motionPhaseAccuracy": round(float(table[:, MOTION].mean()), 4),
         "perPhase": {phase: round(float(table[:, i].mean()), 4) for i, phase in enumerate(PHASES)},
         "clipsWithoutKeyframes": sum(1 for frames in clips.values() if all(v is None for v in frames.values())),
     }
@@ -82,6 +87,8 @@ def compare(result):
     print(f"7 阶段准确率 {result['metrics']['phaseAccuracy']:.4f}（快照 {expected['metrics']['phaseAccuracy']:.4f}）；"
           f"没有关键帧的片段 {result['metrics']['clipsWithoutKeyframes']}（快照 {expected['metrics']['clipsWithoutKeyframes']}）")
     print(f"phaseAccuracy {describe_interval(units(result['clips']).values(), '片段')}")
+    print(f"motionPhaseAccuracy {result['metrics']['motionPhaseAccuracy']:.4f}（快照 {expected['metrics'].get('motionPhaseAccuracy', '—')}）："
+          f"{describe_interval(units(result['clips'], MOTION).values(), '片段')}")
     if not changed and result["metrics"] == expected["metrics"]:
         print(f"{len(result['clips'])} 段与快照一致")
         return 0
@@ -93,6 +100,10 @@ def compare(result):
     return 1
 
 
+def lowered(before, now):
+    return [key for key in GATED if key in before and now[key] < before[key]]
+
+
 def against(ref):
     shown = subprocess.run(["git", "show", f"{ref}:{EXPECTED.relative_to(ROOT)}"], capture_output=True, text=True, cwd=ROOT)
     if shown.returncode != 0:
@@ -101,12 +112,11 @@ def against(ref):
     old = json.loads(shown.stdout)
     new = json.loads(EXPECTED.read_text(encoding="utf-8"))
     before, now = old["metrics"], new["metrics"]
-    failed = 0
     for key in GATED:
-        print(f"{key}: {before[key]} -> {now[key]}")
-        if now[key] < before[key]:
-            failed = 1
+        print(f"{key}: {before.get(key, f'{ref} 上还没有这一项')} -> {now[key]}")
+    failed = int(bool(lowered(before, now)))
     print(f"phaseAccuracy {describe_paired(units(old['clips']), units(new['clips']), '片段')}")
+    print(f"motionPhaseAccuracy {describe_paired(units(old['clips'], MOTION), units(new['clips'], MOTION), '片段')}")
     if failed:
         print("基准指标下降了。这个 PR 不能合并：找出是哪些片段变差了并修掉，不要更新快照来通过检查。")
     return failed

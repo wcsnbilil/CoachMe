@@ -2,6 +2,7 @@
  "metrics": {
   "clips": 350,
   "phaseAccuracy": 0.6751,
+  "motionPhaseAccuracy": 0.8646,
   "perPhase": {
    "address": 0.2057,
    "takeaway": 0.8371,

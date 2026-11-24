@@ -32,6 +32,19 @@ class UnitsMatchMetrics(unittest.TestCase):
         self.assertEqual(len(units), expected["metrics"]["clips"])
         self.assertAlmostEqual(sum(units.values()) / len(units), expected["metrics"]["phaseAccuracy"], places=4)
 
+    def test_motion_phases(self):
+        expected = snapshot(regress_phases)
+        units = regress_phases.units(expected["clips"], regress_phases.MOTION)
+        self.assertEqual([regress_phases.PHASES[i] for i in regress_phases.MOTION],
+                         ["takeaway", "midBackswing", "top", "midDownswing", "impact"])
+        self.assertAlmostEqual(sum(units.values()) / len(units), expected["metrics"]["motionPhaseAccuracy"], places=4)
+
+    def test_trading_a_motion_phase_for_address_fails_the_gate(self):
+        before = snapshot(regress_phases)["metrics"]
+        traded = {**before, "motionPhaseAccuracy": before["motionPhaseAccuracy"] - 0.0001}
+        self.assertEqual(regress_phases.lowered(before, traded), ["motionPhaseAccuracy"])
+        self.assertEqual(regress_phases.lowered(before, before), [])
+
     def test_keyframes(self):
         expected = snapshot(regress_keyframes)
         units = regress_keyframes.units(expected["clips"])

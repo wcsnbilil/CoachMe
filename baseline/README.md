@@ -24,7 +24,7 @@ python3 tools/baseline/regress.py --against origin/main   # 一致率不低于 m
 swift test --package-path CoachMeCore --filter GolfDB400RegressionTests   # Swift 判定与快照逐杆一致
 
 python3 tools/baseline/regress_phases.py                         # Python 选帧与快照逐段一致
-python3 tools/baseline/regress_phases.py --against origin/main   # 7 阶段准确率不低于 main
+python3 tools/baseline/regress_phases.py --against origin/main   # 7 阶段准确率、挥杆中 5 阶段准确率都不低于 main
 swift test --package-path CoachMeCore --filter GolfDBPhaseRegressionTests # Swift 选帧与快照逐段一致
 
 python3 tools/baseline/regress_negatives.py                         # 非完整挥杆的选帧与快照一致
@@ -38,6 +38,7 @@ python3 tools/baseline/regress_keyframes.py --against origin/main   # 判定一�
 
 - `pairAgreement`：同一杆的实时和慢动作两个版本得到相同外下/内下判定的比例。
 - `phaseAccuracy`：7 个阶段的关键帧落在 GolfDB 论文容差（`max(round((击球帧 − 准备帧) / 30), 1)` 帧）内的比例；App 不给关键帧的片段 7 个阶段都算错。
+- `motionPhaseAccuracy`：同上，只算挥杆中的 5 个阶段（起杆、上杆中、顶点、下杆中、击球）。准备和收杆落在静止段里，GolfDB 的标注帧本身就不确定；单看总分，一个改动可以拿顶点、击球去换准备帧而不被发现。
 - `negativeRejection`：剪出来的非完整挥杆里，App 不给关键帧的比例。两次挥杆连在一起的那种单独列出、不算进去：标出其中一杆暂时可以接受（2026-11-24 决定）。
 - `verdictAgreement`：用 App 识别出的准备、顶点、击球帧判外下/内下，和用 GolfDB 标注的这三帧判，结论相同的片段比例。它量的是「关键帧的误差有没有改变用户看到的结论」；`phaseAccuracy` 量的是帧号本身。这一项只有 Python 版，Swift 的选帧和判定各自由上面两项的 Swift 测试对照。
 

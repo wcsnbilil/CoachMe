@@ -53,6 +53,7 @@ python3 tools/thresholds/generate.py      # 改了 config/thresholds.json 之后
 python3 tools/faults/test_path_fault.py   # 外下/内下的 Python 合成测试
 python3 tools/baseline/regress.py         # 外下/内下回归基准（GolfDB 400 杆）
 python3 tools/baseline/regress_phases.py  # 7 阶段回归基准
+python3 tools/baseline/regress_negatives.py  # 非完整挥杆会不会照样给关键帧
 python3 tools/baseline/regress_keyframes.py  # 关键帧误差是否改变外下/内下结论
 ```
 

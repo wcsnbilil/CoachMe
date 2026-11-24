@@ -52,6 +52,11 @@ jobs:
       - name: 准确率不低于基线分支
         if: github.ref != 'refs/heads/main'
         run: python tools/baseline/regress_phases.py --against "origin/${{ github.base_ref || 'main' }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 非完整挥杆逐段与快照一致
+        run: python tools/baseline/regress_negatives.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 非完整挥杆不给关键帧的比例不低于基线分支
+        if: github.ref != 'refs/heads/main'
+        run: python tools/baseline/regress_negatives.py --against "origin/${{ github.base_ref || 'main' }}" | tee -a "$GITHUB_STEP_SUMMARY"
 
   keyframes:
     name: 关键帧 → 外下/内下：识别关键帧与标注关键帧的判定一致率不下降

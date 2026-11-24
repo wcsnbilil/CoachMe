@@ -160,7 +160,7 @@ actor SwingAnalyzer {
             onProgress(AnalysisProgress(framesProcessed: 0, estimatedTotalFrames: 0, currentTimestampSeconds: frames.last?.timestampSeconds ?? 0, stage: "正在整理关键帧…"))
             do {
                 keyframes = try phaseDetector?.finish() ?? []
-                if keyframes.isEmpty { phaseDetectionNote = "未找到顺序一致的挥杆阶段。请只保留一次完整挥杆，或手动标记。" }
+                if keyframes.isEmpty { phaseDetectionNote = "没有识别出一次完整的挥杆。请只保留一次完整挥杆，或手动标记。" }
             } catch is CancellationError { throw CancellationError() }
             catch { phaseDetectionNote = "阶段识别失败，姿态分析已保留。" }
         }

@@ -66,7 +66,10 @@ def read_frames(path: Path) -> np.ndarray:
 
 
 def probabilities(model, frames: np.ndarray) -> np.ndarray:
-    feats = model.encode(frames)
+    return sequence_probabilities(model, model.encode(frames))
+
+
+def sequence_probabilities(model, feats: np.ndarray) -> np.ndarray:
     rows = []
     for s in range(0, len(feats), 64):  # app and GolfDB both use 64-frame chunks, no padding
         rows.extend(softmax(list(map(float, r))) for r in model.sequence(feats[s:s + 64]))

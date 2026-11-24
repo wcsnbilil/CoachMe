@@ -38,7 +38,7 @@ python3 tools/baseline/regress_keyframes.py --against origin/main   # 判定一�
 
 - `pairAgreement`：同一杆的实时和慢动作两个版本得到相同外下/内下判定的比例。
 - `phaseAccuracy`：7 个阶段的关键帧落在 GolfDB 论文容差（`max(round((击球帧 − 准备帧) / 30), 1)` 帧）内的比例；App 不给关键帧的片段 7 个阶段都算错。
-- `negativeRejection`：剪出来的非完整挥杆里，App 不给关键帧的比例。
+- `negativeRejection`：剪出来的非完整挥杆里，App 不给关键帧的比例。两次挥杆连在一起的那种单独列出、不算进去：标出其中一杆暂时可以接受（2026-11-24 决定）。
 - `verdictAgreement`：用 App 识别出的准备、顶点、击球帧判外下/内下，和用 GolfDB 标注的这三帧判，结论相同的片段比例。它量的是「关键帧的误差有没有改变用户看到的结论」；`phaseAccuracy` 量的是帧号本身。这一项只有 Python 版，Swift 的选帧和判定各自由上面两项的 Swift 测试对照。
 
 改了判定或选帧逻辑、结果有意变化时：运行对应脚本的 `--update`，把 `expected.json` 的差异一起提交，在 PR 里列出哪些杆变了、为什么。

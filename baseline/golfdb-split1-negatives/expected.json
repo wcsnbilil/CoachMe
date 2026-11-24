@@ -1,7 +1,7 @@
 {
  "metrics": {
   "cuts": 2099,
-  "negativeRejection": 0.8599,
+  "negativeRejection": 0.9594,
   "perVariant": {
    "standing": {
     "cuts": 350,

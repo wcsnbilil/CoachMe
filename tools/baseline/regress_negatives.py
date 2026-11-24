@@ -5,8 +5,9 @@ app still shows automatic phase marks on them.
   python3 tools/baseline/regress_negatives.py --update   # rewrite expected.json from today's code
   python3 tools/baseline/regress_negatives.py --against origin/main   # exit 1 if a gated metric is lower than on that ref
 
-Gated metric: negativeRejection, the share of cuts where the app gives no automatic marks. The cuts are listed in
-tools/baseline/pack_negatives.py.
+Gated metric: negativeRejection, the share of cuts where the app gives no automatic marks, over every cut except
+twoSwings. Marking one of two swings is accepted for now (owner's decision, 2026-11-24), so twoSwings is reported but
+not gated. The cuts are listed in tools/baseline/pack_negatives.py.
 """
 import argparse
 import json
@@ -25,6 +26,7 @@ from uncertainty import describe_interval, describe_paired  # noqa: E402
 DATA = ROOT / "baseline" / "golfdb-split1-negatives"
 EXPECTED = DATA / "expected.json"
 GATED = ["negativeRejection"]
+NOT_GATED = {"twoSwings"}
 
 
 def load():
@@ -47,8 +49,12 @@ def marks(probabilities):
     return {phase: int(time) for phase, (time, _) in sorted(selector.keyframes().items())}
 
 
+def gated(key):
+    return key.split("/")[0] not in NOT_GATED
+
+
 def units(cuts):
-    return {key: float(not frames) for key, frames in cuts.items()}
+    return {key: float(not frames) for key, frames in cuts.items() if gated(key)}
 
 
 def run():
@@ -58,7 +64,7 @@ def run():
         variants.setdefault(cut["variant"], []).append(not cuts[name(cut)])
     metrics = {
         "cuts": len(cuts),
-        "negativeRejection": round(float(np.mean([not frames for frames in cuts.values()])), 4),
+        "negativeRejection": round(float(np.mean(list(units(cuts).values()))), 4),
         "perVariant": {v: {"cuts": len(r), "rejection": round(float(np.mean(r)), 4)} for v, r in variants.items()},
     }
     return {"metrics": metrics, "cuts": cuts}
@@ -71,10 +77,10 @@ def write(result):
 def compare(result):
     expected = json.loads(EXPECTED.read_text(encoding="utf-8"))
     changed = [key for key in result["cuts"] if result["cuts"][key] != expected["cuts"].get(key)]
-    print(f"非完整挥杆不给关键帧的比例 {result['metrics']['negativeRejection']:.4f}"
+    print(f"非完整挥杆（不含两次挥杆）不给关键帧的比例 {result['metrics']['negativeRejection']:.4f}"
           f"（快照 {expected['metrics']['negativeRejection']:.4f}），{describe_interval(units(result['cuts']).values(), '片段')}")
     for variant, row in result["metrics"]["perVariant"].items():
-        print(f"  {variant}: {row['rejection']:.4f}（{row['cuts']} 段）")
+        print(f"  {variant}: {row['rejection']:.4f}（{row['cuts']} 段）{'，不设门槛' if variant in NOT_GATED else ''}")
     if not changed and result["metrics"] == expected["metrics"]:
         print(f"{len(result['cuts'])} 段与快照一致")
         return 0

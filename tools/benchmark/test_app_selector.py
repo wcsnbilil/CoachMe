@@ -20,55 +20,38 @@ def check(name, actual, expected):
     print(f"{'PASS' if ok else 'FAIL'}  {name:<52} = {actual!r}")
 
 
+def row(event, value):
+    p = [0.0] * 9
+    p[event] = value
+    p[8] = 1 - value
+    return p
+
+
+def run(rows, ts=None):
+    s = SwingNetEventSelector()
+    for i, r in enumerate(rows):
+        s.append(r, ts[i] if ts else float(i))
+    return s.keyframes()
+
+
 def times(marks):
     return [marks[p][0] for p in ORDER if p in marks]
 
 
-s = SwingNetEventSelector()
 ts = [4.02, 4.17, 4.38, 4.56, 4.72, 4.79, 4.84, 5.13]
-for e in range(8):
-    p = [0.0] * 9
-    p[e] = 0.002 if e == 0 else 0.7
-    p[8] = 1 - p[e]
-    s.append(p, ts[e])
-m = s.keyframes()
+m = run([row(e, 0.002 if e == 0 else 0.7) for e in range(8)], ts)
 check("keeps original timestamps and low-scoring address", times(m), [4.02, 4.17, 4.38, 4.56, 4.72, 4.79, 5.13])
 check("all seven phases present", [k for k in ORDER if k in m], ORDER)
-
-s = SwingNetEventSelector()
-for e in reversed(range(8)):
-    p = [0.0] * 9
-    p[e] = 1
-    s.append(p, float(8 - e))
-check("contradictory order -> no marks", s.keyframes(), {})
-
-s = SwingNetEventSelector()
-for i in range(9):
-    p = [0.0] * 9
-    p[i if i < 8 else 0] = 0.9 if i == 8 else 0.5
-    p[8] = 1 - sum(p)
-    s.append(p, float(i))
-check("later setup does not discard ordered swing", times(s.keyframes()), [0, 1, 2, 3, 4, 5, 7])
-
-s = SwingNetEventSelector()
-early = [0.0] * 9
-early[7], early[8] = 0.9, 0.1
-s.append(early, 0.0)
-for i in range(8):
-    p = [0.0] * 9
-    p[i], p[8] = 0.5, 0.5
-    s.append(p, float(i + 1))
-check("earlier finish does not discard ordered swing", times(s.keyframes()), [1, 2, 3, 4, 5, 6, 8])
-
-s = SwingNetEventSelector()
-for i in range(2, 8):
-    p = [0.0] * 9
-    p[i] = 1
-    s.append(p, float(i))
-late = [0.0] * 9
-late[0] = 1
-s.append(late, 8.0)
-check("missing setup evidence does not invent boundary", s.keyframes(), {})
+check("reversed swing is not one swing", run([row(e, 1) for e in reversed(range(8))]), {})
+check("ordered picks ignore a later stronger peak", times(run([row(e, 0.6) for e in range(8)] + [row(3, 0.9)])),
+      [0, 1, 2, 3, 4, 5, 7])
+check("later setup does not discard ordered swing", times(run([row(e, 0.5) for e in range(8)] + [row(0, 0.9)])),
+      [0, 1, 2, 3, 4, 5, 7])
+check("earlier finish does not discard ordered swing", times(run([row(7, 0.9)] + [row(e, 0.5) for e in range(8)])),
+      [1, 2, 3, 4, 5, 6, 8])
+check("ties go to the earliest frame", times(run([row(e, 0.5) for e in range(8)] + [row(7, 0.5)]))[-1], 7)
+check("two events without evidence is not one swing", run([row(8, 1), row(8, 1)] + [row(e, 1) for e in range(2, 8)]), {})
+check("fewer frames than events gives no marks", run([row(e, 1) for e in range(7)]), {})
 
 s = SwingNetEventSelector()
 uniform = [1 / 9] * 9

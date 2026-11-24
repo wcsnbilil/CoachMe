@@ -2,63 +2,70 @@
 
 Keep the two in step: the GolfDB benchmark uses this port to score what the
 app would actually show, not only SwingNet's raw per-event argmax.
+
+The eight GolfDB events are picked together, in strictly increasing frames, maximising the product of their
+probabilities (each floored at probabilityFloor). If the geometric mean of those eight probabilities is below
+exp(minMeanLogProbability) the video is treated as not one complete swing and gets no marks. Products and
+comparisons only, so Swift and Python pick the same frames bit for bit.
 """
 
+import json
 import math
+from pathlib import Path
 
-# GolfDB event index -> CoachMe phase. Event 6 (mid-follow-through) is unused by the app.
-MAPPING = [(0, "address"), (2, "midBackswing"), (3, "top"), (4, "midDownswing"), (5, "impact"), (7, "finish")]
-TAKEAWAY = (1, "takeaway")
+_T = json.loads((Path(__file__).resolve().parents[2] / "config" / "thresholds.json").read_text(encoding="utf-8"))["swingPhases"]
+
+# GolfDB event index -> CoachMe phase. Event 6 (mid-follow-through) is ordered but not shown.
+MAPPING = [(0, "address"), (1, "takeaway"), (2, "midBackswing"), (3, "top"), (4, "midDownswing"), (5, "impact"),
+           (7, "finish")]
 APP_EVENTS = [0, 1, 2, 3, 4, 5, 7]
+EVENTS = 8
 
 
 class SwingNetEventSelector:
     def __init__(self):
-        self.scores = [-math.inf] * 8
-        self.times = [None] * 8
-        self.boundaries = []  # (time, address, finish, takeaway)
-        self.last = None
+        self.rows = []
+        self.timestamps = []
 
     def append(self, probabilities, timestamp):
         if (len(probabilities) != 9 or not math.isfinite(timestamp)
                 or not all(math.isfinite(p) and 0 <= p <= 1 for p in probabilities)
-                or (self.last is not None and not timestamp > self.last)):
+                or (self.timestamps and not timestamp > self.timestamps[-1])):
             raise ValueError("invalid prediction")
-        self.last = timestamp
-        self.boundaries.append((timestamp, probabilities[0], probabilities[7], probabilities[1]))
-        for e in range(8):
-            if probabilities[e] > self.scores[e]:
-                self.scores[e] = probabilities[e]
-                self.times[e] = timestamp
+        self.timestamps.append(timestamp)
+        self.rows.append(list(probabilities[:EVENTS]))
 
     def keyframes(self):
         """Returns {phase: (time, score)} or {} when the app would show no automatic marks."""
-        times, scores = list(self.times), list(self.scores)
-        interior = [times[i] for i in (2, 3, 4, 5) if times[i] is not None]
-        if len(interior) != 4 or not all(a < b for a, b in zip(interior, interior[1:])):
+        frames, product = ordered(self.rows)
+        if frames is None or math.log(product) / EVENTS < _T["minMeanLogProbability"]:
             return {}
-        if times[0] is None or times[0] >= interior[0]:
-            cands = [b for b in self.boundaries if b[0] < interior[0] and b[1] > 0]
-            if not cands:
-                return {}
-            best = max(cands, key=lambda b: b[1])
-            times[0], scores[0] = best[0], best[1]
-        if times[7] is None or times[7] <= interior[3]:
-            cands = [b for b in self.boundaries if b[0] > interior[3] and b[2] > 0]
-            if not cands:
-                return {}
-            best = max(cands, key=lambda b: b[2])
-            times[7], scores[7] = best[0], best[2]
-        selected = [times[e] for e, _ in MAPPING]
-        if any(t is None for t in selected) or not all(a < b for a, b in zip(selected, selected[1:])):
-            return {}
-        mapping = list(MAPPING)
-        cands = [b for b in self.boundaries if times[0] < b[0] < times[2] and b[3] > 0]
-        if cands:
-            best = max(cands, key=lambda b: b[3])
-            times[1], scores[1] = best[0], best[3]
-            mapping.insert(1, TAKEAWAY)
-        return {phase: (times[e], scores[e]) for e, phase in mapping}
+        return {phase: (self.timestamps[frames[e]], self.rows[frames[e]][e]) for e, phase in MAPPING}
+
+
+def ordered(rows):
+    """Frames f0 < f1 < ... < f7 maximising prod rows[f_e][e]; earliest frame on ties. (None, 0) if too short."""
+    if len(rows) < EVENTS:
+        return None, 0.0
+    rows = [[max(p, _T["probabilityFloor"]) for p in row] for row in rows]
+    best = [row[0] for row in rows]
+    back = []
+    for e in range(1, EVENTS):
+        nxt, arg = [0.0] * len(rows), [0] * len(rows)
+        running, at = 0.0, 0
+        for t, row in enumerate(rows):
+            if running > 0:
+                nxt[t], arg[t] = running * row[e], at
+            if best[t] > running:
+                running, at = best[t], t
+        best = nxt
+        back.append(arg)
+    t = max(range(len(rows)), key=lambda i: (best[i], -i))
+    product, frames = best[t], [t]
+    for arg in reversed(back):
+        t = arg[t]
+        frames.append(t)
+    return frames[::-1], product
 
 
 def softmax(row):

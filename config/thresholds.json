@@ -51,5 +51,9 @@
     "quickCameraWidth": 0.45,
     "minVisibility": 0.5,
     "earlyMarginFrames": 3
+  },
+  "swingPhases": {
+    "probabilityFloor": 0.0001,
+    "minMeanLogProbability": -2.0
   }
 }

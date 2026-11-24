@@ -14,6 +14,7 @@ OUTPUTS = {
     "swingPath": GENERATED / "SwingPathThresholds.swift",
     "swingSplit": GENERATED / "SwingSplitThresholds.swift",
     "preflight": GENERATED / "PreflightThresholds.swift",
+    "swingPhases": ROOT / "CoachMeCore/Sources/PhaseSegmentation/Generated/SwingPhasesThresholds.swift",
 }
 
 

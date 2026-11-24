@@ -175,7 +175,7 @@ actor SwingAnalyzer {
                     start: timeRange?.start.seconds ?? 0, end: timeRange?.end.seconds,
                     frames: frames, usePersonCrop: true, onProgress: onProgress)
                 phaseDetectionNote = keyframes.isEmpty
-                    ? "人物增强仍未找到一致阶段。请重新选取一次挥杆，或手动标记。"
+                    ? "人物增强后仍没有识别出一次完整的挥杆。请重新选取一次挥杆，或手动标记。"
                     : "已使用人物增强生成关键帧候选，请逐帧复核。"
             } catch is CancellationError { throw CancellationError() }
             catch { phaseDetectionNote = "人物增强失败，姿态分析已保留；可手动标记。" }

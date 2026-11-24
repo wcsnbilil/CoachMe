@@ -181,7 +181,7 @@ UI 层越过服务层、直接构造底层对象的位置（第 2 步分层要�
 
 | 有测试 | 无直接测试 |
 |---|---|
-| Geometry（18）、Smoothing / OneEuro（15）、RuleEngine（13+2）、SwingPathAnalyzer（19，含 22 杆 parity）、LLMChatService（10，请求构造与解码）、SwingNetEventSelector（6）、PoseDisplayCompleter（6）、AIFramePlan（4）、GolfAvatarPose（4）、PersonCrop / PoseTrackSelector（2）、PoseDisplaySmoother（3） | **`SwingMetricsCalculator`**（只在 App 端到端测试里被间接调用）、`QualityPolicy` / `FrameQuality`、`ChatModels` / `Conversation` 状态变化、`SwingAnalysisContext` 构造 |
+| Geometry（18）、Smoothing / OneEuro（15）、RuleEngine（13+2）、SwingPathAnalyzer（19，含 22 杆 parity）、LLMChatService（10，请求构造与解码）、SwingNetEventSelector（9）、PoseDisplayCompleter（6）、AIFramePlan（4）、GolfAvatarPose（4）、PersonCrop / PoseTrackSelector（2）、PoseDisplaySmoother（3） | **`SwingMetricsCalculator`**（只在 App 端到端测试里被间接调用）、`QualityPolicy` / `FrameQuality`、`ChatModels` / `Conversation` 状态变化、`SwingAnalysisContext` 构造 |
 
 ### 4.2 App（38 个测试函数，需模拟器）
 
@@ -245,7 +245,7 @@ MediaPipe 和 SwingNet 推理本身在 actor 上（`SwingAnalyzer`、`SavedSwing
 | 主版本 | 副本 | 同步机制 |
 |---|---|---|
 | `tools/faults/path_fault.py` | `SwingPathAnalyzer.swift` | 22 杆 parity（仅 CI 有环境变量时） |
-| `SwingNetEventSelector.swift` | `tools/benchmark/app_selector.py` | 两边各写一套相同用例，无交叉验证 |
+| `SwingNetEventSelector.swift` | `tools/benchmark/app_selector.py` | 两边各写一套相同用例；GolfDB 350 段和 2099 段非完整挥杆的逐段快照两边都对照 |
 | `Geometry` / `Rules` | `tools/reference/*.mjs` | 手动运行 |
 
 ### 5.5 错误被吞掉
@@ -268,7 +268,7 @@ MediaPipe 和 SwingNet 推理本身在 actor 上（`SwingAnalyzer`、`SavedSwing
 
 - `CoachMeCore` 自称“无依赖纯逻辑”，但 `Chat/LLMChatService.swift` 直接做 URLSession 网络请求。
 - `CoachMeCore/.swiftpm/xcode/xcuserdata/nikomac.xcuserdatad/...` 个人 Xcode 状态被提交，`.gitignore` 未覆盖 `xcuserdata/`。
-- 强制解包：`GolfAvatarPose.swift` 约 21 处，`MetricCatalog.definition(for:)`、`SwingPhase.order`、`SwingNetEventSelector.keyframes()` 等也有。
+- 强制解包：`GolfAvatarPose.swift` 约 21 处，`MetricCatalog.definition(for:)`、`SwingPhase.order`、等也有。
 - 中文 UI 文案硬编码在 Core 的枚举（`nameZH` `messageZH` `riskZH`）和 View 里，无本地化。
 
 ---

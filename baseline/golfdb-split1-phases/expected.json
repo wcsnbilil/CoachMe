@@ -1,17 +1,17 @@
 {
  "metrics": {
   "clips": 350,
-  "phaseAccuracy": 0.6714,
+  "phaseAccuracy": 0.6751,
   "perPhase": {
    "address": 0.2057,
    "takeaway": 0.8371,
-   "midBackswing": 0.8571,
-   "top": 0.6714,
-   "midDownswing": 0.9657,
-   "impact": 0.9686,
-   "finish": 0.1943
+   "midBackswing": 0.86,
+   "top": 0.6743,
+   "midDownswing": 0.9743,
+   "impact": 0.9771,
+   "finish": 0.1971
   },
-  "clipsWithoutKeyframes": 8
+  "clipsWithoutKeyframes": 5
  },
  "clips": {
   "10": {
@@ -222,13 +222,13 @@
    "finish": 130
   },
   "97": {
-   "address": null,
-   "takeaway": null,
-   "midBackswing": null,
-   "top": null,
-   "midDownswing": null,
-   "impact": null,
-   "finish": null
+   "address": 68,
+   "takeaway": 80,
+   "midBackswing": 98,
+   "top": 142,
+   "midDownswing": 144,
+   "impact": 158,
+   "finish": 219
   },
   "98": {
    "address": 41,
@@ -402,13 +402,13 @@
    "finish": null
   },
   "213": {
-   "address": null,
-   "takeaway": null,
-   "midBackswing": null,
-   "top": null,
-   "midDownswing": null,
-   "impact": null,
-   "finish": null
+   "address": 24,
+   "takeaway": 53,
+   "midBackswing": 65,
+   "top": 84,
+   "midDownswing": 97,
+   "impact": 103,
+   "finish": 171
   },
   "216": {
    "address": 25,
@@ -1320,13 +1320,13 @@
    "finish": 332
   },
   "545": {
-   "address": null,
-   "takeaway": null,
-   "midBackswing": null,
-   "top": null,
-   "midDownswing": null,
-   "impact": null,
-   "finish": null
+   "address": 286,
+   "takeaway": 364,
+   "midBackswing": 370,
+   "top": 378,
+   "midDownswing": 382,
+   "impact": 385,
+   "finish": 429
   },
   "546": {
    "address": 127,
@@ -2090,7 +2090,7 @@
    "midBackswing": 103,
    "top": 125,
    "midDownswing": 152,
-   "impact": 228,
+   "impact": 165,
    "finish": 233
   },
   "941": {

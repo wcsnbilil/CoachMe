@@ -3,66 +3,72 @@ import Model
 
 /// Reduces the nine-class per-frame probabilities used by GolfDB's SwingNet.
 /// Scores are model outputs, not calibrated correctness probabilities.
+///
+/// The eight GolfDB events are picked together in strictly increasing frames, maximising the product of their
+/// probabilities. A video whose eight picks have a low geometric mean is not treated as one complete swing.
+/// Same algorithm as tools/benchmark/app_selector.py; products and comparisons only, so both pick the same frames.
 public struct SwingNetEventSelector {
-    private var scores = Array(repeating: -Double.infinity, count: 8)
-    private var times = Array<Double?>(repeating: nil, count: 8)
-    private var boundaries: [(time: Double, address: Double, finish: Double, takeaway: Double)] = []
-    private var lastTimestamp: Double?
+    /// The phase each GolfDB event is shown as, in event order; mid-follow-through is ordered but not shown.
+    private static let shownAs: [SwingPhase?] = [.address, .takeaway, .midBackswing, .top, .midDownswing, .impact,
+                                                 nil, .finish]
+    private static let events = shownAs.count
+    private var rows: [[Double]] = []
+    private var timestamps: [Double] = []
     public init() {}
 
     public mutating func append(probabilities: [Double], timestamp: Double) throws {
         guard probabilities.count == 9, timestamp.isFinite,
               probabilities.allSatisfy({ $0.isFinite && (0...1).contains($0) }),
-              lastTimestamp.map({ timestamp > $0 }) ?? true else {
+              timestamps.last.map({ timestamp > $0 }) ?? true else {
             throw InputError.invalidPrediction
         }
-        lastTimestamp = timestamp
-        boundaries.append((timestamp, probabilities[0], probabilities[7], probabilities[1]))
-        for event in 0..<8 where probabilities[event] > scores[event] {
-            scores[event] = probabilities[event]
-            times[event] = timestamp
+        timestamps.append(timestamp)
+        rows.append(Array(probabilities.prefix(Self.events)))
+    }
+
+    public func keyframes() -> [Keyframe] {
+        guard let (frames, product) = Self.ordered(rows),
+              log(product) / Double(Self.events) >= SwingPhasesThresholds.minMeanLogProbability else { return [] }
+        return Self.shownAs.enumerated().compactMap { event, shown in
+            shown.map { phase in
+                Keyframe(phase: phase, timestampSeconds: timestamps[frames[event]], markedByCoach: false,
+                         note: String(format: "SwingNet 1800 · 自动标记 · 模型分数 %.4f", rows[frames[event]][event]))
+            }
         }
     }
 
-    /// Preserve the independently predicted interior phases. Only repair boundary
-    /// events, which can otherwise latch onto a later setup or an earlier finish.
-    /// Contradictory interior phases still require manual review.
-    public func keyframes() -> [Keyframe] {
-        let mapping: [(Int, SwingPhase)] = [(0, .address), (2, .midBackswing),
-                                           (3, .top), (4, .midDownswing),
-                                           (5, .impact), (7, .finish)]
-        var times = self.times
-        var scores = self.scores
-        let interior = [2, 3, 4, 5].compactMap { times[$0] }
-        guard interior.count == 4,
-              zip(interior, interior.dropFirst()).allSatisfy({ $0 < $1 }) else { return [] }
-        if times[0].map({ $0 >= interior[0] }) ?? true {
-            guard let candidate = boundaries.filter({ $0.time < interior[0] && $0.address > 0 })
-                .max(by: { $0.address < $1.address }) else { return [] }
-            times[0] = candidate.time
-            scores[0] = candidate.address
+    /// Frames f0 < f1 < ... < f7 maximising the product of rows[f_e][e]; the earliest frame wins ties.
+    static func ordered(_ raw: [[Double]]) -> (frames: [Int], product: Double)? {
+        guard raw.count >= events else { return nil }
+        let rows = raw.map { $0.map { max($0, SwingPhasesThresholds.probabilityFloor) } }
+        var best = rows.map { $0[0] }
+        var back: [[Int]] = []
+        for event in 1..<events {
+            var next = Array(repeating: 0.0, count: rows.count)
+            var arg = Array(repeating: 0, count: rows.count)
+            var running = 0.0
+            var at = 0
+            for (t, row) in rows.enumerated() {
+                if running > 0 {
+                    next[t] = running * row[event]
+                    arg[t] = at
+                }
+                if best[t] > running {
+                    running = best[t]
+                    at = t
+                }
+            }
+            best = next
+            back.append(arg)
         }
-        if times[7].map({ $0 <= interior[3] }) ?? true {
-            guard let candidate = boundaries.filter({ $0.time > interior[3] && $0.finish > 0 })
-                .max(by: { $0.finish < $1.finish }) else { return [] }
-            times[7] = candidate.time
-            scores[7] = candidate.finish
+        guard var t = best.indices.max(by: { best[$0] < best[$1] || (best[$0] == best[$1] && $0 > $1) }) else { return nil }
+        let product = best[t]
+        var frames = [t]
+        for arg in back.reversed() {
+            t = arg[t]
+            frames.append(t)
         }
-        let selected = mapping.compactMap { times[$0.0] }
-        guard selected.count == mapping.count,
-              zip(selected, selected.dropFirst()).allSatisfy({ $0 < $1 }) else { return [] }
-        var extendedMapping = mapping
-        if let address = times[0], let mid = times[2],
-           let candidate = boundaries.filter({ $0.time > address && $0.time < mid && $0.takeaway > 0 })
-            .max(by: { $0.takeaway < $1.takeaway }) {
-            times[1] = candidate.time
-            scores[1] = candidate.takeaway
-            extendedMapping.insert((1, .takeaway), at: 1)
-        }
-        return extendedMapping.map { event, phase in
-            Keyframe(phase: phase, timestampSeconds: times[event]!, markedByCoach: false,
-                     note: String(format: "SwingNet 1800 · 自动标记 · 模型分数 %.4f", scores[event]))
-        }
+        return (frames.reversed(), product)
     }
 
     public enum InputError: Error { case invalidPrediction }

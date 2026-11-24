@@ -60,6 +60,10 @@ def across(specs: list[str]) -> int:
     for spec in specs:
         label, d = spec.split("=", 1)
         sets.append((label, {json.loads(f.read_text())["name"]: json.loads(f.read_text()) for f in sorted(Path(d).glob("*.json"))}))
+    empty = [f"{label}（{spec.split('=', 1)[1]}）" for (label, c), spec in zip(sets, specs) if not c]
+    if empty:
+        print("## 跨进程 / 跨机器\n\n没有结果可比：" + "、".join(empty) + " 里没有 JSON。看上游「同一视频跑多次」哪一步没跑完。")
+        return 1
     names = sorted(set.intersection(*[set(c) for _, c in sets]))
     head = " | ".join(f"{l}（{next(iter(c.values())).get('processors', '?')} 核，先快检={'是' if next(iter(c.values())).get('quickFirst') else '否'}）"
                       for l, c in sets)

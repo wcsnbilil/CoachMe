@@ -80,7 +80,7 @@ jobs:
   report:
     name: 翻转率
     needs: run
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       actions: read

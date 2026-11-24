@@ -10,3 +10,11 @@ jobs:
       - run: python check.py | tee -a "$GITHUB_STEP_SUMMARY"
       - shell: bash
         run: echo ok
+      - if: always()
+        run: echo step-level always is fine
+  report:
+    needs: a
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo report

@@ -137,7 +137,7 @@ jobs:
   compare:
     name: 跨进程、跨机器比较
     needs: repeat
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

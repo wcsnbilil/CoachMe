@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Proves check_workflows.py catches a workflow without pipefail and a step that switches shell.
+# Proves check_workflows.py catches a workflow without pipefail, a step that switches shell and a job-level always().
 set -u
 cd "$(dirname "$0")"
 FAILED=0
@@ -11,4 +11,5 @@ expect() {
 expect 0 good
 expect 1 no_defaults
 expect 1 sh_step
+expect 1 job_always
 exit $FAILED

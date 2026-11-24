@@ -164,7 +164,7 @@ jobs:
   report:
     name: P0 三项（App vs Python）
     needs: [app, python]
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       actions: read     # 复用上一次 run 的 App 关键点 artifact

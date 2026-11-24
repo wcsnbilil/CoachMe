@@ -30,7 +30,7 @@ jobs:
         run: python3 tools/thresholds/generate.py --check
       - name: 规则自测
         run: tools/lint/selftest.sh
-      - name: 工作流都开了 pipefail
+      - name: 工作流规则：都开了 pipefail，没有任务级 always()
         run: |
           tools/ci/selftest_workflows.sh
           python3 tools/ci/check_workflows.py

@@ -1,0 +1,16 @@
+name: job_always
+on: push
+defaults:
+  run:
+    shell: bash
+jobs:
+  a:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo a
+  report:
+    needs: a
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo report

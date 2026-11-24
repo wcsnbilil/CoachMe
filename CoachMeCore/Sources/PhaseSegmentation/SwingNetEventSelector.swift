@@ -8,9 +8,10 @@ import Model
 /// probabilities. A video whose eight picks have a low geometric mean is not treated as one complete swing.
 /// Same algorithm as tools/benchmark/app_selector.py; products and comparisons only, so both pick the same frames.
 public struct SwingNetEventSelector {
-    private static let events = 8
-    private static let mapping: [(Int, SwingPhase)] = [(0, .address), (1, .takeaway), (2, .midBackswing),
-                                                       (3, .top), (4, .midDownswing), (5, .impact), (7, .finish)]
+    /// The phase each GolfDB event is shown as, in event order; mid-follow-through is ordered but not shown.
+    private static let shownAs: [SwingPhase?] = [.address, .takeaway, .midBackswing, .top, .midDownswing, .impact,
+                                                 nil, .finish]
+    private static let events = shownAs.count
     private var rows: [[Double]] = []
     private var timestamps: [Double] = []
     public init() {}
@@ -28,9 +29,11 @@ public struct SwingNetEventSelector {
     public func keyframes() -> [Keyframe] {
         guard let (frames, product) = Self.ordered(rows),
               log(product) / Double(Self.events) >= SwingPhasesThresholds.minMeanLogProbability else { return [] }
-        return Self.mapping.map { event, phase in
-            Keyframe(phase: phase, timestampSeconds: timestamps[frames[event]], markedByCoach: false,
-                     note: String(format: "SwingNet 1800 · 自动标记 · 模型分数 %.4f", rows[frames[event]][event]))
+        return Self.shownAs.enumerated().compactMap { event, shown in
+            shown.map { phase in
+                Keyframe(phase: phase, timestampSeconds: timestamps[frames[event]], markedByCoach: false,
+                         note: String(format: "SwingNet 1800 · 自动标记 · 模型分数 %.4f", rows[frames[event]][event]))
+            }
         }
     }
 

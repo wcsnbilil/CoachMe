@@ -87,7 +87,7 @@ final class WorkbenchModel {
             // Do not overwrite marks added while the background analysis ran.
             guard swing.keyframes.isEmpty else { return }
             if marks.isEmpty {
-                phaseDetectionMessage = "未能识别出顺序一致的挥杆阶段，请手动标记这段视频。"
+                phaseDetectionMessage = "没有识别出一次完整的挥杆，请手动标记这段视频。"
             } else {
                 swing.keyframes = marks
                 persist(library)

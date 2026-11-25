@@ -9,7 +9,7 @@ on:
         description: 自训检测器的起点权重
         type: choice
         default: yolo11n.pt
-        options: [yolo11n.pt, yolo11s.pt]
+        options: [yolo11n.pt, yolo11s.pt, swingtrace]
 
 concurrency:
   group: clubhead-probe-${{ github.ref }}
@@ -91,9 +91,22 @@ jobs:
       - name: 留出球手的手部位置
         run: |
           "$RUNNER_TEMP/mp/bin/python" tools/club/clubheaddb_pose.py --frames "$RUNNER_TEMP/clubheaddb_aligned" --clips "${{ matrix.holdout }}" --out "$RUNNER_TEMP/poses"
+      - name: SwingTrace 权重（Hugging Face 上要同意条款，用仓库 secret HF_TOKEN 下载，只留在这台机器上）
+        if: inputs.model == 'swingtrace'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then echo "::error::没有 HF_TOKEN：先在 Hugging Face 同意 nishsm/golf-club-detection-swingtrace 的条款，再把只读 token 存成仓库的 Actions secret HF_TOKEN"; exit 1; fi
+          pip install --quiet huggingface_hub
+          python -c "from huggingface_hub import hf_hub_download as d; import shutil, sys; shutil.copy(d('nishsm/golf-club-detection-swingtrace', 'swingtrace-yolo11m.pt'), sys.argv[1])" "$RUNNER_TEMP/swingtrace.pt"
+      - name: SwingTrace 不训练、直接测留出的球手
+        if: inputs.model == 'swingtrace'
+        run: |
+          python tools/club/clubheaddb_train.py --model "$RUNNER_TEMP/swingtrace.pt" --hours 0 --frames "$RUNNER_TEMP/clubheaddb_aligned" --holdout "${{ matrix.holdout }}" --work "$RUNNER_TEMP/zero" --poses "$RUNNER_TEMP/poses" --summary "$RUNNER_TEMP/zero.md"
+          cat "$RUNNER_TEMP/zero.md" >> "$GITHUB_STEP_SUMMARY"
       - name: 训练并在留出的球手上评测
         env:
-          MODEL: ${{ inputs.model || 'yolo11n.pt' }}
+          MODEL: ${{ inputs.model == 'swingtrace' && format('{0}/swingtrace.pt', runner.temp) || inputs.model || 'yolo11n.pt' }}
         run: |
           python tools/club/clubheaddb_train.py --model "$MODEL" --frames "$RUNNER_TEMP/clubheaddb_aligned" --holdout "${{ matrix.holdout }}" --work "$RUNNER_TEMP/fold" --poses "$RUNNER_TEMP/poses" --summary "$RUNNER_TEMP/fold.md"
           cat "$RUNNER_TEMP/fold.md" >> "$GITHUB_STEP_SUMMARY"

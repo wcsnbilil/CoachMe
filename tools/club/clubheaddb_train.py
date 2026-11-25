@@ -6,6 +6,10 @@ hundred labelled frames finds the clubhead on golfers it has never seen, especia
 blurred part of the swing.
 
   python3 tools/club/clubheaddb_train.py --frames aligned/ --holdout swing_035,swing_037 --work /tmp/fold --summary fold.md
+  ... --model swingtrace.pt --hours 0   # no training: score a pretrained detector as it is
+
+A pretrained detector with several classes (SwingTrace: shaft, head, hands) is scored on its class whose
+name contains "head"; fine-tuning replaces its classes with the single clubhead class.
 
 Frames are binned by how far the labelled clubhead moved since the previous frame (fraction of the
 frame height): still < 0.005, moving < 0.03, fast >= 0.03. A detection is "within r" when its box
@@ -117,6 +121,16 @@ def viterbi(frames):
     return path[::-1]
 
 
+def head_class(names):
+    """The class to score: the only one, or the one whose name contains "head"."""
+    if len(names) == 1:
+        return next(iter(names))
+    heads = [i for i, n in names.items() if "head" in n.lower()]
+    if len(heads) != 1:
+        raise SystemExit(f"认不出哪个类别是杆头：{names}")
+    return heads[0]
+
+
 def confidence(tops):
     """Can a confidence threshold separate right boxes from wrong ones? The most confident box of each frame
     (any conf >= CANDIDATE_CONF): right = within RADII[0] of the label, wrong = farther, hidden = the label
@@ -160,10 +174,14 @@ def main():
     build(frames_root, table, test, work / "ds" / "test")
     (work / "data.yaml").write_text(f"path: {work / 'ds'}\ntrain: train/images\nval: train/images\nnames:\n  0: clubhead\n")
 
-    model = YOLO(a.model)
-    model.train(data=str(work / "data.yaml"), epochs=a.epochs, time=a.hours, imgsz=a.imgsz, batch=16, device="cpu",
-                workers=2, val=False, plots=False, project=str(work / "runs"), name="fold", exist_ok=True, verbose=False)
-    trained = YOLO(str(work / "runs" / "fold" / "weights" / "last.pt"))
+    if a.hours > 0:
+        YOLO(a.model).train(data=str(work / "data.yaml"), epochs=a.epochs, time=a.hours, imgsz=a.imgsz, batch=16,
+                            device="cpu", workers=2, val=False, plots=False, project=str(work / "runs"), name="fold",
+                            exist_ok=True, verbose=False)
+        trained = YOLO(str(work / "runs" / "fold" / "weights" / "last.pt"))
+    else:
+        trained = YOLO(a.model)
+    head = head_class(trained.names)
 
     held = table[table["video_id"].isin(test)].copy()
     held["step"] = motion(held)
@@ -175,8 +193,9 @@ def main():
             src = frames_root / row.video_id / f"frame_{row.frame:04d}.jpg"
             result = trained.predict(str(src), imgsz=a.imgsz, conf=CANDIDATE_CONF, device="cpu", verbose=False)[0]
             h, w = result.orig_shape
-            xy = result.boxes.xywhn[:, :2].cpu().numpy() * [w / h, 1.0]
-            boxes.append((xy, result.boxes.conf.cpu().numpy(), hands.get(row.frame), w / h, h))
+            keep = result.boxes.cls.cpu().numpy().astype(int) == head
+            xy = result.boxes.xywhn[:, :2].cpu().numpy()[keep] * [w / h, 1.0]
+            boxes.append((xy, result.boxes.conf.cpu().numpy()[keep], hands.get(row.frame), w / h, h))
         picks = {
             "top1": [(xy[c.argmax()] if len(c) and c.max() >= TOP1_CONF else None) for xy, c, *_ in boxes],
             "viterbi": viterbi([(xy, c) for xy, c, *_ in boxes]),
@@ -212,7 +231,8 @@ def main():
 
     head = "| 挑法 | 帧 | 数量 | 检出 | " + " | ".join(f"≤{r} 画面高" for r in RADII) + " |"
     rule = "|---|---|---|---|" + "---|" * len(RADII)
-    lines = [f"### 自训杆头检测器（{a.model}，{a.imgsz}px）：测试 {', '.join(test)}", "",
+    how = f"{Path(a.model).name} 在其余球手上训练 {a.hours} 小时" if a.hours > 0 else f"{Path(a.model).name} 不训练、直接用"
+    lines = [f"### 杆头检测器（{how}，{a.imgsz}px）：测试 {', '.join(test)}", "",
              f"训练 {len(train)} 段（{len(table[table['video_id'].isin(train)])} 帧），测试 {len(test)} 段（{len(held)} 帧）。"
              + ("" if a.poses else "没有 --poses，hands 等于 viterbi。"), "", head, rule]
     for name in ("top1", "viterbi", "hands"):
